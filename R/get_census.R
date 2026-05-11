@@ -1,6 +1,6 @@
-#' Get India Census Data
+#' Get India census data
 #'
-#' Retrieve census data for India at various geographic levels.
+#' Census data for India at state, district, or subdistrict level.
 #'
 #' @param year Census year. One of: 1901, 1911, 1921, 1931, 1941, 1951, 1961,
 #'   1971, 1981, 1991, 2001, 2011.
@@ -54,11 +54,11 @@ get_census <- function(year,
 #' @noRd
 get_census_data_for_year <- function(year, geography, sector) {
   if (year == 2011 && geography == "subdistrict") {
-    return(indiacensus::census_subdistricts_2011)
+    return(censusindia::census_subdistricts_2011)
   }
 
   if (year == 1981) {
-    data <- indiacensus::census_1981 |>
+    data <- censusindia::census_1981 |>
       dplyr::filter(.data$sector == .env$sector)
 
     if (geography == "state") {
@@ -72,7 +72,7 @@ get_census_data_for_year <- function(year, geography, sector) {
   }
 
   if (year == 1971) {
-    data <- indiacensus::census_1971 |>
+    data <- censusindia::census_1971 |>
       dplyr::filter(.data$geography == .env$geography)
 
     suffix <- if (sector == "rural") "_rural" else if (sector == "urban") "_urban" else "_total"
@@ -90,16 +90,16 @@ get_census_data_for_year <- function(year, geography, sector) {
     if (geography != "district") {
       cli::cli_abort("1961 data only available at district level for literacy")
     }
-    return(indiacensus::census_1961_literacy)
+    return(censusindia::census_1961_literacy)
   }
 
-  indiacensus::census_population_time_series |>
+  censusindia::census_population_time_series |>
     dplyr::filter(.data$year == .env$year, .data$geography == .env$geography)
 }
 
 #' @noRd
 filter_by_state <- function(data, state) {
-  state_lookup <- indiacensus::india_states
+  state_lookup <- censusindia::india_states
 
   state_match <- if (toupper(state) %in% state_lookup$state_abbr) {
     state_lookup$state_name[state_lookup$state_abbr == toupper(state)]

@@ -23,7 +23,7 @@ knitr::opts_chunk$set(
 ```
 
 ```{r load}
-library(indiacensus)
+library(censusindia)
 library(dplyr)
 library(ggplot2)
 library(ggrepel)
@@ -82,7 +82,6 @@ state_trends <- census_population_time_series |>
   filter(geography == "state", year %in% years) |>
   mutate(sex_ratio = 1000 * females / males)
 
-# Identify top 5 and bottom 5 by 2011 sex ratio
 extremes_2011 <- state_trends |>
   filter(year == 2011) |>
   arrange(sex_ratio)
@@ -94,11 +93,8 @@ top_5 <- extremes_2011 |>
   slice_tail(n = 5) |>
   pull(state_name_harmonized)
 
-# Color palette: blues/teals for high ratios (positive), reds/oranges for low (concerning)
 state_colors <- c(
-  # Bottom 5 (low sex ratio) - warm colors indicating concern
   setNames(c("#d73027", "#f46d43", "#fdae61", "#fee090", "#ffffbf"), bottom_5),
-  # Top 5 (high sex ratio) - cool colors indicating balance
   setNames(c("#e0f3f8", "#abd9e9", "#74add1", "#4575b4", "#313695"), top_5)
 )
 

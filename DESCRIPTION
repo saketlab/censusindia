@@ -1,17 +1,17 @@
-Package: indiacensus
-Title: Package to access census of India across the years
+Package: censusindia
+Title: Census of India data for R
 Version: 0.0.0.9000
 Authors@R:
     person("Saket", "Choudhary", email = "saketkc@gmail.com",
            role = c("aut", "cre"))
-Description: Provides easy access to digitised Census of India data from 1901
-    to 2011. Includes population time series, primary census abstracts at
-    state and district levels, and administrative directories. Supports
-    retrieval of census variables with optional geographic boundaries for
-    mapping. 
+Description: Digitised Census of India data from 1901 to 2011: population time
+    series, primary census abstracts at state and district levels, mother
+    tongue tables, SC/ST and tribal populations, and administrative
+    directories. Census variables can be retrieved with geographic boundaries
+    attached for mapping.
 License: MIT + file LICENSE
-URL: https://saketlab.github.io/indiacensus/, https://github.com/saketlab/indiacensus
-BugReports: https://github.com/saketlab/indiacensus/issues
+URL: https://saketlab.github.io/censusindia/, https://github.com/saketlab/censusindia
+BugReports: https://github.com/saketlab/censusindia/issues
 Depends:
     R (>= 4.1.0)
 Imports:
@@ -38,7 +38,7 @@ Suggests:
 VignetteBuilder: knitr
 Config/testthat/edition: 3
 Encoding: UTF-8
-LazyData: true
+LazyData: false
 LazyDataCompression: xz
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.3
+Config/roxygen2/version: 8.0.0

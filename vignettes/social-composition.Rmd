@@ -23,7 +23,7 @@ knitr::opts_chunk$set(
 ```
 
 ```{r load}
-library(indiacensus)
+library(censusindia)
 library(dplyr)
 library(ggplot2)
 library(ggtern)
@@ -31,14 +31,11 @@ library(ggridges)
 library(patchwork)
 ```
 
-This vignette explores the social composition of India using SC, ST, and general population data.
-
 ## SC/ST/General composition
 
-Districts can be characterized by their mix of Scheduled Caste, Scheduled Tribe, and general population.
+Each district has a different mix of Scheduled Caste, Scheduled Tribe, and general population. Ternary plots show these three-way proportions at a glance.
 
 ```{r composition, fig.height=8, fig.width=10}
-# Get 2011 district data with SC/ST
 composition <- census_2011_pca |>
   filter(geography == "district") |>
   mutate(
@@ -190,8 +187,6 @@ composition |>
 ```
 
 ## Linguistic diversity vs social composition
-
-Do areas with high SC/ST populations show different linguistic patterns?
 
 ```{r diversity-composition, fig.height=6, fig.width=10}
 diversity <- census_2011_mother_tongue |>

@@ -1,12 +1,12 @@
 #' Plotting functions for census data
 #'
 #' @description
-#' Helper functions to create maps easily from census data.
+#' Choropleth maps and comparison plots from census data.
 #'
 #' @name plotting
 NULL
 
-#' Creates a choropleth map from census data with sensible defaults.
+#' Create a choropleth map from census data.
 #'
 #' @param data An sf object or data frame with geometry attached via
 #'   \code{\link{attach_geometry}}
@@ -272,17 +272,14 @@ compare_maps <- function(data_list,
 #' @export
 get_palette <- function(name, reverse = FALSE) {
   palettes <- list(
-    # Diverging: red to blue (red = high is default)
     red_blue = c(
       "#67001F", "#B2182B", "#D6604D", "#F4A582", "#FDDBC7",
       "#F7F7F7", "#D1E5F0", "#92C5DE", "#4393C3", "#2166AC", "#053061"
     ),
-    # Diverging: blue to red
     blue_red = c(
       "#053061", "#2166AC", "#4393C3", "#92C5DE", "#D1E5F0",
       "#F7F7F7", "#FDDBC7", "#F4A582", "#D6604D", "#B2182B", "#67001F"
     ),
-    # Sequential palettes
     greens = c(
       "#F7FCF5", "#E5F5E0", "#C7E9C0", "#A1D99B", "#74C476",
       "#41AB5D", "#238B45", "#006D2C", "#00441B"
@@ -299,12 +296,10 @@ get_palette <- function(name, reverse = FALSE) {
       "#F7FBFF", "#DEEBF7", "#C6DBEF", "#9ECAE1", "#6BAED6",
       "#4292C6", "#2171B5", "#08519C", "#08306B"
     ),
-    # Diverging: purple to green
     purple_green = c(
       "#40004B", "#762A83", "#9970AB", "#C2A5CF", "#E7D4E8",
       "#F7F7F7", "#D9F0D3", "#A6DBA0", "#5AAE61", "#1B7837", "#00441B"
     ),
-    # Viridis-like
     viridis = c(
       "#440154", "#482878", "#3E4A89", "#31688E", "#26828E",
       "#1F9E89", "#35B779", "#6DCD59", "#B4DE2C", "#FDE725"
@@ -313,7 +308,6 @@ get_palette <- function(name, reverse = FALSE) {
 
   colors <- palettes[[name]]
   if (is.null(colors)) {
-    # Default to viridis
     colors <- palettes[["viridis"]]
   }
 

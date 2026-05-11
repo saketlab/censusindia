@@ -1,4 +1,4 @@
-url: https://saketlab.github.io/indiacensus/
+url: https://saketlab.github.io/censusindia/
 
 development:
   mode: auto
@@ -16,21 +16,21 @@ template:
       <meta name="author" content="Saket Choudhary">
       <meta name="robots" content="index, follow">
       <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
-      <link rel="canonical" href="https://saketlab.github.io/indiacensus/">
+      <link rel="canonical" href="https://saketlab.github.io/censusindia/">
       <meta property="og:type" content="website">
-      <meta property="og:url" content="https://saketlab.github.io/indiacensus/">
-      <meta property="og:title" content="indiacensus - India Census Data for R">
+      <meta property="og:url" content="https://saketlab.github.io/censusindia/">
+      <meta property="og:title" content="censusindia - India Census Data for R">
       <meta property="og:description" content="R package for accessing digitised India Census data from 1901-2011. Includes population time series, administrative boundaries, and tools for choropleth mapping.">
-      <meta property="og:site_name" content="indiacensus">
+      <meta property="og:site_name" content="censusindia">
       <meta property="og:locale" content="en_US">
       <meta name="twitter:card" content="summary_large_image">
-      <meta name="twitter:title" content="indiacensus - India Census Data for R">
+      <meta name="twitter:title" content="censusindia - India Census Data for R">
       <meta name="twitter:description" content="R package for accessing digitised India Census data from 1901-2011.">
       <script type="application/ld+json">
       {
         "@context": "https://schema.org",
         "@type": "SoftwareApplication",
-        "name": "indiacensus",
+        "name": "censusindia",
         "applicationCategory": "DeveloperApplication",
         "operatingSystem": "Windows, macOS, Linux",
         "offers": {
@@ -44,24 +44,24 @@ template:
           "name": "Saket Choudhary",
           "url": "https://saketlab.org"
         },
-        "url": "https://saketlab.github.io/indiacensus/",
-        "downloadUrl": "https://github.com/saketlab/indiacensus",
+        "url": "https://saketlab.github.io/censusindia/",
+        "downloadUrl": "https://github.com/saketlab/censusindia",
         "softwareVersion": "0.1.0",
         "programmingLanguage": "R"
       }
       </script>
 
 home:
-  title: "indiacensus - India Census Data for R"
+  title: "censusindia - India Census Data for R"
   description: >
-    R package for accessing digitised India Census data from 1901-2011 including
-    population time series, administrative boundaries, and tools for choropleth mapping.
+    Digitised Census of India data from 1901 to 2011 for R. Population, literacy,
+    SC/ST, workers, mother tongue, and tribal data with geographic boundaries for mapping.
 
   links:
   - text: Browse source code
-    href: https://github.com/saketlab/indiacensus
+    href: https://github.com/saketlab/censusindia
   - text: Report a bug
-    href: https://github.com/saketlab/indiacensus/issues
+    href: https://github.com/saketlab/censusindia/issues
 
 navbar:
   structure:
@@ -88,6 +88,10 @@ navbar:
         href: articles/social-composition.html
       - text: Linguistic diversity
         href: articles/linguistic-diversity.html
+      - text: Tribal isolation and vulnerability
+        href: articles/tribal-isolation.html
+      - text: District population overview
+        href: articles/district-population.html
 
     news:
       text: Changelog
@@ -95,37 +99,53 @@ navbar:
 
     github:
       icon: fab fa-github fa-lg
-      href: https://github.com/saketlab/indiacensus
+      href: https://github.com/saketlab/censusindia
       aria-label: GitHub
 
 reference:
 - title: "Census Datasets"
-  desc: "Pre-loaded census data"
+  desc: "Census data"
   contents:
+  - census_population_time_series
   - census_1961_literacy
   - census_1971
   - census_1981
   - census_2011_pca
+  - census_2011_demographics
+  - census_2011_workers
+  - census_2011_marginal_detail
   - census_2011_mother_tongue
-  - census_population_time_series
+  - census_2011_district_languages
+  - census_2011_subdistrict_languages
+  - census_2011_linguistic_diversity
+  - census_2011_sc_st
+  - census_2011_tribes
   - census_subdistricts_2011
   - census_variables
   - india_states
 
+- title: "Population Projections"
+  desc: "MOHFW population projections (2011-2036)"
+  contents:
+  - get_population
+  - population_projections_state
+  - population_projections_district
+  - population_projections_district_lgd
+
 - title: "Census Data Access"
-  desc: "Retrieve census datasets programmatically"
+  desc: "Retrieve census datasets"
   contents:
   - get_census
 
 - title: "Geographic Boundaries"
-  desc: "Work with administrative boundaries"
+  desc: "Administrative boundaries"
   contents:
   - get_census_boundaries
   - attach_geometry
   - clear_geometry_cache
 
 - title: "Mapping & Visualization"
-  desc: "Create choropleth maps"
+  desc: "Choropleth maps"
   contents:
   - plotting
   - plot_map
@@ -133,7 +153,7 @@ reference:
   - get_palette
 
 - title: "Variable Discovery"
-  desc: "Explore available census variables"
+  desc: "Available census variables"
   contents:
   - list_census_variables
   - list_census_geographies

@@ -22,12 +22,12 @@ knitr::opts_chunk$set(
 )
 ```
 
-India is one of the most linguistically diverse countries in the world. The 2011 Census recorded over 19,500 languages and dialects. This vignette demonstrates how to visualize this diversity using Shannon entropy.
+The 2011 Census recorded over 19,500 languages and dialects across India. Shannon entropy and the effective number of languages summarize this diversity at the district level.
 
 ## Load data
 
 ```{r load-packages}
-library(indiacensus)
+library(censusindia)
 library(dplyr)
 ```
 

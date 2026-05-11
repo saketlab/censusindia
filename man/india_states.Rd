@@ -3,7 +3,7 @@
 \docType{data}
 \name{india_states}
 \alias{india_states}
-\title{Indian States Lookup}
+\title{Indian states lookup}
 \format{
 A tibble with 36 rows and 5 columns:
 \describe{
@@ -15,9 +15,9 @@ A tibble with 36 rows and 5 columns:
 }
 }
 \usage{
-india_states
+data(india_states)
 }
 \description{
-A lookup table of Indian states with their codes, abbreviations, and regions.
+States and union territories with codes, abbreviations, and regions.
 }
 \keyword{datasets}

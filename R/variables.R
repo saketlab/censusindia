@@ -1,6 +1,6 @@
 #' List census variables
 #'
-#' Browse available census variables, optionally filtered by year, geography, or category.
+#' Available census variables, optionally filtered by year, geography, or category.
 #'
 #' @param year Filter to variables available for specific census year.
 #' @param geography Filter to "state", "district", or "subdistrict".
@@ -14,16 +14,16 @@
 #'
 #' @export
 list_census_variables <- function(year = NULL, geography = NULL, category = NULL) {
-  vars <- indiacensus::census_variables
+  vars <- censusindia::census_variables
   if (!is.null(year)) vars <- vars |> dplyr::filter(grepl(as.character(year), .data$years))
   if (!is.null(geography)) vars <- vars |> dplyr::filter(grepl(geography, .data$geographies))
   if (!is.null(category)) vars <- vars |> dplyr::filter(.data$category == .env$category)
   vars
 }
 
-#' List Available Census Geographies
+#' List available census geographies
 #'
-#' Show which geographic levels are available for each census year.
+#' Geographic levels available for each census year.
 #'
 #' @return A tibble showing available year-geography combinations.
 #' @examples
@@ -62,7 +62,7 @@ list_census_geographies <- function() {
 
 #' List Indian states
 #'
-#' Get a lookup table of Indian states with codes and abbreviations.
+#' States and union territories with codes, abbreviations, and regions.
 #'
 #' @param region Filter by region: "North", "South", "East", "West", "Central", "Northeast", "Islands".
 #' @return A tibble of states with codes, names, abbreviations, and regions.
@@ -73,7 +73,7 @@ list_census_geographies <- function() {
 #'
 #' @export
 list_states <- function(region = NULL) {
-  states <- indiacensus::india_states
+  states <- censusindia::india_states
   if (!is.null(region)) {
     states <- states |> dplyr::filter(.data$region == .env$region)
   }
@@ -82,7 +82,7 @@ list_states <- function(region = NULL) {
 
 #' Search census variables
 #'
-#' Search for census variables by keyword in names and labels.
+#' Find census variables by keyword in names and labels.
 #'
 #' @param pattern Character string or regex pattern to search.
 #' @return A tibble of matching variables.
@@ -93,7 +93,7 @@ list_states <- function(region = NULL) {
 #'
 #' @export
 search_census_variables <- function(pattern) {
-  indiacensus::census_variables |>
+  censusindia::census_variables |>
     dplyr::filter(
       grepl(pattern, variable, ignore.case = TRUE) |
         grepl(pattern, label, ignore.case = TRUE)

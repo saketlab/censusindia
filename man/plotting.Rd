@@ -4,5 +4,5 @@
 \alias{plotting}
 \title{Plotting functions for census data}
 \description{
-Helper functions to create maps easily from census data.
+Choropleth maps and comparison plots from census data.
 }

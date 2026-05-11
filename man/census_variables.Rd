@@ -3,7 +3,7 @@
 \docType{data}
 \name{census_variables}
 \alias{census_variables}
-\title{Census Variables Lookup}
+\title{Census variables lookup}
 \format{
 A tibble with 23 rows and 5 columns:
 \describe{
@@ -15,10 +15,10 @@ A tibble with 23 rows and 5 columns:
 }
 }
 \usage{
-census_variables
+data(census_variables)
 }
 \description{
-A lookup table of available census variables with their labels, available
-years, geographic levels, and categories.
+Available census variables with labels, years, geographic levels, and
+categories.
 }
 \keyword{datasets}

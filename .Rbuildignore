@@ -20,3 +20,5 @@
 ^data/2026$
 ^doc$
 ^Meta$
+^vignettes/.*\.csv$
+^vignettes/clustering-methodology\.md$

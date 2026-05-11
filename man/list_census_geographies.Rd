@@ -2,7 +2,7 @@
 % Please edit documentation in R/variables.R
 \name{list_census_geographies}
 \alias{list_census_geographies}
-\title{List Available Census Geographies}
+\title{List available census geographies}
 \usage{
 list_census_geographies()
 }
@@ -10,7 +10,7 @@ list_census_geographies()
 A tibble showing available year-geography combinations.
 }
 \description{
-Show which geographic levels are available for each census year.
+Geographic levels available for each census year.
 }
 \examples{
 list_census_geographies()

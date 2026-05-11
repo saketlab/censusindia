@@ -34,10 +34,10 @@ Collection, 1901-2026: Digitised Subnational Population and Administrative
 Datasets." Harvard Dataverse. \doi{10.7910/DVN/ON8CP8}.
 }
 \usage{
-census_1981
+data(census_1981)
 }
 \description{
-Detailed census data at state, district, and urban agglomeration levels
-from the 1981 Census, including literacy and worker classification.
+State and district data from the 1981 Census with literacy and worker
+classification.
 }
 \keyword{datasets}

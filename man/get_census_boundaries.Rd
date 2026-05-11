@@ -15,7 +15,7 @@ get_census_boundaries(year, geography = c("state", "district"))
 An sf object containing the geographic boundaries with harmonized state names.
 }
 \description{
-Retrieve geographic boundaries for Indian states or districts.
+State or district boundaries for a given census year.
 }
 \examples{
 \dontrun{

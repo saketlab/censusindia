@@ -18,9 +18,8 @@ auto-detects based on available columns.}
 An sf object with geometry attached.
 }
 \description{
-Adds geometry to census data for mapping. This function automatically
-detects the geographic level (state or district) and attaches the
-appropriate boundaries.
+Adds geometry for mapping. Auto-detects state or district level from
+available columns.
 }
 \examples{
 \dontrun{

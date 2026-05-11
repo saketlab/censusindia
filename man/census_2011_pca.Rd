@@ -34,10 +34,10 @@ Collection, 1901-2026: Digitised Subnational Population and Administrative
 Datasets." Harvard Dataverse. \doi{10.7910/DVN/ON8CP8}.
 }
 \usage{
-census_2011_pca
+data(census_2011_pca)
 }
 \description{
-District-level data from the 2011 Census of India Primary Census Abstract.
-Contains population, SC/ST populations, literacy, and worker statistics.
+District-level population, SC/ST, literacy, and worker statistics from
+the 2011 Census.
 }
 \keyword{datasets}

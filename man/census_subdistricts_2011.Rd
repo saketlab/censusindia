@@ -3,7 +3,7 @@
 \docType{data}
 \name{census_subdistricts_2011}
 \alias{census_subdistricts_2011}
-\title{Subdistrict Directory with 2011 Census Data}
+\title{Subdistrict directory (2011)}
 \format{
 A tibble with 7,074 rows and 15 columns:
 \describe{
@@ -30,10 +30,9 @@ Collection, 1901-2026: Digitised Subnational Population and Administrative
 Datasets." Harvard Dataverse. \doi{10.7910/DVN/ON8CP8}.
 }
 \usage{
-census_subdistricts_2011
+data(census_subdistricts_2011)
 }
 \description{
-Administrative subdistrict (tehsil/taluka) level data linked to 2011 Census
-population figures. Based on 2011 administrative boundaries.
+Subdistrict (tehsil/taluka) population from the 2011 Census.
 }
 \keyword{datasets}

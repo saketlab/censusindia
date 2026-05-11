@@ -3,7 +3,7 @@
 \docType{data}
 \name{census_2011_mother_tongue}
 \alias{census_2011_mother_tongue}
-\title{Census 2011 Mother Tongue Data (C-16)}
+\title{Census 2011 mother tongue data (C-16)}
 \format{
 A tibble with 350,157 rows and 18 columns:
 \describe{
@@ -31,11 +31,10 @@ A tibble with 350,157 rows and 18 columns:
 Census of India 2011, C-16 Mother Tongue Tables.
 }
 \usage{
-census_2011_mother_tongue
+data(census_2011_mother_tongue)
 }
 \description{
-District-level mother tongue data from the 2011 Census of India C-16 tables.
-Contains population counts for each language at state and district levels,
-with breakdown by rural/urban and male/female.
+Mother tongue speakers by language at state and district levels from the
+2011 Census C-16 tables, with rural/urban and male/female breakdowns.
 }
 \keyword{datasets}

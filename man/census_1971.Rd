@@ -36,10 +36,10 @@ Collection, 1901-2026: Digitised Subnational Population and Administrative
 Datasets." Harvard Dataverse. \doi{10.7910/DVN/ON8CP8}.
 }
 \usage{
-census_1971
+data(census_1971)
 }
 \description{
-State and district level population data from the 1971 Census, including
-rural/urban breakdown and SC/ST populations.
+State and district population from the 1971 Census with rural/urban
+breakdown and SC/ST populations.
 }
 \keyword{datasets}

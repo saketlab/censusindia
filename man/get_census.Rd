@@ -2,7 +2,7 @@
 % Please edit documentation in R/get_census.R
 \name{get_census}
 \alias{get_census}
-\title{Get India Census Data}
+\title{Get India census data}
 \usage{
 get_census(
   year,
@@ -35,7 +35,7 @@ abbreviation (e.g., "Maharashtra" or "MH").}
 A tibble (or sf object if geometry = TRUE).
 }
 \description{
-Retrieve census data for India at various geographic levels.
+Census data for India at state, district, or subdistrict level.
 }
 \examples{
 get_census(2011, "state")

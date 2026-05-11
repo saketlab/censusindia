@@ -6,7 +6,6 @@
 #' @export
 #' @examples
 #' \dontrun{
-#' # Clear cached geometry to free memory
 #' clear_geometry_cache()
 #' }
 clear_geometry_cache <- function() {
@@ -26,7 +25,7 @@ get_cached_geometry <- function(year, geography) {
     "india-census-%d-%s.geojson", year,
     if (geography == "state") "states" else "districts"
   )
-  geojson_path <- system.file("extdata", filename, package = "indiacensus")
+  geojson_path <- system.file("extdata", filename, package = "censusindia")
 
   if (geojson_path == "") {
     return(NULL)
@@ -250,9 +249,8 @@ normalize_name <- function(x) {
 
 #' Attach geographic boundaries to census data
 #'
-#' Adds geometry to census data for mapping. This function automatically
-#' detects the geographic level (state or district) and attaches the
-#' appropriate boundaries.
+#' Adds geometry for mapping. Auto-detects state or district level from
+#' available columns.
 #'
 #' @param data A data frame containing census data with state/district names.
 #' @param year Census year for boundaries. Available: 1941, 1951, 1961, 1971, 1981, 1991, 2001, 2011.
@@ -293,7 +291,7 @@ attach_geometry <- function(data, year, geography = NULL) {
 
 #' Get census boundaries
 #'
-#' Retrieve geographic boundaries for Indian states or districts.
+#' State or district boundaries for a given census year.
 #'
 #' @param year Census year. Available: 1941, 1951, 1961, 1971, 1981, 1991, 2001, 2011.
 #' @param geography Geographic level: "state" or "district".

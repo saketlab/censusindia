@@ -1,6 +1,6 @@
 #' Census population time series (1901-2011)
 #'
-#' Decadal population data for India at state and district levels from 1901 to 2011.
+#' Decadal population at state and district levels, 1901-2011.
 #'
 #' @format A tibble with 7,901 rows and 12 columns:
 #' \describe{
@@ -24,7 +24,7 @@
 
 #' Census 1961 literacy data
 #'
-#' District-level literacy rates from the 1961 Census of India.
+#' District-level literacy rates from the 1961 Census.
 #'
 #' @format A tibble with 347 rows and 8 columns:
 #' \describe{
@@ -44,8 +44,8 @@
 
 #' Census 1971 Primary Census Abstract
 #'
-#' State and district level population data from the 1971 Census, including
-#' rural/urban breakdown and SC/ST populations.
+#' State and district population from the 1971 Census with rural/urban
+#' breakdown and SC/ST populations.
 #'
 #' @format A tibble with 370 rows and 21 columns:
 #' \describe{
@@ -78,8 +78,8 @@
 
 #' Census 1981 Primary Census Abstract
 #'
-#' Detailed census data at state, district, and urban agglomeration levels
-#' from the 1981 Census, including literacy and worker classification.
+#' State and district data from the 1981 Census with literacy and worker
+#' classification.
 #'
 #' @format A tibble with 2,364 rows and 39 columns including:
 #' \describe{
@@ -108,10 +108,9 @@
 #'   Datasets." Harvard Dataverse. \doi{10.7910/DVN/ON8CP8}.
 "census_1981"
 
-#' Subdistrict Directory with 2011 Census Data
+#' Subdistrict directory (2011)
 #'
-#' Administrative subdistrict (tehsil/taluka) level data linked to 2011 Census
-#' population figures. Based on 2011 administrative boundaries.
+#' Subdistrict (tehsil/taluka) population from the 2011 Census.
 #'
 #' @format A tibble with 7,074 rows and 15 columns:
 #' \describe{
@@ -136,10 +135,10 @@
 #'   Datasets." Harvard Dataverse. \doi{10.7910/DVN/ON8CP8}.
 "census_subdistricts_2011"
 
-#' Census Variables Lookup
+#' Census variables lookup
 #'
-#' A lookup table of available census variables with their labels, available
-#' years, geographic levels, and categories.
+#' Available census variables with labels, years, geographic levels, and
+#' categories.
 #'
 #' @format A tibble with 23 rows and 5 columns:
 #' \describe{
@@ -151,9 +150,9 @@
 #' }
 "census_variables"
 
-#' Indian States Lookup
+#' Indian states lookup
 #'
-#' A lookup table of Indian states with their codes, abbreviations, and regions.
+#' States and union territories with codes, abbreviations, and regions.
 #'
 #' @format A tibble with 36 rows and 5 columns:
 #' \describe{
@@ -165,11 +164,10 @@
 #' }
 "india_states"
 
-#' Census 2011 Mother Tongue Data (C-16)
+#' Census 2011 mother tongue data (C-16)
 #'
-#' District-level mother tongue data from the 2011 Census of India C-16 tables.
-#' Contains population counts for each language at state and district levels,
-#' with breakdown by rural/urban and male/female.
+#' Mother tongue speakers by language at state and district levels from the
+#' 2011 Census C-16 tables, with rural/urban and male/female breakdowns.
 #'
 #' @format A tibble with 350,157 rows and 18 columns:
 #' \describe{
@@ -197,8 +195,8 @@
 
 #' Census 2011 Primary Census Abstract (PCA)
 #'
-#' District-level data from the 2011 Census of India Primary Census Abstract.
-#' Contains population, SC/ST populations, literacy, and worker statistics.
+#' District-level population, SC/ST, literacy, and worker statistics from
+#' the 2011 Census.
 #'
 #' @format A tibble with 593 rows and 19 columns:
 #' \describe{
@@ -226,3 +224,65 @@
 #'   Collection, 1901-2026: Digitised Subnational Population and Administrative
 #'   Datasets." Harvard Dataverse. \doi{10.7910/DVN/ON8CP8}.
 "census_2011_pca"
+
+#' Population projections -- state level (2011-2036)
+#'
+#' MOHFW population projections at state level, based on the 2011 Census.
+#' Covers 38 entries (36 states/UTs, India total, and Ladakh) with annual
+#' projections from 2011 to 2036. Values are absolute numbers (the source
+#' rounds in thousands independently, so `population` may differ from
+#' `males + females` by up to 1000).
+#'
+#' @format A tibble with 988 rows and 5 columns:
+#' \describe{
+#'   \item{year}{Projection year (2011-2036)}
+#'   \item{state_name_harmonized}{Harmonized state name for joining}
+#'   \item{males}{Projected male population}
+#'   \item{females}{Projected female population}
+#'   \item{population}{Projected total population}
+#' }
+#' @source Ministry of Health and Family Welfare, Government of India.
+#'   Population Projections for India and States 2011-2036.
+"population_projections_state"
+
+#' Population projections -- district level, Census 2011 boundaries (2011-2031)
+#'
+#' MOHFW population projections at district level using Census 2011
+#' boundaries (640 districts). Projections are at 5-year intervals:
+#' 2011, 2016, 2021, 2026, 2031.
+#'
+#' Compatible with [attach_geometry()] using 2011 district boundaries.
+#'
+#' @format A tibble with 3,200 rows and 6 columns:
+#' \describe{
+#'   \item{year}{Projection year (5-year intervals)}
+#'   \item{state_name_harmonized}{Harmonized state name for joining}
+#'   \item{district}{District name (MOHFW naming convention)}
+#'   \item{males}{Projected male population}
+#'   \item{females}{Projected female population}
+#'   \item{population}{Projected total population (males + females)}
+#' }
+#' @source Ministry of Health and Family Welfare, Government of India.
+#'   Population Projections for India and States 2011-2036.
+"population_projections_district"
+
+#' Population projections -- district level, LGD boundaries (2012-2031)
+#'
+#' MOHFW population projections scaled to current Local Government
+#' Directory (LGD) district boundaries (785 districts). Annual
+#' projections from 2012 to 2031, aggregated across age groups.
+#'
+#' @format A tibble with 15,700 rows and 6 columns:
+#' \describe{
+#'   \item{year}{Projection year (annual, 2012-2031)}
+#'   \item{state_name_harmonized}{Harmonized state name for joining}
+#'   \item{district}{District name (LGD naming convention)}
+#'   \item{males}{Projected male population}
+#'   \item{females}{Projected female population}
+#'   \item{population}{Projected total population (males + females)}
+#' }
+#' @source Ministry of Health and Family Welfare, Government of India.
+#'   Population Projections for India and States 2011-2036. District
+#'   scaling from India_Population_Estimates project using spatial
+#'   overlap analysis.
+"population_projections_district_lgd"

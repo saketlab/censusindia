@@ -2,7 +2,7 @@
 % Please edit documentation in R/plotting.R
 \name{plot_map}
 \alias{plot_map}
-\title{Creates a choropleth map from census data with sensible defaults.}
+\title{Create a choropleth map from census data.}
 \usage{
 plot_map(
   data,
@@ -73,7 +73,7 @@ Default is "identity" (no transformation)}
 A ggplot2 object
 }
 \description{
-Creates a choropleth map from census data with sensible defaults.
+Create a choropleth map from census data.
 }
 \examples{
 \dontrun{

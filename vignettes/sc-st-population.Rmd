@@ -23,7 +23,7 @@ knitr::opts_chunk$set(
 ```
 
 ```{r load}
-library(indiacensus)
+library(censusindia)
 library(dplyr)
 library(ggplot2)
 library(ggrepel)
@@ -31,7 +31,7 @@ library(biscale)
 library(patchwork)
 ```
 
-Scheduled Castes (SC) and Scheduled Tribes (ST) are constitutionally recognized groups in India. Their geographic distribution reflects historical settlement patterns and regional diversity.
+Scheduled Castes (SC) and Scheduled Tribes (ST) are constitutionally recognized groups in India. SC populations concentrate in the Indo-Gangetic plain; ST populations cluster along the central tribal belt, the northeast, and the Western Ghats.
 
 ```{r data}
 sc_st_2011 <- census_2011_pca |>
@@ -143,7 +143,7 @@ state_summary |>
 
 ## Bivariate choropleth: SC and ST together
 
-This map uses a bivariate color scheme to show both SC and ST percentages simultaneously. The legend shows how colors combine: one axis represents SC concentration, the other ST concentration.
+A bivariate choropleth shows both SC and ST percentages simultaneously. One axis represents SC concentration, the other ST concentration.
 
 ```{r bivariate-map, fig.height=10}
 boundaries <- get_census_boundaries(2011, "district")

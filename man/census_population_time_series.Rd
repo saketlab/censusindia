@@ -27,9 +27,9 @@ Collection, 1901-2026: Digitised Subnational Population and Administrative
 Datasets." Harvard Dataverse. \doi{10.7910/DVN/ON8CP8}.
 }
 \usage{
-census_population_time_series
+data(census_population_time_series)
 }
 \description{
-Decadal population data for India at state and district levels from 1901 to 2011.
+Decadal population at state and district levels, 1901-2011.
 }
 \keyword{datasets}

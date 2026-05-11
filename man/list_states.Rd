@@ -13,7 +13,7 @@ list_states(region = NULL)
 A tibble of states with codes, names, abbreviations, and regions.
 }
 \description{
-Get a lookup table of Indian states with codes and abbreviations.
+States and union territories with codes, abbreviations, and regions.
 }
 \examples{
 list_states()
