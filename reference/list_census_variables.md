@@ -1,7 +1,7 @@
 # List census variables
 
-Browse available census variables, optionally filtered by year,
-geography, or category.
+Available census variables, optionally filtered by year, geography, or
+category.
 
 ## Usage
 

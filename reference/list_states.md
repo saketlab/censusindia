@@ -1,6 +1,6 @@
 # List Indian states
 
-Get a lookup table of Indian states with codes and abbreviations.
+States and union territories with codes, abbreviations, and regions.
 
 ## Usage
 

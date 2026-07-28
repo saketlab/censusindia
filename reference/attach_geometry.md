@@ -1,8 +1,7 @@
 # Attach geographic boundaries to census data
 
-Adds geometry to census data for mapping. This function automatically
-detects the geographic level (state or district) and attaches the
-appropriate boundaries.
+Adds geometry for mapping. Auto-detects state or district level from
+available columns.
 
 ## Usage
 

@@ -1,6 +1,6 @@
-# List Available Census Geographies
+# List available census geographies
 
-Show which geographic levels are available for each census year.
+Geographic levels available for each census year.
 
 ## Usage
 

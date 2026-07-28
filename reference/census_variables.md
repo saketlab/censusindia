@@ -1,12 +1,12 @@
-# Census Variables Lookup
+# Census variables lookup
 
-A lookup table of available census variables with their labels,
-available years, geographic levels, and categories.
+Available census variables with labels, years, geographic levels, and
+categories.
 
 ## Usage
 
 ``` r
-census_variables
+data(census_variables)
 ```
 
 ## Format

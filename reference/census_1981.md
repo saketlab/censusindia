@@ -1,12 +1,12 @@
 # Census 1981 Primary Census Abstract
 
-Detailed census data at state, district, and urban agglomeration levels
-from the 1981 Census, including literacy and worker classification.
+State and district data from the 1981 Census with literacy and worker
+classification.
 
 ## Usage
 
 ``` r
-census_1981
+data(census_1981)
 ```
 
 ## Format

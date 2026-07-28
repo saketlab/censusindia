@@ -1,18 +1,19 @@
 # Mapping linguistic diversity
 
-India is one of the most linguistically diverse countries in the world.
-The 2011 Census recorded over 19,500 languages and dialects. This
-vignette demonstrates how to visualize this diversity using Shannon
-entropy.
+The 2011 Census recorded over 19,500 languages and dialects across
+India. Shannon entropy and the effective number of languages summarize
+this diversity at the district level.
 
 ## Load data
 
 ``` r
-library(indiacensus)
+
+library(censusindia)
 library(dplyr)
 ```
 
 ``` r
+
 data(census_2011_mother_tongue)
 
 census_2011_mother_tongue |>
@@ -33,11 +34,12 @@ The C-16 tables classify languages as:
 
 ## Calculate Shannon entropy
 
-The **effective number of languages** ($2^{H}$) gives an intuitive
-interpretation: a district with $2^{H} = 4$ has diversity equivalent to
+The **effective number of languages** ($`2^H`$) gives an intuitive
+interpretation: a district with $`2^H = 4`$ has diversity equivalent to
 four equally-spoken languages.
 
 ``` r
+
 calculate_diversity <- function(data, level) {
   data |>
     filter(language_level == level, district_code != "000", !grepl("Others", language_name)) |>
@@ -71,6 +73,7 @@ summary(diversity_l2$effective_languages)
 ## Prepare map data
 
 ``` r
+
 districts_sf <- get_census_boundaries(2011, "district") |>
   mutate(district_key = tolower(gsub("[^a-z0-9 ]", "", district_name)))
 
@@ -97,6 +100,7 @@ map_l2 <- left_join(
 ### Diversity index (Shannon entropy)
 
 ``` r
+
 plot_map(
   map_l1,
   fill_var = "effective_languages",
@@ -116,6 +120,7 @@ plot_map(
 ### Number of languages spoken
 
 ``` r
+
 plot_map(
   map_l1,
   fill_var = "n_languages",
@@ -134,6 +139,7 @@ plot_map(
 ### Diversity index (Shannon entropy)
 
 ``` r
+
 plot_map(
   map_l2,
   fill_var = "effective_languages",
@@ -153,6 +159,7 @@ plot_map(
 ### Number of dialects spoken
 
 ``` r
+
 plot_map(
   map_l2,
   fill_var = "n_languages",
@@ -169,6 +176,7 @@ plot_map(
 ## Most diverse districts
 
 ``` r
+
 cat("Top 10 by scheduled languages (L1):\n")
 #> Top 10 by scheduled languages (L1):
 diversity_l1 |>

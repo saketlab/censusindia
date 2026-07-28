@@ -1,6 +1,6 @@
 # Get census boundaries
 
-Retrieve geographic boundaries for Indian states or districts.
+State or district boundaries for a given census year.
 
 ## Usage
 

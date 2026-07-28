@@ -1,5 +1,5 @@
-pandoc: 3.1.11
-pkgdown: 2.2.0
+pandoc: 3.8.3
+pkgdown: 2.2.1
 pkgdown_sha: ~
 articles:
   linguistic-diversity: linguistic-diversity.html
@@ -8,7 +8,7 @@ articles:
   sc-st-population: sc-st-population.html
   sex-ratio: sex-ratio.html
   social-composition: social-composition.html
-last_built: 2026-02-19T21:32Z
+last_built: 2026-07-28T06:48Z
 urls:
-  reference: https://saketlab.github.io/indiacensus/reference
-  article: https://saketlab.github.io/indiacensus/articles
+  reference: https://saketlab.github.io/censusindia/reference
+  article: https://saketlab.github.io/censusindia/articles

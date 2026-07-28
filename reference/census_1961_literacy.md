@@ -1,11 +1,11 @@
 # Census 1961 literacy data
 
-District-level literacy rates from the 1961 Census of India.
+District-level literacy rates from the 1961 Census.
 
 ## Usage
 
 ``` r
-census_1961_literacy
+data(census_1961_literacy)
 ```
 
 ## Format

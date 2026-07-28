@@ -1,7 +1,8 @@
 # Population dynamics
 
 ``` r
-library(indiacensus)
+
+library(censusindia)
 library(dplyr)
 library(ggplot2)
 library(tidyr)
@@ -9,9 +10,10 @@ library(tidyr)
 
 ## State ranking changes (1901-2011)
 
-How have state populations shifted over 110 years?
+State populations have shifted substantially over 110 years.
 
 ``` r
+
 rankings <- census_population_time_series |>
   filter(geography == "state", year %in% c(1901, 2011)) |>
   group_by(year) |>
@@ -49,7 +51,7 @@ ggplot(rankings, aes(x = factor(year), y = rank, group = state_name_harmonized))
     x = NULL,
     y = "Population rank",
     title = "State population rankings: 1901 vs 2011",
-    subtitle = "How states have risen and fallen over 110 years"
+    subtitle = "1901 vs 2011"
   ) +
   theme_minimal() +
   theme(
@@ -64,6 +66,7 @@ ggplot(rankings, aes(x = factor(year), y = rank, group = state_name_harmonized))
 ## State population trajectories
 
 ``` r
+
 state_trajectories <- census_population_time_series |>
   filter(geography == "state") |>
   group_by(state_name_harmonized) |>
@@ -116,11 +119,11 @@ ggplot(state_trajectories, aes(year, pop_scaled)) +
 ## Decadal growth rates
 
 ``` r
+
 growth_data <- census_population_time_series |>
   filter(geography == "state", !is.na(variation_percent)) |>
   select(year, state_name_harmonized, variation_percent)
 
-# Order states by average growth
 state_order <- growth_data |>
   group_by(state_name_harmonized) |>
   summarise(avg_growth = mean(variation_percent, na.rm = TRUE)) |>

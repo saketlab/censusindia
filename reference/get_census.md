@@ -1,6 +1,6 @@
-# Get India Census Data
+# Get India census data
 
-Retrieve census data for India at various geographic levels.
+Census data for India at state, district, or subdistrict level.
 
 ## Usage
 
@@ -30,7 +30,7 @@ get_census(
 - variables:
 
   Character vector of variables to retrieve. Use
-  [`list_census_variables()`](https://saketlab.github.io/indiacensus/reference/list_census_variables.md)
+  [`list_census_variables()`](https://saketlab.github.io/censusindia/reference/list_census_variables.md)
   to see available variables. If NULL (default), returns all available
   variables for the specified year and geography.
 

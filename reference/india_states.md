@@ -1,12 +1,11 @@
-# Indian States Lookup
+# Indian states lookup
 
-A lookup table of Indian states with their codes, abbreviations, and
-regions.
+States and union territories with codes, abbreviations, and regions.
 
 ## Usage
 
 ``` r
-india_states
+data(india_states)
 ```
 
 ## Format

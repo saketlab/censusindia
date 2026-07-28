@@ -5,31 +5,31 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Population dynamics • indiacensus</title>
+<title>Population dynamics • censusindia</title>
 <script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Population dynamics">
 <meta name="keywords" content="India Census, R package, census data, demographics, population, districts, states, 1901-2011, choropleth maps, spatial analysis, India statistics">
 <meta name="author" content="Saket Choudhary">
 <meta name="robots" content="index, follow">
 <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
-<link rel="canonical" href="https://saketlab.github.io/indiacensus/">
+<link rel="canonical" href="https://saketlab.github.io/censusindia/">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://saketlab.github.io/indiacensus/">
-<meta property="og:title" content="indiacensus - India Census Data for R">
+<meta property="og:url" content="https://saketlab.github.io/censusindia/">
+<meta property="og:title" content="censusindia - India Census Data for R">
 <meta property="og:description" content="R package for accessing digitised India Census data from 1901-2011. Includes population time series, administrative boundaries, and tools for choropleth mapping.">
-<meta property="og:site_name" content="indiacensus">
+<meta property="og:site_name" content="censusindia">
 <meta property="og:locale" content="en_US">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="indiacensus - India Census Data for R">
+<meta name="twitter:title" content="censusindia - India Census Data for R">
 <meta name="twitter:description" content="R package for accessing digitised India Census data from 1901-2011.">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
-  "name": "indiacensus",
+  "name": "censusindia",
   "applicationCategory": "DeveloperApplication",
   "operatingSystem": "Windows, macOS, Linux",
   "offers": {
@@ -43,8 +43,8 @@
     "name": "Saket Choudhary",
     "url": "https://saketlab.org"
   },
-  "url": "https://saketlab.github.io/indiacensus/",
-  "downloadUrl": "https://github.com/saketlab/indiacensus",
+  "url": "https://saketlab.github.io/censusindia/",
+  "downloadUrl": "https://github.com/saketlab/censusindia",
   "softwareVersion": "0.1.0",
   "programmingLanguage": "R"
 }
@@ -56,7 +56,7 @@
 
     <nav class="navbar navbar-expand-lg fixed-top " aria-label="Site navigation"><div class="container">
 
-    <a class="navbar-brand me-2" href="../index.html">indiacensus</a>
+    <a class="navbar-brand me-2" href="../index.html">censusindia</a>
 
     <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Unreleased version">0.0.0.9000</small>
 
@@ -77,6 +77,8 @@
     <li><a class="dropdown-item" href="../articles/sc-st-population.html">SC/ST population distribution</a></li>
     <li><a class="dropdown-item" href="../articles/social-composition.html">Social composition</a></li>
     <li><a class="dropdown-item" href="../articles/linguistic-diversity.html">Linguistic diversity</a></li>
+    <li><a class="dropdown-item" href="../articles/tribal-isolation.html">Tribal isolation and vulnerability</a></li>
+    <li><a class="dropdown-item" href="../articles/district-population.html">District population overview</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -85,7 +87,7 @@
 <li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json">
 </form></li>
-<li class="nav-item"><a class="external-link nav-link" href="https://github.com/saketlab/indiacensus" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/saketlab/censusindia" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-lightswitch" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" aria-label="Light switch"><span class="fa fa-sun"></span></button>
   <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdown-lightswitch">
@@ -110,21 +112,21 @@
       <h1>Population dynamics</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/saketlab/indiacensus/blob/master/vignettes/population-dynamics.Rmd" class="external-link"><code>vignettes/population-dynamics.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/saketlab/censusindia/blob/master/vignettes/population-dynamics.Rmd" class="external-link"><code>vignettes/population-dynamics.Rmd</code></a></small>
       <div class="d-none name"><code>population-dynamics.Rmd</code></div>
     </div>
 
     
     
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://saketlab.github.io/indiacensus/">indiacensus</a></span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://saketlab.github.io/censusindia/">censusindia</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://tidyr.tidyverse.org" class="external-link">tidyr</a></span><span class="op">)</span></span></code></pre></div>
 <div class="section level2">
 <h2 id="state-ranking-changes-1901-2011">State ranking changes (1901-2011)<a class="anchor" aria-label="anchor" href="#state-ranking-changes-1901-2011"></a>
 </h2>
-<p>How have state populations shifted over 110 years?</p>
+<p>State populations have shifted substantially over 110 years.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">rankings</span> <span class="op">&lt;-</span> <span class="va">census_population_time_series</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">geography</span> <span class="op">==</span> <span class="st">"state"</span>, <span class="va">year</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1901</span>, <span class="fl">2011</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
@@ -163,7 +165,7 @@
 <span>    x <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>    y <span class="op">=</span> <span class="st">"Population rank"</span>,</span>
 <span>    title <span class="op">=</span> <span class="st">"State population rankings: 1901 vs 2011"</span>,</span>
-<span>    subtitle <span class="op">=</span> <span class="st">"How states have risen and fallen over 110 years"</span></span>
+<span>    subtitle <span class="op">=</span> <span class="st">"1901 vs 2011"</span></span>
 <span>  <span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span></span>
@@ -232,7 +234,6 @@
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">geography</span> <span class="op">==</span> <span class="st">"state"</span>, <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">variation_percent</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">year</span>, <span class="va">state_name_harmonized</span>, <span class="va">variation_percent</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Order states by average growth</span></span>
 <span><span class="va">state_order</span> <span class="op">&lt;-</span> <span class="va">growth_data</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">state_name_harmonized</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarise</a></span><span class="op">(</span>avg_growth <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">variation_percent</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>

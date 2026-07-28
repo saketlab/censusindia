@@ -1,7 +1,8 @@
 # SC/ST population distribution
 
 ``` r
-library(indiacensus)
+
+library(censusindia)
 library(dplyr)
 library(ggplot2)
 library(ggrepel)
@@ -10,10 +11,12 @@ library(patchwork)
 ```
 
 Scheduled Castes (SC) and Scheduled Tribes (ST) are constitutionally
-recognized groups in India. Their geographic distribution reflects
-historical settlement patterns and regional diversity.
+recognized groups in India. SC populations concentrate in the
+Indo-Gangetic plain; ST populations cluster along the central tribal
+belt, the northeast, and the Western Ghats.
 
 ``` r
+
 sc_st_2011 <- census_2011_pca |>
   mutate(
     sc_pct = 100 * sc_population / population_total,
@@ -35,6 +38,7 @@ sc_st_1971 <- census_1971 |>
 ### SC: 2011
 
 ``` r
+
 plot_map(
   sc_st_2011,
   fill_var = "sc_pct",
@@ -51,6 +55,7 @@ plot_map(
 ### SC: 1971 vs 2011
 
 ``` r
+
 compare_maps(
   list(
     "1971" = sc_st_1971,
@@ -70,6 +75,7 @@ compare_maps(
 ### ST: 2011
 
 ``` r
+
 plot_map(
   sc_st_2011,
   fill_var = "st_pct",
@@ -86,6 +92,7 @@ plot_map(
 ### ST: 1971 vs 2011
 
 ``` r
+
 compare_maps(
   list(
     "1971" = sc_st_1971,
@@ -103,6 +110,7 @@ compare_maps(
 ## State-level summary (2011)
 
 ``` r
+
 state_summary <- census_2011_pca |>
   group_by(state_name_harmonized) |>
   summarise(
@@ -150,11 +158,11 @@ state_summary |>
 
 ## Bivariate choropleth: SC and ST together
 
-This map uses a bivariate color scheme to show both SC and ST
-percentages simultaneously. The legend shows how colors combine: one
-axis represents SC concentration, the other ST concentration.
+A bivariate choropleth shows both SC and ST percentages simultaneously.
+One axis represents SC concentration, the other ST concentration.
 
 ``` r
+
 boundaries <- get_census_boundaries(2011, "district")
 
 bivariate_data <- sc_st_2011 |>
@@ -184,6 +192,7 @@ map + inset_element(legend, left = 0.7, bottom = 0.05, right = 0.95, top = 0.3)
 ## SC vs ST scatter plot
 
 ``` r
+
 scatter_data <- sf::st_drop_geometry(sc_st_2011) |>
   mutate(
     is_extreme = sc_pct > quantile(sc_pct, 0.95, na.rm = TRUE) |

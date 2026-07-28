@@ -1,12 +1,12 @@
 # Census 1971 Primary Census Abstract
 
-State and district level population data from the 1971 Census, including
-rural/urban breakdown and SC/ST populations.
+State and district population from the 1971 Census with rural/urban
+breakdown and SC/ST populations.
 
 ## Usage
 
 ``` r
-census_1971
+data(census_1971)
 ```
 
 ## Format

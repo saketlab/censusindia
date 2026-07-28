@@ -1,13 +1,12 @@
 # Census 2011 Primary Census Abstract (PCA)
 
-District-level data from the 2011 Census of India Primary Census
-Abstract. Contains population, SC/ST populations, literacy, and worker
-statistics.
+District-level population, SC/ST, literacy, and worker statistics from
+the 2011 Census.
 
 ## Usage
 
 ``` r
-census_2011_pca
+data(census_2011_pca)
 ```
 
 ## Format

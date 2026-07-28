@@ -1,7 +1,8 @@
 # Social composition
 
 ``` r
-library(indiacensus)
+
+library(censusindia)
 library(dplyr)
 library(ggplot2)
 library(ggtern)
@@ -9,16 +10,14 @@ library(ggridges)
 library(patchwork)
 ```
 
-This vignette explores the social composition of India using SC, ST, and
-general population data.
-
 ## SC/ST/General composition
 
-Districts can be characterized by their mix of Scheduled Caste,
-Scheduled Tribe, and general population.
+Each district has a different mix of Scheduled Caste, Scheduled Tribe,
+and general population. Ternary plots show these three-way proportions
+at a glance.
 
 ``` r
-# Get 2011 district data with SC/ST
+
 composition <- census_2011_pca |>
   filter(geography == "district") |>
   mutate(
@@ -49,6 +48,7 @@ ggtern(composition, aes(x = sc_pct, y = st_pct, z = general_pct)) +
 ## Regional patterns
 
 ``` r
+
 regions <- tibble::tribble(
   ~state_name_harmonized, ~region,
   "Jammu & Kashmir", "North",
@@ -126,6 +126,7 @@ ggtern(composition_region, aes(x = sc_pct, y = st_pct, z = general_pct)) +
 ## SC population distribution by state
 
 ``` r
+
 state_order <- composition |>
   group_by(state_name_harmonized) |>
   summarise(median_sc = median(sc_pct, na.rm = TRUE)) |>
@@ -153,6 +154,7 @@ composition |>
 ## ST population distribution by state
 
 ``` r
+
 state_order_st <- composition |>
   group_by(state_name_harmonized) |>
   summarise(median_st = median(st_pct, na.rm = TRUE)) |>
@@ -179,9 +181,8 @@ composition |>
 
 ## Linguistic diversity vs social composition
 
-Do areas with high SC/ST populations show different linguistic patterns?
-
 ``` r
+
 diversity <- census_2011_mother_tongue |>
   filter(language_level == "L1", district_code != "000", !grepl("Others", language_name)) |>
   group_by(state_name, district_code, area_name) |>

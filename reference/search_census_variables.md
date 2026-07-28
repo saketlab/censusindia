@@ -1,6 +1,6 @@
 # Search census variables
 
-Search for census variables by keyword in names and labels.
+Find census variables by keyword in names and labels.
 
 ## Usage
 

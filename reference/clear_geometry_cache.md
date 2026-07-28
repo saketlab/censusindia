@@ -16,7 +16,6 @@ Invisible NULL
 
 ``` r
 if (FALSE) { # \dontrun{
-# Clear cached geometry to free memory
 clear_geometry_cache()
 } # }
 ```

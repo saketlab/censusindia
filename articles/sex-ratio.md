@@ -1,7 +1,8 @@
 # Sex ratio evolution
 
 ``` r
-library(indiacensus)
+
+library(censusindia)
 library(dplyr)
 library(ggplot2)
 library(ggrepel)
@@ -13,6 +14,7 @@ Sex ratio in India is conventionally expressed as females per 1000
 males. A ratio below 1000 indicates a male-skewed population.
 
 ``` r
+
 years <- c(1961, 1971, 1981, 1991, 2001, 2011)
 
 pop_geo <- lapply(years, function(y) {
@@ -24,6 +26,7 @@ pop_geo <- lapply(years, function(y) {
 ```
 
 ``` r
+
 ggplot(pop_geo) +
   geom_sf(aes(fill = sex_ratio), color = "white", linewidth = 0.1) +
   scale_fill_gradientn(
@@ -41,6 +44,7 @@ ggplot(pop_geo) +
 ## National trend
 
 ``` r
+
 national <- census_population_time_series |>
   filter(geography == "state", year %in% years) |>
   group_by(year) |>
@@ -61,11 +65,11 @@ ggplot(national, aes(year, sex_ratio)) +
 ## State-level trends
 
 ``` r
+
 state_trends <- census_population_time_series |>
   filter(geography == "state", year %in% years) |>
   mutate(sex_ratio = 1000 * females / males)
 
-# Identify top 5 and bottom 5 by 2011 sex ratio
 extremes_2011 <- state_trends |>
   filter(year == 2011) |>
   arrange(sex_ratio)
@@ -77,11 +81,8 @@ top_5 <- extremes_2011 |>
   slice_tail(n = 5) |>
   pull(state_name_harmonized)
 
-# Color palette: blues/teals for high ratios (positive), reds/oranges for low (concerning)
 state_colors <- c(
-  # Bottom 5 (low sex ratio) - warm colors indicating concern
   setNames(c("#d73027", "#f46d43", "#fdae61", "#fee090", "#ffffbf"), bottom_5),
-  # Top 5 (high sex ratio) - cool colors indicating balance
   setNames(c("#e0f3f8", "#abd9e9", "#74add1", "#4575b4", "#313695"), top_5)
 )
 
@@ -115,6 +116,7 @@ ggplot(state_trends, aes(year, sex_ratio, group = state_name_harmonized)) +
 ## Highest and lowest sex ratios (2011)
 
 ``` r
+
 pop_2011 <- census_population_time_series |>
   filter(geography == "state", year == 2011) |>
   mutate(sex_ratio = round(1000 * females / males)) |>
@@ -149,6 +151,7 @@ tail(pop_2011 |> select(state_name_harmonized, sex_ratio), 5)
 ## Change from 1961 to 2011
 
 ``` r
+
 change_data <- census_population_time_series |>
   filter(geography == "state", year %in% c(1961, 2011)) |>
   mutate(sex_ratio = 1000 * females / males) |>

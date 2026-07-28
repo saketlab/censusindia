@@ -1,6 +1,6 @@
-# Creates a choropleth map from census data with sensible defaults.
+# Create a choropleth map from census data.
 
-Creates a choropleth map from census data with sensible defaults.
+Create a choropleth map from census data.
 
 ## Usage
 
@@ -30,7 +30,7 @@ plot_map(
 - data:
 
   An sf object or data frame with geometry attached via
-  [`attach_geometry`](https://saketlab.github.io/indiacensus/reference/attach_geometry.md)
+  [`attach_geometry`](https://saketlab.github.io/censusindia/reference/attach_geometry.md)
 
 - fill_var:
 

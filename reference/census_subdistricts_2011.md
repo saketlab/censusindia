@@ -1,12 +1,11 @@
-# Subdistrict Directory with 2011 Census Data
+# Subdistrict directory (2011)
 
-Administrative subdistrict (tehsil/taluka) level data linked to 2011
-Census population figures. Based on 2011 administrative boundaries.
+Subdistrict (tehsil/taluka) population from the 2011 Census.
 
 ## Usage
 
 ``` r
-census_subdistricts_2011
+data(census_subdistricts_2011)
 ```
 
 ## Format

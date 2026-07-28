@@ -1,7 +1,8 @@
 # Population maps
 
 ``` r
-library(indiacensus)
+
+library(censusindia)
 library(dplyr)
 #> 
 #> Attaching package: 'dplyr'
@@ -17,6 +18,7 @@ library(ggplot2)
 ## State population
 
 ``` r
+
 years <- c(1941, 1951, 1961, 1971, 1981, 1991, 2001, 2011)
 
 pop_geo <- lapply(years, function(y) {
@@ -27,6 +29,7 @@ pop_geo <- lapply(years, function(y) {
 ```
 
 ``` r
+
 ggplot(pop_geo) +
   geom_sf(aes(fill = population / 1e6), color = "white", linewidth = 0.1) +
   scale_fill_gradientn(colors = get_palette("viridis"), name = "Million") +
@@ -40,6 +43,7 @@ ggplot(pop_geo) +
 ## Decadal growth rate
 
 ``` r
+
 growth_years <- c(1951, 1961, 1971, 1981, 1991, 2001, 2011)
 
 pop <- census_population_time_series |>
@@ -60,6 +64,7 @@ growth_geo <- lapply(growth_years, function(y) {
 ```
 
 ``` r
+
 ggplot(growth_geo) +
   geom_sf(aes(fill = growth_rate), color = "white", linewidth = 0.1) +
   scale_fill_gradientn(colors = get_palette("blue_red"), name = "Growth %", limits = c(-10, 50)) +

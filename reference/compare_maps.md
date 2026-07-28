@@ -38,7 +38,7 @@ compare_maps(
 - palette:
 
   Color palette (see
-  [`plot_map`](https://saketlab.github.io/indiacensus/reference/plot_map.md)
+  [`plot_map`](https://saketlab.github.io/censusindia/reference/plot_map.md)
   for options)
 
 - common_scale:
@@ -52,7 +52,7 @@ compare_maps(
 - ...:
 
   Additional arguments passed to
-  [`plot_map`](https://saketlab.github.io/indiacensus/reference/plot_map.md)
+  [`plot_map`](https://saketlab.github.io/censusindia/reference/plot_map.md)
 
 ## Value
 
