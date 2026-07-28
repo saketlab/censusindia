@@ -2,8 +2,8 @@
 
 Digitised Census of India data from 1901 to 2011 for R. Population time series,
 primary census abstracts, mother tongue tables, SC/ST and tribal populations,
-linguistic diversity indices, and administrative directories at state, district,
-and subdistrict levels.
+linguistic diversity indices, MOHFW population projections through 2036, and
+administrative directories at state, district, and subdistrict levels.
 
 ## Installation
 
@@ -23,6 +23,10 @@ get_census(1971, "district", state = "MH", geometry = TRUE)
 list_census_variables()
 search_census_variables("literacy")
 list_census_geographies()
+
+# MOHFW population projections (2011-2036)
+get_population(2031, "state")
+get_population(2031, "district")
 ```
 
 ## Example

@@ -286,3 +286,191 @@
 #'   scaling from India_Population_Estimates project using spatial
 #'   overlap analysis.
 "population_projections_district_lgd"
+
+#' Census 2011 demographics (PCA)
+#'
+#' Population, SC/ST, and literacy counts from the 2011 Primary Census
+#' Abstract at all geographic levels (India, state, district, subdistrict,
+#' town/village, ward), split by total/rural/urban sector.
+#'
+#' @format A tibble with 751,594 rows and 28 columns:
+#' \describe{
+#'   \item{state_code}{Numeric state code}
+#'   \item{district_code}{Numeric district code}
+#'   \item{subdistrict_code}{Numeric subdistrict code}
+#'   \item{town_village_code}{Town or village code}
+#'   \item{ward_code}{Ward code}
+#'   \item{level}{Geographic level (india, state, district, subdistrict, town, village, ward)}
+#'   \item{name}{Name of the geographic unit}
+#'   \item{state_name_harmonized}{Harmonized state name for joining across datasets}
+#'   \item{sector}{Sector: "total", "rural", or "urban"}
+#'   \item{households}{Number of households}
+#'   \item{population_total,population_male,population_female}{Total, male, and female population}
+#'   \item{pop_0_6_total,pop_0_6_male,pop_0_6_female}{Population aged 0-6 years}
+#'   \item{sc_total,sc_male,sc_female}{Scheduled Caste population}
+#'   \item{st_total,st_male,st_female}{Scheduled Tribe population}
+#'   \item{literate_total,literate_male,literate_female}{Literate population}
+#'   \item{illiterate_total,illiterate_male,illiterate_female}{Illiterate population}
+#' }
+#' @source Census of India 2011, Primary Census Abstract.
+"census_2011_demographics"
+
+#' Census 2011 workers (PCA)
+#'
+#' Worker classification from the 2011 Primary Census Abstract at all
+#' geographic levels, split by total/rural/urban sector. Main and marginal
+#' workers are broken down by activity (cultivators, agricultural labourers,
+#' household industry, other workers).
+#'
+#' @format A tibble with 751,594 rows and 42 columns:
+#' \describe{
+#'   \item{state_code,district_code,subdistrict_code,town_village_code,ward_code}{Geographic codes}
+#'   \item{level}{Geographic level (india, state, district, subdistrict, town, village, ward)}
+#'   \item{name}{Name of the geographic unit}
+#'   \item{state_name_harmonized}{Harmonized state name for joining across datasets}
+#'   \item{sector}{Sector: "total", "rural", or "urban"}
+#'   \item{total_workers_total,total_workers_male,total_workers_female}{All workers}
+#'   \item{main_workers_total,main_workers_male,main_workers_female}{Main workers}
+#'   \item{main_cultivators_total,main_cultivators_male,main_cultivators_female}{Main cultivators}
+#'   \item{main_agri_labour_total,main_agri_labour_male,main_agri_labour_female}{Main agricultural labourers}
+#'   \item{main_hh_industry_total,main_hh_industry_male,main_hh_industry_female}{Main household industry workers}
+#'   \item{main_other_total,main_other_male,main_other_female}{Main other workers}
+#'   \item{marginal_workers_total,marginal_workers_male,marginal_workers_female}{Marginal workers}
+#'   \item{marginal_cultivators_total,marginal_cultivators_male,marginal_cultivators_female}{Marginal cultivators}
+#'   \item{marginal_agri_labour_total,marginal_agri_labour_male,marginal_agri_labour_female}{Marginal agricultural labourers}
+#'   \item{marginal_hh_industry_total,marginal_hh_industry_male,marginal_hh_industry_female}{Marginal household industry workers}
+#'   \item{marginal_other_total,marginal_other_male,marginal_other_female}{Marginal other workers}
+#' }
+#' @source Census of India 2011, Primary Census Abstract.
+"census_2011_workers"
+
+#' Census 2011 marginal worker detail (PCA)
+#'
+#' Marginal workers from the 2011 Primary Census Abstract split by duration
+#' of work (3-6 months and 0-3 months) and by activity, plus non-workers,
+#' at all geographic levels and total/rural/urban sector.
+#'
+#' @format A tibble with 751,594 rows and 42 columns:
+#' \describe{
+#'   \item{state_code,district_code,subdistrict_code,town_village_code,ward_code}{Geographic codes}
+#'   \item{level}{Geographic level (india, state, district, subdistrict, town, village, ward)}
+#'   \item{name}{Name of the geographic unit}
+#'   \item{state_name_harmonized}{Harmonized state name for joining across datasets}
+#'   \item{sector}{Sector: "total", "rural", or "urban"}
+#'   \item{marginal_workers_3_6_total,marginal_workers_3_6_male,marginal_workers_3_6_female}{Marginal workers employed 3-6 months}
+#'   \item{marg_cultivators_3_6_total,marg_cultivators_3_6_male,marg_cultivators_3_6_female}{Marginal cultivators, 3-6 months}
+#'   \item{marg_agri_labour_3_6_total,marg_agri_labour_3_6_male,marg_agri_labour_3_6_female}{Marginal agricultural labourers, 3-6 months}
+#'   \item{marg_hh_industry_3_6_total,marg_hh_industry_3_6_male,marg_hh_industry_3_6_female}{Marginal household industry workers, 3-6 months}
+#'   \item{marg_other_3_6_total,marg_other_3_6_male,marg_other_3_6_female}{Marginal other workers, 3-6 months}
+#'   \item{marginal_workers_0_3_total,marginal_workers_0_3_male,marginal_workers_0_3_female}{Marginal workers employed 0-3 months}
+#'   \item{marg_cultivators_0_3_total,marg_cultivators_0_3_male,marg_cultivators_0_3_female}{Marginal cultivators, 0-3 months}
+#'   \item{marg_agri_labour_0_3_total,marg_agri_labour_0_3_male,marg_agri_labour_0_3_female}{Marginal agricultural labourers, 0-3 months}
+#'   \item{marg_hh_industry_0_3_total,marg_hh_industry_0_3_male,marg_hh_industry_0_3_female}{Marginal household industry workers, 0-3 months}
+#'   \item{marg_other_0_3_total,marg_other_0_3_male,marg_other_0_3_female}{Marginal other workers, 0-3 months}
+#'   \item{non_workers_total,non_workers_male,non_workers_female}{Non-workers}
+#' }
+#' @source Census of India 2011, Primary Census Abstract.
+"census_2011_marginal_detail"
+
+#' Census 2011 district languages (C-16)
+#'
+#' Mother tongue speakers by language at district level from the 2011
+#' Census C-16 tables, with male/female and rural/urban breakdowns.
+#'
+#' @format A tibble with 38,993 rows and 11 columns:
+#' \describe{
+#'   \item{state_code}{Numeric state code}
+#'   \item{state_name_harmonized}{Harmonized state name for joining across datasets}
+#'   \item{district_code}{Numeric district code}
+#'   \item{language_name}{Name of the language}
+#'   \item{language_group}{Numeric language group code}
+#'   \item{total_speakers}{Total speakers}
+#'   \item{male_speakers}{Male speakers}
+#'   \item{female_speakers}{Female speakers}
+#'   \item{rural_speakers}{Rural speakers}
+#'   \item{urban_speakers}{Urban speakers}
+#'   \item{district_name}{Name of the district}
+#' }
+#' @source Census of India 2011, C-16 Mother Tongue Tables.
+"census_2011_district_languages"
+
+#' Census 2011 subdistrict languages (C-16)
+#'
+#' Mother tongue speakers by language at subdistrict level from the 2011
+#' Census C-16 tables, with male/female and rural/urban breakdowns.
+#'
+#' @format A tibble with 183,127 rows and 11 columns:
+#' \describe{
+#'   \item{state_code}{Numeric state code}
+#'   \item{state_name_harmonized}{Harmonized state name for joining across datasets}
+#'   \item{district_code}{Numeric district code}
+#'   \item{area_name}{Name of the subdistrict}
+#'   \item{language_name}{Name of the language}
+#'   \item{language_group}{Numeric language group code}
+#'   \item{total_speakers}{Total speakers}
+#'   \item{male_speakers}{Male speakers}
+#'   \item{female_speakers}{Female speakers}
+#'   \item{rural_speakers}{Rural speakers}
+#'   \item{urban_speakers}{Urban speakers}
+#' }
+#' @source Census of India 2011, C-16 Mother Tongue Tables.
+"census_2011_subdistrict_languages"
+
+#' Census 2011 linguistic diversity
+#'
+#' District-level linguistic diversity metrics derived from the 2011 Census
+#' C-16 mother tongue tables.
+#'
+#' @format A tibble with 640 rows and 10 columns:
+#' \describe{
+#'   \item{state_name_harmonized}{Harmonized state name for joining across datasets}
+#'   \item{state_code}{Numeric state code}
+#'   \item{district_code}{Numeric district code}
+#'   \item{n_languages}{Number of distinct languages spoken}
+#'   \item{total_speakers}{Total speakers across all languages}
+#'   \item{shannon_entropy}{Shannon entropy of the language distribution}
+#'   \item{effective_languages}{Effective number of languages (exp of Shannon entropy)}
+#'   \item{dominant_language}{Most-spoken language}
+#'   \item{dominant_share}{Share of speakers of the dominant language}
+#'   \item{district_name}{Name of the district}
+#' }
+#' @source Census of India 2011, C-16 Mother Tongue Tables (derived).
+"census_2011_linguistic_diversity"
+
+#' Census 2011 Scheduled Castes and Scheduled Tribes (A-10/A-11)
+#'
+#' District-level population of individual Scheduled Castes and Scheduled
+#' Tribes from the 2011 Census A-10 and A-11 tables.
+#'
+#' @format A tibble with 14,028 rows and 8 columns:
+#' \describe{
+#'   \item{year}{Census year (2011)}
+#'   \item{state_name_harmonized}{Harmonized state name for joining across datasets}
+#'   \item{district_name}{Name of the district}
+#'   \item{category}{"SC" or "ST"}
+#'   \item{caste_tribe_name}{Name of the caste or tribe}
+#'   \item{population}{Population of the caste or tribe}
+#'   \item{percentage}{Share of district population}
+#'   \item{district_total_population}{Total district population}
+#' }
+#' @source Census of India 2011, A-10 (SC) and A-11 (ST) tables.
+"census_2011_sc_st"
+
+#' Census 2011 Scheduled Tribes (A-11)
+#'
+#' District-level population of individual Scheduled Tribes from the 2011
+#' Census A-11 tables, with original (un-harmonized) tribe names retained.
+#'
+#' @format A tibble with 12,861 rows and 8 columns:
+#' \describe{
+#'   \item{year}{Census year (2011)}
+#'   \item{state_name_harmonized}{Harmonized state name for joining across datasets}
+#'   \item{district_name}{Name of the district}
+#'   \item{tribe_name}{Harmonized tribe name}
+#'   \item{tribe_name_original}{Original tribe name as recorded in the source}
+#'   \item{population}{Tribe population}
+#'   \item{percentage}{Share of district population}
+#'   \item{district_total_population}{Total district population}
+#' }
+#' @source Census of India 2011, A-11 Scheduled Tribe tables.
+"census_2011_tribes"
