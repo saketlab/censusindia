@@ -80,6 +80,8 @@ navbar:
         href: articles/population-maps.html
       - text: Population dynamics
         href: articles/population-dynamics.html
+      - text: Population projections
+        href: articles/population-projections.html
       - text: Sex ratio evolution
         href: articles/sex-ratio.html
       - text: SC/ST population distribution
