@@ -19,6 +19,14 @@
 *.swp
 *~
 
-# OS files
 .DS_Store
 Thumbs.db
+
+/parquet/
+/geoparquet/
+.positai
+
+data-raw/
+
+__pycache__/
+*.pyc

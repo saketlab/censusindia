@@ -1,4 +1,4 @@
-url: https://saketlab.github.io/censusindia/
+url: https://censusindia.saketlab.org
 
 development:
   mode: auto
@@ -8,17 +8,35 @@ template:
   light-switch: true
   preset: default
   bslib:
-    primary: "#0071e3"
-    border-radius: "0.5rem"
+    primary: "#c07828"
+    secondary: "#6b7689"
+    body-bg: "#f8f7f9"
+    body-color: "#171923"
+    border-color: "#dcdae0"
+    border-radius: "6px"
+    font-size-base: "1rem"
+    headings-font-weight: "700"
+    base_font: {google: "Albert Sans"}
+    heading_font: {google: "Albert Sans"}
+    code_font: {google: "JetBrains Mono"}
   includes:
     in_header: |
+      <script>
+        (function(){
+          var stored = localStorage.getItem('bs-color-scheme');
+          if (!stored) {
+            stored = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          }
+          document.documentElement.setAttribute('data-bs-theme', stored);
+        })();
+      </script>
       <meta name="keywords" content="India Census, R package, census data, demographics, population, districts, states, 1901-2011, choropleth maps, spatial analysis, India statistics">
       <meta name="author" content="Saket Choudhary">
       <meta name="robots" content="index, follow">
       <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
-      <link rel="canonical" href="https://saketlab.github.io/censusindia/">
+      <link rel="canonical" href="https://censusindia.saketlab.org/">
       <meta property="og:type" content="website">
-      <meta property="og:url" content="https://saketlab.github.io/censusindia/">
+      <meta property="og:url" content="https://censusindia.saketlab.org/">
       <meta property="og:title" content="censusindia - India Census Data for R">
       <meta property="og:description" content="R package for accessing digitised India Census data from 1901-2011. Includes population time series, administrative boundaries, and tools for choropleth mapping.">
       <meta property="og:site_name" content="censusindia">
@@ -44,7 +62,7 @@ template:
           "name": "Saket Choudhary",
           "url": "https://saketlab.org"
         },
-        "url": "https://saketlab.github.io/censusindia/",
+        "url": "https://censusindia.saketlab.org/",
         "downloadUrl": "https://github.com/saketlab/censusindia",
         "softwareVersion": "0.1.0",
         "programmingLanguage": "R"
@@ -76,6 +94,10 @@ navbar:
     articles:
       text: Articles
       menu:
+      - text: Getting started
+        href: articles/getting-started.html
+      - text: Primary Census Abstract, 2001 and 2011
+        href: articles/primary-census-abstract.html
       - text: Population maps
         href: articles/population-maps.html
       - text: Population dynamics
@@ -113,6 +135,8 @@ reference:
   - census_1971
   - census_1981
   - census_2011_pca
+  - census_2001_pca
+  - census_2001_pca_full
   - census_2011_demographics
   - census_2011_workers
   - census_2011_marginal_detail
@@ -139,6 +163,14 @@ reference:
   contents:
   - get_census
 
+- title: "Levels and vintages"
+  desc: "Slice the stacked tables safely"
+  contents:
+  - at_level
+  - census_languages
+  - census_sc_st
+  - census_years
+
 - title: "Geographic Boundaries"
   desc: "Administrative boundaries"
   contents:
@@ -153,6 +185,14 @@ reference:
   - plot_map
   - compare_maps
   - get_palette
+  - census_base_layer
+  - theme_census
+
+- title: "Derived measures"
+  desc: "Rates the census reports by convention"
+  contents:
+  - sex_ratio
+  - share
 
 - title: "Variable Discovery"
   desc: "Available census variables"

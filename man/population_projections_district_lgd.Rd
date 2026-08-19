@@ -22,11 +22,19 @@ scaling from India_Population_Estimates project using spatial
 overlap analysis.
 }
 \usage{
-data(population_projections_district_lgd)
+population_projections_district_lgd
 }
 \description{
 MOHFW population projections scaled to current Local Government
 Directory (LGD) district boundaries (785 districts). Annual
 projections from 2012 to 2031, aggregated across age groups.
 }
+\section{Do not aggregate}{
+
+District values do not reconcile to the state table. Summing all districts at
+2021 gives 2,715,393,155 against an India projection of 1,363,006,000, a
+factor of 1.99, and all 37 states/UTs are outside 1 percent. Use
+\link{population_projections_district} instead, which sums to its state table.
+}
+
 \keyword{datasets}

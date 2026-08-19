@@ -29,7 +29,7 @@ A tibble with 751,594 rows and 42 columns:
 Census of India 2011, Primary Census Abstract.
 }
 \usage{
-data(census_2011_workers)
+census_2011_workers
 }
 \description{
 Worker classification from the 2011 Primary Census Abstract at all

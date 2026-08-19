@@ -1,0 +1,237 @@
+---
+title: "Primary Census Abstract, 2001 and 2011"
+output:
+  rmarkdown::html_vignette:
+    self_contained: true
+vignette: >
+  %\VignetteIndexEntry{Primary Census Abstract, 2001 and 2011}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE, comment = "#>",
+  fig.width = 9, fig.height = 6, fig.align = "center",
+  warning = FALSE, message = FALSE, dev = "png", dpi = 150
+)
+```
+
+```{r load}
+library(censusindia)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+
+data("census_2001_pca")
+data("census_2001_pca_full")
+data("census_2011_pca")
+```
+
+```{r design}
+INK <- "#1c1c1c"
+INK_MUTED <- "#6b6b6b"
+ACCENT <- get_palette("blues")[8]
+DIV_LOW <- get_palette("blue_red")[2]
+DIV_MID <- "grey92"
+DIV_HIGH <- get_palette("blue_red")[10]
+
+theme_pca <- theme_minimal(base_size = 11) +
+  theme(
+    plot.title = element_text(face = "bold", size = rel(1.15), colour = INK),
+    plot.subtitle = element_text(colour = INK_MUTED, margin = margin(b = 10)),
+    plot.caption = element_text(colour = INK_MUTED, size = rel(0.8), hjust = 0),
+    plot.title.position = "plot", plot.caption.position = "plot",
+    axis.title = element_text(colour = INK_MUTED, size = rel(0.9)),
+    axis.text = element_text(colour = INK_MUTED),
+    panel.grid.minor = element_blank(),
+    panel.grid.major = element_line(colour = "grey92", linewidth = 0.3),
+    legend.position = "bottom"
+  )
+theme_set(theme_pca)
+
+theme_map <- theme_void(base_size = 11) +
+  theme(
+    plot.title = element_text(face = "bold", colour = INK),
+    plot.subtitle = element_text(colour = INK_MUTED, margin = margin(b = 8)),
+    legend.position = "right", legend.key.width = unit(0.4, "cm")
+  )
+
+SRC <- "Source: Census of India, Primary Census Abstract"
+```
+
+```{r rounds}
+bind_rows(
+  census_2001_pca |> mutate(round = "2001"),
+  census_2011_pca |> mutate(round = "2011")
+) |>
+  group_by(round) |>
+  summarise(
+    districts = n(),
+    population = sum(population_total),
+    literate_pct = 100 * sum(literate_total) / sum(population_total),
+    worker_pct = 100 * sum(workers_total) / sum(population_total),
+    .groups = "drop"
+  ) |>
+  mutate(population = format(population, big.mark = ",")) |>
+  knitr::kable(digits = 1)
+```
+
+```{r geometry}
+geo_2001 <- census_2001_pca |>
+  mutate(literate_pct = 100 * literate_total / population_total) |>
+  attach_geometry(2001, geography = "district")
+
+geo_2011 <- census_2011_pca |>
+  mutate(literate_pct = 100 * literate_total / population_total) |>
+  attach_geometry(2011, geography = "district")
+
+c(`2001` = nrow(geo_2001), `2011` = nrow(geo_2011))
+```
+
+```{r literacy-maps, fig.height = 5.5, fig.width = 10}
+lit_map <- function(d, year) {
+  ggplot(d) +
+    geom_sf(aes(fill = literate_pct), colour = NA) +
+    scale_fill_gradient2(
+      low = DIV_HIGH, mid = DIV_MID, high = DIV_LOW, midpoint = 55,
+      limits = c(30, 80), oob = scales::squish, na.value = "grey85",
+      name = "Literate (%)"
+    ) +
+    labs(title = year) +
+    theme_map
+}
+
+patchwork::wrap_plots(lit_map(geo_2001, "2001"), lit_map(geo_2011, "2011")) +
+  patchwork::plot_annotation(
+    title = "Literacy rises from 54.5% to 63.1% of the population",
+    subtitle = "Each round on its own district boundaries. Grey = unmatched",
+    caption = SRC,
+    theme = theme(
+      plot.title = element_text(face = "bold", size = rel(1.15), colour = INK),
+      plot.subtitle = element_text(colour = INK_MUTED),
+      plot.caption = element_text(colour = INK_MUTED, size = rel(0.8), hjust = 0)
+    )
+  )
+```
+
+```{r state-change, fig.height = 8}
+by_state <- function(d, round) {
+  d |>
+    group_by(state_name_harmonized) |>
+    summarise(
+      population = sum(population_total),
+      literate_pct = 100 * sum(literate_total) / sum(population_total),
+      .groups = "drop"
+    ) |>
+    mutate(round = round)
+}
+
+states <- bind_rows(by_state(census_2001_pca, "y2001"), by_state(census_2011_pca, "y2011")) |>
+  select(state_name_harmonized, round, literate_pct) |>
+  pivot_wider(names_from = round, values_from = literate_pct) |>
+  filter(!is.na(y2001), !is.na(y2011)) |>
+  mutate(
+    gain = y2011 - y2001,
+    state_name_harmonized = reorder(state_name_harmonized, y2011)
+  )
+
+ggplot(states, aes(y = state_name_harmonized)) +
+  geom_segment(aes(x = y2001, xend = y2011, yend = state_name_harmonized),
+    colour = "grey75", linewidth = 0.8
+  ) +
+  geom_point(aes(x = y2001), colour = "grey55", size = 2.4) +
+  geom_point(aes(x = y2011), colour = ACCENT, size = 2.8) +
+  labs(
+    x = "Literate, % of population", y = NULL,
+    title = "Every state gains literacy between 2001 and 2011",
+    subtitle = "Grey point = 2001, blue point = 2011. Ordered by 2011 level",
+    caption = SRC
+  )
+```
+
+```{r full-shape}
+c(
+  columns_shared = ncol(census_2001_pca),
+  columns_full = ncol(census_2001_pca_full),
+  rows_full = nrow(census_2001_pca_full),
+  sectors = dplyr::n_distinct(census_2001_pca_full$sector)
+)
+```
+
+```{r rural-urban, fig.height = 5}
+census_2001_pca_full |>
+  filter(sector != "total") |>
+  group_by(sector) |>
+  summarise(
+    literate = 100 * sum(literate_total) / sum(population_total),
+    workers = 100 * sum(workers_total) / sum(population_total),
+    .groups = "drop"
+  ) |>
+  pivot_longer(-sector) |>
+  ggplot(aes(value, name, fill = sector)) +
+  geom_col(position = "dodge", width = 0.6) +
+  scale_fill_manual(values = c(rural = "#999999", urban = ACCENT), name = NULL) +
+  labs(
+    x = "% of population", y = NULL,
+    title = "Urban India is more literate but no more likely to be working, 2001",
+    caption = SRC
+  )
+```
+
+```{r worker-categories, fig.height = 5}
+census_2001_pca_full |>
+  filter(sector == "total") |>
+  summarise(
+    Cultivators = sum(main_cultivators_total),
+    `Agricultural labourers` = sum(main_agri_labour_total),
+    `Household industry` = sum(main_hh_industry_total),
+    `Other work` = sum(main_other_total)
+  ) |>
+  pivot_longer(everything(), names_to = "category", values_to = "workers") |>
+  ggplot(aes(workers / 1e6, reorder(category, workers))) +
+  geom_col(fill = ACCENT, width = 0.65) +
+  labs(
+    x = "Main workers (millions)", y = NULL,
+    title = "Cultivation and agricultural labour account for half of main workers, 2001",
+    subtitle = "Only census_2001_pca_full carries the category breakdown",
+    caption = SRC
+  )
+```
+
+```{r literacy-gap, fig.height = 8}
+census_2001_pca_full |>
+  filter(sector == "total") |>
+  group_by(state_name_harmonized) |>
+  summarise(
+    male = 100 * sum(literate_male) / sum(population_male),
+    female = 100 * sum(literate_female) / sum(population_female),
+    .groups = "drop"
+  ) |>
+  mutate(gap = male - female, state_name_harmonized = reorder(state_name_harmonized, gap)) |>
+  ggplot(aes(gap, state_name_harmonized, fill = gap)) +
+  geom_col(width = 0.7) +
+  scale_fill_gradient(low = DIV_MID, high = DIV_HIGH, guide = "none") +
+  labs(
+    x = "Male minus female literacy (percentage points)", y = NULL,
+    title = "The literacy gender gap is 18 points nationally in 2001",
+    subtitle = "Sex splits come from census_2001_pca_full",
+    caption = SRC
+  )
+```
+
+```{r claims, include = FALSE}
+# Titles above state specific numbers. Fail the build rather than ship a stale one.
+lit <- function(d) 100 * sum(d$literate_total) / sum(d$population_total)
+f <- dplyr::filter(census_2001_pca_full, sector == "total")
+stopifnot(
+  nrow(census_2001_pca) == 593, nrow(census_2011_pca) == 640,
+  round(lit(census_2001_pca), 1) == 54.5,
+  round(lit(census_2011_pca), 1) == 63.1,
+  all(states$gain > 0),
+  round(100 * sum(f$literate_male) / sum(f$population_male) -
+    100 * sum(f$literate_female) / sum(f$population_female)) == 18,
+  sum(f$main_cultivators_total) + sum(f$main_agri_labour_total) >
+    sum(f$main_hh_industry_total) + sum(f$main_other_total)
+)
+```

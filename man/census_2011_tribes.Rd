@@ -21,10 +21,25 @@ A tibble with 12,861 rows and 8 columns:
 Census of India 2011, A-11 Scheduled Tribe tables.
 }
 \usage{
-data(census_2011_tribes)
+census_2011_tribes
 }
 \description{
 District-level population of individual Scheduled Tribes from the 2011
-Census A-11 tables, with original (un-harmonized) tribe names retained.
+Census A-11 tables. \code{tribe_name} is harmonised; \code{tribe_name_original} keeps
+the source string verbatim, including the full synonym list the census
+publishes ("Gond, Arakh, Arrakh, Agaria, ...") and any parenthetical
+district qualifier.
+}
+\details{
+Harmonisation takes the first synonym and drops the qualifier, so
+\code{"Thoti (in Adilabad, Hyderabad, ...)"} becomes \code{"Thoti"}. That collapses 581
+source strings to 483 tribe names, and it is deliberate: the same tribe is
+written differently across states, sometimes differing only in whitespace.
+
+These are the ST rows of \link{census_2011_sc_st} with \code{"Generic Tribes etc."}
+removed, which is why the population here sums to 103,409,280 rather than the
+106,213,428 in that table. Neither figure equals the 104,545,716 in
+\code{census_2011_pca$st_population}; the A-11 tables and the Primary Census
+Abstract do not reconcile, so pick one source per analysis and say which.
 }
 \keyword{datasets}

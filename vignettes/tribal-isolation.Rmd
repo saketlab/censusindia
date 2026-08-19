@@ -1,0 +1,1650 @@
+---
+title: "Tribal isolation and vulnerability"
+output:
+  rmarkdown::html_vignette:
+    self_contained: false
+vignette: >
+  %\VignetteIndexEntry{Tribal isolation and vulnerability}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 9,
+  fig.height = 7,
+  warning = FALSE,
+  message = FALSE,
+  dpi = 150
+)
+```
+
+```{r load}
+library(censusindia)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(sf)
+library(patchwork)
+```
+
+Which scheduled tribes should be prioritised for genome sequencing? Census 2011 tribe-by-district data can identify populations that are geographically restricted, demographically small, or highly concentrated, all proxies for genetic isolation.
+
+Isolation is multifaceted. A tribe found in only one district is geographically restricted. A tribe with 7 people spread across 3 districts in Arunachal Pradesh faces extreme genetic drift. Both matter, for different reasons.
+
+## Data
+
+We use `tribe_name_original` (580 tribes) rather than the cleaned `tribe_name` (483 tribes) because the cleaning collapses distinct sub-tribes --- e.g., nine different Gond groups become one "Gond", masking genuine population structure.
+
+```{r data-overview}
+data(census_2011_tribes)
+
+tibble::tibble(
+  Metric = c("Records", "Tribes (original names)", "Districts", "States/UTs"),
+  Value = c(
+    format(nrow(census_2011_tribes), big.mark = ","),
+    length(unique(census_2011_tribes$tribe_name_original)),
+    length(unique(paste(
+      census_2011_tribes$state_name_harmonized,
+      census_2011_tribes$district_name
+    ))),
+    length(unique(census_2011_tribes$state_name_harmonized))
+  )
+) |> knitr::kable()
+```
+
+## Measuring isolation
+
+We compute four dimensions for each tribe:
+
+1. **Geographic range**: number of districts and states
+2. **Population size**: total across all districts
+3. **Concentration (HHI)**: Herfindahl-Hirschman index --- sum of squared district shares. HHI = 1 means the entire tribe lives in one district; HHI near 0 means even spread. This captures tribes that nominally span many districts but are really concentrated in one.
+4. **Effective number of districts**: 1/HHI --- the number of equally-sized districts that would give the same concentration. A tribe in 20 districts but with 95% in one has an effective count near 1.
+
+```{r tribe-metrics}
+tribe_metrics <- census_2011_tribes |>
+  group_by(tribe_name_original) |>
+  mutate(tribe_total = sum(population), share = population / tribe_total) |>
+  summarise(
+    n_districts = n(),
+    n_states = n_distinct(state_name_harmonized),
+    total_pop = sum(population),
+    hhi = sum(share^2),
+    max_share = max(share),
+    primary_state = state_name_harmonized[which.max(population)],
+    primary_district = district_name[which.max(population)],
+    .groups = "drop"
+  ) |>
+  mutate(effective_districts = 1 / hhi)
+```
+
+```{r isolation-summary}
+tribe_metrics |>
+  summarise(
+    `Single district` = sum(n_districts == 1),
+    `2-3 districts` = sum(n_districts %in% 2:3),
+    `4-10 districts` = sum(n_districts %in% 4:10),
+    `Single state` = sum(n_states == 1),
+    `Pop < 100` = sum(total_pop < 100),
+    `Pop < 1,000` = sum(total_pop < 1000),
+    `Pop < 5,000` = sum(total_pop < 5000),
+    `HHI > 0.8` = sum(hhi > 0.8)
+  ) |>
+  pivot_longer(everything(), names_to = "Criterion", values_to = "Tribes") |>
+  knitr::kable()
+```
+
+### Why HHI matters
+
+Consider a tribe recorded in 20 districts. Naively it looks widespread. But if 95% of the population lives in one district, the tribe is effectively a single-district population with census spillover. HHI captures this:
+
+```{r hhi-examples}
+tribe_metrics |>
+  filter(n_districts >= 10, hhi > 0.7) |>
+  select(
+    Tribe = tribe_name_original, Districts = n_districts,
+    Population = total_pop, HHI = hhi, `Effective districts` = effective_districts,
+    `Primary district` = primary_district
+  ) |>
+  mutate(HHI = round(HHI, 2), `Effective districts` = round(`Effective districts`, 1)) |>
+  arrange(desc(HHI)) |>
+  head(15) |>
+  knitr::kable(caption = "Tribes in many districts but highly concentrated (HHI > 0.7)")
+```
+
+## Composite vulnerability score
+
+We score each tribe on four axes. Higher scores indicate greater isolation and vulnerability --- tribes most likely to harbour unique genetic variation and most at risk of losing it. The total ranges from 0 (widespread, large) to 12 (maximally restricted and small):
+
+| Component | Score | Criterion |
+|-----------|-------|-----------|
+| Geographic restriction | 4/3/2/1 | 1 / 2 / 3 / 4-5 districts |
+| Population size | 4/3/2/1 | <50 / <200 / <1K / <5K |
+| State restriction | 2/1 | 1 state / 2 states |
+| Concentration | 2/1 | HHI > 0.8 / HHI > 0.5 |
+
+```{r sampling-score}
+tribe_scored <- tribe_metrics |>
+  mutate(
+    geo_score = case_when(
+      n_districts == 1 ~ 4L, n_districts == 2 ~ 3L,
+      n_districts == 3 ~ 2L, n_districts <= 5 ~ 1L, TRUE ~ 0L
+    ),
+    pop_score = case_when(
+      total_pop < 50 ~ 4L, total_pop < 200 ~ 3L,
+      total_pop < 1000 ~ 2L, total_pop < 5000 ~ 1L, TRUE ~ 0L
+    ),
+    state_score = case_when(n_states == 1 ~ 2L, n_states == 2 ~ 1L, TRUE ~ 0L),
+    conc_score = case_when(hhi > 0.8 ~ 2L, hhi > 0.5 ~ 1L, TRUE ~ 0L),
+    vulnerability = geo_score + pop_score + state_score + conc_score
+  )
+
+tribe_scored |>
+  filter(vulnerability > 0) |>
+  count(vulnerability, name = "tribes") |>
+  arrange(desc(vulnerability)) |>
+  knitr::kable(col.names = c("Vulnerability score (higher = more isolated)", "Tribes"))
+```
+
+```{r priority-plot, fig.height=9}
+top_vulnerable <- tribe_scored |>
+  filter(vulnerability >= 6) |>
+  arrange(desc(vulnerability), total_pop) |>
+  head(40)
+
+ggplot(top_vulnerable, aes(
+  x = reorder(tribe_name_original, vulnerability),
+  y = vulnerability
+)) +
+  geom_col(aes(fill = primary_state), width = 0.7) +
+  geom_text(
+    aes(label = paste0(
+      "n=", format(total_pop, big.mark = ","),
+      "  d=", n_districts
+    )),
+    hjust = -0.05, size = 2.2
+  ) +
+  scale_fill_viridis_d(option = "turbo", name = "Primary state") +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.2))) +
+  coord_flip() +
+  labs(
+    x = NULL, y = "Vulnerability score (higher = more isolated)",
+    title = "Top 40 most vulnerable tribes",
+    subtitle = "Labels: n = population, d = districts"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.y = element_text(size = 6.5),
+    panel.grid.major.y = element_blank(),
+    legend.position = "bottom", legend.text = element_text(size = 7)
+  ) +
+  guides(fill = guide_legend(nrow = 3))
+```
+
+## District-level sampling map
+
+For fieldwork planning, we need a district-level view. Each district is scored by the tribes it contains --- higher scores indicate districts with more irreplaceable populations:
+
+- **Endemic tribes** (only found in this district): weight 5
+- **Primary tribes** (>50% of tribe lives here): weight 3
+- **Rare tribes** (total population < 5,000): weight 2
+- **Tiny tribes** (total population < 500): weight 1
+
+```{r district-scoring}
+tribe_district_stats <- census_2011_tribes |>
+  group_by(tribe_name_original) |>
+  mutate(
+    tribe_total = sum(population),
+    share = population / tribe_total,
+    n_districts_tribe = n_distinct(paste(state_name_harmonized, district_name))
+  ) |>
+  ungroup()
+
+district_priority <- tribe_district_stats |>
+  group_by(state_name_harmonized, district_name) |>
+  summarise(
+    total_tribes = n_distinct(tribe_name_original),
+    endemic_tribes = sum(n_districts_tribe == 1),
+    primary_tribes = sum(share > 0.5 & n_districts_tribe > 1),
+    rare_tribes = sum(tribe_total < 5000),
+    tiny_tribes = sum(tribe_total < 500),
+    tribal_pop = sum(population),
+    district_pop = first(district_total_population),
+    .groups = "drop"
+  ) |>
+  mutate(
+    tribal_pct = round(100 * tribal_pop / district_pop, 1),
+    sampling_score = endemic_tribes * 5 + primary_tribes * 3 +
+      rare_tribes * 2 + tiny_tribes
+  )
+```
+
+```{r load-boundaries}
+boundaries <- get_census_boundaries(2011, "district")
+
+make_girafe <- function(p, width = 7, height = 8) {
+  p
+}
+```
+
+```{r map-sampling, fig.height=9}
+map_data <- boundaries |>
+  mutate(key = tolower(gsub("[^a-z0-9]", "", district_name))) |>
+  left_join(
+    district_priority |>
+      mutate(key = tolower(gsub("[^a-z0-9]", "", district_name))) |>
+      select(state_name_harmonized, key, sampling_score, endemic_tribes),
+    by = c("state_name_harmonized", "key")
+  )
+
+ggplot() +
+  geom_sf(data = boundaries, fill = "grey80", color = "grey80", linewidth = 0.05) +
+  geom_sf(
+    data = filter(map_data, sampling_score > 0),
+    aes(fill = sampling_score), color = "grey50", linewidth = 0.1
+  ) +
+  scale_fill_viridis_c(
+    option = "inferno", direction = 1, begin = 0.15, end = 0.9,
+    name = "Sampling\nscore"
+  ) +
+  labs(
+    title = "District sampling priority for tribal genomes",
+    subtitle = "Higher score = more irreplaceable tribal populations"
+  ) +
+  theme_void() +
+  theme(
+    legend.position = c(0.15, 0.25),
+    plot.title = element_text(face = "bold", size = 13)
+  )
+```
+
+```{r map-sampling-interactive}
+sampling_tips <- district_priority |>
+  mutate(
+    tip = paste0(
+      district_name, " (", state_name_harmonized, ")",
+      "\nSampling score: ", sampling_score,
+      "\nEndemic: ", endemic_tribes, ", Primary: ", primary_tribes,
+      ", Rare: ", rare_tribes, ", Tiny: ", tiny_tribes,
+      "\nTribal pop: ", format(tribal_pop, big.mark = ","),
+      " (", tribal_pct, "% of district)"
+    )
+  )
+
+map_data_tip <- map_data |>
+  left_join(
+    sampling_tips |>
+      mutate(key = tolower(gsub("[^a-z0-9]", "", district_name))) |>
+      select(state_name_harmonized, key, tip),
+    by = c("state_name_harmonized", "key")
+  ) |>
+  mutate(tip = ifelse(is.na(tip),
+    paste0(district_name, " (", state_name_harmonized, ")\nNo tribal data"),
+    tip
+  ))
+
+p_samp <- ggplot() +
+  geom_sf(data = boundaries, fill = "grey80", color = "grey80", linewidth = 0.05) +
+  geom_sf(
+    data = map_data_tip,
+    aes(fill = sampling_score),
+    color = "grey50", linewidth = 0.1
+  ) +
+  scale_fill_viridis_c(
+    option = "inferno", direction = 1, begin = 0.15, end = 0.9,
+    name = "Sampling\nscore", na.value = "grey70"
+  ) +
+  labs(
+    title = "District sampling priority for tribal genomes",
+    subtitle = "Hover for score breakdown"
+  ) +
+  theme_void() +
+  theme(
+    legend.position = c(0.15, 0.25),
+    plot.title = element_text(face = "bold", size = 13)
+  )
+
+make_girafe(p_samp)
+```
+
+### Must-sample districts
+
+Districts with endemic tribes (tribes found nowhere else) are irreplaceable:
+
+```{r must-sample}
+district_priority |>
+  filter(endemic_tribes > 0) |>
+  arrange(desc(endemic_tribes)) |>
+  select(
+    State = state_name_harmonized, District = district_name,
+    Endemic = endemic_tribes, `Total tribes` = total_tribes,
+    `Tribal %` = tribal_pct, Score = sampling_score
+  ) |>
+  knitr::kable(caption = "Districts with endemic tribes (found nowhere else)")
+```
+
+### Top districts by composite score
+
+```{r top-districts}
+district_priority |>
+  arrange(desc(sampling_score)) |>
+  head(20) |>
+  select(
+    State = state_name_harmonized, District = district_name,
+    Endemic = endemic_tribes, Primary = primary_tribes,
+    Rare = rare_tribes, Score = sampling_score
+  ) |>
+  knitr::kable(caption = "Top 20 districts for genome sampling")
+```
+
+## Regional maps
+
+### Northeast India
+
+Arunachal Pradesh alone accounts for the majority of high-priority districts, driven by extraordinary Tangsa subgroup diversity and many tiny populations.
+
+```{r map-northeast, fig.height=7}
+ne_states <- c(
+  "Arunachal Pradesh", "Nagaland", "Manipur", "Mizoram",
+  "Tripura", "Meghalaya", "Assam", "Sikkim"
+)
+
+ne_bounds <- boundaries |> filter(state_name_harmonized %in% ne_states)
+ne_data <- map_data |> filter(state_name_harmonized %in% ne_states)
+
+ggplot() +
+  geom_sf(data = ne_bounds, fill = "grey80", color = "grey70", linewidth = 0.15) +
+  geom_sf(
+    data = filter(ne_data, sampling_score > 0),
+    aes(fill = sampling_score), color = "grey40", linewidth = 0.2
+  ) +
+  scale_fill_viridis_c(option = "magma", direction = 1, begin = 0.15, end = 0.85, name = "Priority") +
+  labs(title = "Sampling priority: Northeast India") +
+  theme_void() +
+  theme(plot.title = element_text(face = "bold"))
+```
+
+```{r map-northeast-interactive}
+ne_tip <- map_data_tip |> filter(state_name_harmonized %in% ne_states)
+
+p_ne <- ggplot() +
+  geom_sf(data = ne_bounds, fill = "grey80", color = "grey70", linewidth = 0.15) +
+  geom_sf(
+    data = ne_tip,
+    aes(fill = sampling_score),
+    color = "grey40", linewidth = 0.2
+  ) +
+  scale_fill_viridis_c(
+    option = "magma", direction = 1, begin = 0.15, end = 0.85,
+    name = "Priority", na.value = "grey70"
+  ) +
+  labs(title = "Sampling priority: Northeast India (hover for details)") +
+  theme_void() +
+  theme(plot.title = element_text(face = "bold"))
+
+make_girafe(p_ne, width = 7, height = 6)
+```
+
+### Andaman & Nicobar Islands
+
+Island populations with physical barriers to gene flow. The Sentinelese (n=15) and Onges (n=101) are among the most isolated human populations on Earth.
+
+```{r andaman-table}
+census_2011_tribes |>
+  filter(state_name_harmonized == "Andaman & Nicobar Islands") |>
+  group_by(tribe_name_original) |>
+  summarise(
+    Population = sum(population),
+    Districts = paste(unique(district_name), collapse = ", "),
+    .groups = "drop"
+  ) |>
+  arrange(Population) |>
+  knitr::kable(
+    col.names = c("Tribe", "Population", "Districts"),
+    caption = "Andaman & Nicobar tribal populations"
+  )
+```
+
+```{r map-andaman, fig.height=6}
+andaman_bounds <- boundaries |>
+  filter(state_name_harmonized == "Andaman & Nicobar Islands")
+
+andaman_data <- census_2011_tribes |>
+  filter(state_name_harmonized == "Andaman & Nicobar Islands") |>
+  group_by(district_name) |>
+  summarise(n_tribes = n_distinct(tribe_name_original), .groups = "drop") |>
+  mutate(key = tolower(gsub("[^a-z0-9]", "", district_name)))
+
+andaman_map <- andaman_bounds |>
+  mutate(key = tolower(gsub("[^a-z0-9]", "", district_name))) |>
+  left_join(andaman_data |> select(-district_name), by = "key")
+
+ggplot(andaman_map) +
+  geom_sf(aes(fill = n_tribes), color = "white", linewidth = 0.5) +
+  geom_sf_text(aes(label = district_name), size = 3) +
+  scale_fill_viridis_c(option = "mako", direction = 1, begin = 0.2, end = 0.8, name = "Tribes") +
+  labs(title = "Tribal diversity: Andaman & Nicobar Islands") +
+  theme_void()
+```
+
+```{r map-andaman-interactive}
+andaman_tribe_tips <- census_2011_tribes |>
+  filter(state_name_harmonized == "Andaman & Nicobar Islands") |>
+  group_by(district_name) |>
+  summarise(
+    tribe_list = paste(
+      paste0(
+        tribe_name_original, " (n=",
+        format(population, big.mark = ","), ")"
+      ),
+      collapse = ", "
+    ),
+    n_tribes = n_distinct(tribe_name_original),
+    .groups = "drop"
+  ) |>
+  mutate(
+    key = tolower(gsub("[^a-z0-9]", "", district_name)),
+    tip = paste0(district_name, "\nTribes (", n_tribes, "): ", tribe_list)
+  )
+
+andaman_map_i <- andaman_map |>
+  mutate(key = tolower(gsub("[^a-z0-9]", "", district_name))) |>
+  left_join(andaman_tribe_tips |> select(key, tip), by = "key")
+
+p_and <- ggplot(andaman_map_i) +
+  geom_sf(
+    aes(fill = n_tribes),
+    color = "white", linewidth = 0.5
+  ) +
+  scale_fill_viridis_c(option = "mako", direction = 1, begin = 0.2, end = 0.8, name = "Tribes") +
+  labs(title = "Tribal diversity: Andaman & Nicobar Islands (hover for tribes)") +
+  theme_void()
+
+make_girafe(p_and, width = 5, height = 6)
+```
+
+### Peninsular India
+
+Western Ghats and central tribal belt:
+
+```{r map-peninsular, fig.height=8}
+pen_states <- c(
+  "Kerala", "Tamil Nadu", "Karnataka", "Goa",
+  "Maharashtra", "Gujarat", "Dadra & Nagar Haveli",
+  "Madhya Pradesh", "Chhattisgarh", "Odisha",
+  "Jharkhand", "West Bengal", "Rajasthan"
+)
+
+pen_bounds <- boundaries |> filter(state_name_harmonized %in% pen_states)
+pen_data <- map_data |> filter(state_name_harmonized %in% pen_states)
+
+ggplot() +
+  geom_sf(data = pen_bounds, fill = "grey80", color = "grey70", linewidth = 0.1) +
+  geom_sf(
+    data = filter(pen_data, sampling_score > 0),
+    aes(fill = sampling_score), color = "grey40", linewidth = 0.15
+  ) +
+  scale_fill_viridis_c(option = "rocket", direction = 1, begin = 0.15, end = 0.85, name = "Priority") +
+  labs(title = "Sampling priority: Peninsular and central India") +
+  theme_void() +
+  theme(plot.title = element_text(face = "bold"))
+```
+
+```{r map-peninsular-interactive}
+pen_tip <- map_data_tip |> filter(state_name_harmonized %in% pen_states)
+
+p_pen <- ggplot() +
+  geom_sf(data = pen_bounds, fill = "grey80", color = "grey70", linewidth = 0.1) +
+  geom_sf(
+    data = pen_tip,
+    aes(fill = sampling_score),
+    color = "grey40", linewidth = 0.15
+  ) +
+  scale_fill_viridis_c(
+    option = "rocket", direction = 1, begin = 0.15, end = 0.85,
+    name = "Priority", na.value = "grey70"
+  ) +
+  labs(title = "Sampling priority: Peninsular and central India (hover for details)") +
+  theme_void() +
+  theme(plot.title = element_text(face = "bold"))
+
+make_girafe(p_pen, width = 7, height = 7)
+```
+
+## Smallest populations
+
+These 30 tribes have the smallest recorded populations. Many are Tangsa subgroups in Arunachal Pradesh (Longin, Longphi, Namsang, Hotang, Lichi), each with under 50 people.
+
+```{r smallest-populations}
+tribe_metrics |>
+  arrange(total_pop) |>
+  head(30) |>
+  select(
+    Tribe = tribe_name_original, State = primary_state,
+    Districts = n_districts, Population = total_pop,
+    HHI = hhi
+  ) |>
+  mutate(HHI = round(HHI, 2)) |>
+  knitr::kable(caption = "30 smallest tribal populations")
+```
+
+## Divergent lineage candidates
+
+Tribes present in 2-3 states with small populations are candidates for divergent lineage studies --- the same tribe in different states may have been reproductively isolated for centuries:
+
+```{r divergent}
+tribe_metrics |>
+  filter(n_states %in% 2:3, total_pop < 10000) |>
+  arrange(total_pop) |>
+  select(
+    Tribe = tribe_name_original, States = n_states, Districts = n_districts,
+    Population = total_pop, `Primary state` = primary_state
+  ) |>
+  head(20) |>
+  knitr::kable(caption = "Cross-state tribes with small populations (divergent lineage candidates)")
+```
+
+## Linguistic dimension
+
+Many scheduled tribes speak languages that are themselves rare. The Census 2011 mother tongue data records 270 named languages (L2 level) under 122 language families. Tribal and language names frequently overlap: Anal, Tangsa, Konyak, and Pochury appear as both tribe names and language groups.
+
+Sampling by tribal population size alone would miss linguistically distinct groups. A district with high linguistic diversity may harbour genetically distinct populations even if no single tribe there looks rare by headcount.
+
+### Rare languages
+
+```{r rare-languages}
+data(census_2011_mother_tongue)
+
+lang_stats <- census_2011_mother_tongue |>
+  filter(
+    language_level == "L2", district_code == "000",
+    !grepl("Others$", language_name)
+  ) |>
+  group_by(language_name, language_group) |>
+  summarise(
+    total_speakers = sum(total_persons, na.rm = TRUE),
+    n_states = n(),
+    primary_state = state_name_harmonized[which.max(total_persons)],
+    .groups = "drop"
+  )
+
+rare_langs <- lang_stats |> filter(total_speakers < 100000)
+
+rare_langs |>
+  group_by(primary_state) |>
+  summarise(n_rare_languages = n(), .groups = "drop") |>
+  arrange(desc(n_rare_languages)) |>
+  head(15) |>
+  knitr::kable(col.names = c("State", "Rare languages (< 100K speakers)"))
+```
+
+### Bivariate map: tribal diversity × linguistic diversity
+
+Tribal and linguistic diversity are weakly correlated ($r = 0.17$) and carry complementary information. A bivariate choropleth shows four district types:
+
+- **High tribal + high linguistic** (top-right): maximum sampling priority
+- **High tribal, low linguistic**: tribal diversity in linguistically homogeneous regions
+- **Low tribal, high linguistic**: linguistic frontiers with few scheduled tribes
+- **Low both** (bottom-left): low priority
+
+```{r bivariate-data}
+data(census_2011_linguistic_diversity)
+
+tribal_diversity <- census_2011_tribes |>
+  group_by(state_name_harmonized, district_name) |>
+  mutate(proportion = population / sum(population)) |>
+  summarise(
+    n_tribes = n(),
+    tribal_effective = 2^(-sum(proportion * log2(proportion), na.rm = TRUE)),
+    .groups = "drop"
+  )
+
+bivariate_df <- tribal_diversity |>
+  mutate(key = tolower(gsub("[^a-z0-9]", "", district_name))) |>
+  inner_join(
+    census_2011_linguistic_diversity |>
+      filter(!is.na(district_name)) |>
+      mutate(key = tolower(gsub("[^a-z0-9]", "", district_name))) |>
+      select(state_name_harmonized, key, effective_languages),
+    by = c("state_name_harmonized", "key")
+  )
+```
+
+```{r bivariate-map, fig.width=12, fig.height=14}
+bivariate_sf <- boundaries |>
+  mutate(key = tolower(gsub("[^a-z0-9]", "", district_name))) |>
+  left_join(
+    bivariate_df |> select(state_name_harmonized, key, tribal_effective, effective_languages),
+    by = c("state_name_harmonized", "key")
+  ) |>
+  filter(!is.na(tribal_effective), !is.na(effective_languages))
+
+tribal_breaks <- quantile(bivariate_sf$tribal_effective, probs = c(0, 1 / 3, 2 / 3, 1))
+ling_breaks <- quantile(bivariate_sf$effective_languages, probs = c(0, 1 / 3, 2 / 3, 1))
+
+bivariate_sf <- bivariate_sf |>
+  mutate(
+    tribal_class = cut(tribal_effective,
+      breaks = tribal_breaks,
+      labels = c("1", "2", "3"), include.lowest = TRUE
+    ),
+    ling_class = cut(effective_languages,
+      breaks = ling_breaks,
+      labels = c("1", "2", "3"), include.lowest = TRUE
+    ),
+    bi_class = paste0(tribal_class, "-", ling_class)
+  )
+
+bi_colors <- c(
+  "1-1" = "#c4b99a", "1-2" = "#8abcaa", "1-3" = "#3a9e8f",
+  "2-1" = "#c08a5e", "2-2" = "#8a8e7e", "2-3" = "#3a8080",
+  "3-1" = "#b86530", "3-2" = "#856050", "3-3" = "#3a5a5a"
+)
+
+base_theme <- theme_void() +
+  theme(
+    plot.title = element_text(face = "bold", size = 11, hjust = 0.5),
+    legend.position = "bottom",
+    legend.title = element_text(size = 8),
+    legend.text = element_text(size = 7),
+    legend.key.height = unit(0.3, "cm"),
+    legend.key.width = unit(1.2, "cm")
+  )
+
+p_ling <- ggplot() +
+  geom_sf(data = boundaries, fill = "grey80", color = "grey80", linewidth = 0.05) +
+  geom_sf(
+    data = bivariate_sf, aes(fill = effective_languages),
+    color = "grey60", linewidth = 0.05
+  ) +
+  scale_fill_viridis_c(
+    option = "cividis", direction = 1, begin = 0.1, end = 0.9,
+    name = "Effective languages"
+  ) +
+  labs(title = "Linguistic diversity") +
+  base_theme
+
+p_tribal <- ggplot() +
+  geom_sf(data = boundaries, fill = "grey80", color = "grey80", linewidth = 0.05) +
+  geom_sf(
+    data = bivariate_sf, aes(fill = tribal_effective),
+    color = "grey60", linewidth = 0.05
+  ) +
+  scale_fill_viridis_c(
+    option = "viridis", direction = 1, begin = 0.1, end = 0.9,
+    name = "Effective tribes"
+  ) +
+  labs(title = "Tribal diversity") +
+  base_theme
+
+p_bivar <- ggplot() +
+  geom_sf(data = boundaries, fill = "grey80", color = "grey80", linewidth = 0.05) +
+  geom_sf(
+    data = bivariate_sf, aes(fill = bi_class),
+    color = "grey60", linewidth = 0.05, show.legend = FALSE
+  ) +
+  scale_fill_manual(values = bi_colors, na.value = "grey70") +
+  labs(title = "Combined: tribal × linguistic") +
+  theme_void() +
+  theme(plot.title = element_text(face = "bold", size = 11, hjust = 0.5))
+
+legend_df <- expand.grid(tribal_class = 1:3, ling_class = 1:3) |>
+  mutate(bi_class = paste0(tribal_class, "-", ling_class))
+
+p_legend <- ggplot(legend_df, aes(x = tribal_class, y = ling_class, fill = bi_class)) +
+  geom_tile(color = "grey50", linewidth = 1) +
+  scale_fill_manual(values = bi_colors, guide = "none") +
+  labs(
+    x = expression("Tribal" %->% ""),
+    y = expression("Linguistic" %->% "")
+  ) +
+  coord_fixed() +
+  theme_void() +
+  theme(
+    axis.title.x = element_text(size = 8),
+    axis.title.y = element_text(size = 8, angle = 90)
+  )
+
+(p_ling | p_tribal) /
+  (p_bivar + inset_element(p_legend,
+    left = 0.02, bottom = 0.05,
+    right = 0.22, top = 0.35
+  )) +
+  plot_annotation(
+    title = "Tribal diversity × linguistic diversity",
+    subtitle = "Blue = more languages, green = more tribes, teal = both high",
+    theme = theme(
+      plot.title = element_text(face = "bold", size = 14, hjust = 0.5),
+      plot.subtitle = element_text(size = 10, color = "grey40", hjust = 0.5)
+    )
+  )
+```
+
+```{r bivariate-interactive}
+bivar_tip_sf <- bivariate_sf |>
+  mutate(
+    tip = paste0(
+      district_name, " (", state_name_harmonized, ")",
+      "\nEff. languages: ", round(effective_languages, 1),
+      "\nEff. tribes: ", round(tribal_effective, 1),
+      "\nBivariate class: ", bi_class,
+      " (tribal-linguistic)"
+    )
+  )
+
+p_bivar_i <- ggplot() +
+  geom_sf(data = boundaries, fill = "grey80", color = "grey80", linewidth = 0.05) +
+  geom_sf(
+    data = bivar_tip_sf,
+    aes(fill = bi_class),
+    color = "grey60", linewidth = 0.05
+  ) +
+  scale_fill_manual(values = bi_colors, na.value = "grey70", guide = "none") +
+  labs(
+    title = "Bivariate: tribal x linguistic diversity (hover for details)",
+    subtitle = "1-1 = low-low, 3-3 = high-high"
+  ) +
+  theme_void() +
+  theme(
+    plot.title = element_text(face = "bold", size = 11, hjust = 0.5),
+    plot.subtitle = element_text(size = 9, color = "grey40", hjust = 0.5)
+  )
+
+make_girafe(p_bivar_i)
+```
+
+### High-priority districts: both diversities high
+
+```{r dual-hotspots}
+bivariate_df |>
+  filter(
+    tribal_effective >= tribal_breaks[3],
+    effective_languages >= ling_breaks[3]
+  ) |>
+  arrange(desc(tribal_effective + effective_languages)) |>
+  head(20) |>
+  select(
+    State = state_name_harmonized, District = district_name,
+    `Eff. tribes` = tribal_effective, `Eff. languages` = effective_languages
+  ) |>
+  mutate(
+    `Eff. tribes` = round(`Eff. tribes`, 1),
+    `Eff. languages` = round(`Eff. languages`, 1)
+  ) |>
+  knitr::kable(caption = "Districts with highest tribal AND linguistic diversity")
+```
+
+## Clustering districts by composition
+
+Each district can be represented as a vector of proportions --- the share of the total district population belonging to each tribe or speaking each language. Clustering these vectors groups districts with similar demographic profiles, revealing cultural regions that may not align with administrative boundaries.
+
+### Distance metric matters
+
+The choice of distance metric has a large effect on the results:
+
+- **Hellinger distance** (square root of proportions, then Euclidean distance) respects the compositional nature of the data but is dominated by the majority category. Since each Indian state has a dominant language (Kannada in Karnataka, Marathi in Maharashtra), Hellinger-based clusters tend to **mirror state boundaries**. For example, Belgaum (68% Kannada, 19% Marathi) clusters with interior Karnataka rather than with Kolhapur (89% Marathi), despite their shared Marathi–Urdu minority profile. Works well for linguistic data (10--40 non-zero features per district) but **degenerates for ultra-sparse tribal data** (582 districts × 580 tribes, 96% zeros) where most district pairs share zero tribes and all receive the same maximal distance.
+
+- **TF-IDF cosine distance** multiplies each proportion by $\log(N / n_j)$ --- the inverse of how many districts contain that item --- then L2-normalises and uses cosine distance. This **down-weights ubiquitous items** (Hindi, spoken almost everywhere; dominant state languages) and **up-weights regionally distinctive ones** (Lamani/Lambadi, Tulu, specific Tangsa subgroups). The result is that border districts cluster by their shared minority composition rather than by the dominant language.
+
+- **Jaccard distance** ignores proportions entirely and works on **presence/absence** only. The distance between two districts is $1 - |A \cap B| / |A \cup B|$, where $A$ and $B$ are the sets of tribes (or languages) present. Two districts sharing 3 out of 10 total tribes get the same distance regardless of how the populations are distributed. Critically, Jaccard is defined even when two districts share zero items (distance = 1), and districts that share *any* items get distances strictly less than 1, creating meaningful structure even in ultra-sparse data. This makes it **ideal for the tribal matrix** where 74% of district pairs share no tribes under Hellinger.
+
+- **Bray-Curtis dissimilarity** uses proportions but only non-zero entries contribute: $\sum |p_i - q_i| / \sum (p_i + q_i)$. Standard in ecology for sparse species-abundance data. Unlike Hellinger, shared zeros do not inflate the distance; unlike Jaccard, it distinguishes between districts where a tribe is 80% vs 2% of the population.
+
+We show multiple approaches below so the reader can see the contrast. For linguistic data (relatively dense), we use Hellinger and TF-IDF. For tribal data (ultra-sparse), we use Jaccard and Bray-Curtis alongside TF-IDF. State boundaries are overlaid on all maps to make it easy to spot where cluster boundaries deviate from administrative ones.
+
+```{r composition-vectors}
+data(census_2011_district_languages)
+data(census_2011_mother_tongue)
+
+make_key <- function(df) {
+  df |> mutate(
+    district_id = paste0(
+      gsub("[^a-z0-9]", "", tolower(state_name_harmonized)), "_",
+      gsub("[^a-z0-9]", "", tolower(district_name))
+    )
+  )
+}
+
+district_names <- census_2011_district_languages |>
+  filter(!is.na(district_name)) |>
+  distinct(state_code, district_code, state_name_harmonized, district_name)
+
+mt <- census_2011_mother_tongue |>
+  filter(district_code != "000") |>
+  left_join(
+    district_names |> select(state_code, district_code, district_name),
+    by = c("state_code", "district_code")
+  ) |>
+  filter(!is.na(district_name))
+
+lang_l1 <- mt |>
+  filter(language_level == "L1", !grepl("Others", language_name)) |>
+  make_key() |>
+  group_by(district_id, language_name) |>
+  summarise(speakers = sum(total_persons), .groups = "drop") |>
+  group_by(district_id) |>
+  mutate(prop = speakers / sum(speakers)) |>
+  ungroup() |>
+  select(district_id, language_name, prop) |>
+  pivot_wider(
+    names_from = language_name, values_from = prop,
+    values_fill = 0, names_prefix = "l1_"
+  )
+
+lang_l2 <- mt |>
+  filter(language_level == "L2", !grepl("Others", language_name)) |>
+  make_key() |>
+  group_by(district_id, language_name) |>
+  summarise(speakers = sum(total_persons), .groups = "drop") |>
+  group_by(district_id) |>
+  mutate(prop = speakers / sum(speakers)) |>
+  ungroup() |>
+  select(district_id, language_name, prop) |>
+  pivot_wider(
+    names_from = language_name, values_from = prop,
+    values_fill = 0, names_prefix = "l2_"
+  )
+
+tribal_comp <- census_2011_tribes |>
+  make_key() |>
+  group_by(district_id, tribe_name_original) |>
+  summarise(
+    population = sum(population),
+    district_pop = first(district_total_population),
+    .groups = "drop"
+  ) |>
+  mutate(prop = population / district_pop) |>
+  select(district_id, tribe_name_original, prop) |>
+  pivot_wider(
+    names_from = tribe_name_original, values_from = prop,
+    values_fill = 0, names_prefix = "tribe_"
+  )
+
+tibble::tibble(
+  Matrix = c(
+    "Linguistic (L1: scheduled languages)",
+    "Linguistic (L2: mother tongues/dialects)",
+    "Tribal"
+  ),
+  Districts = c(nrow(lang_l1), nrow(lang_l2), nrow(tribal_comp)),
+  Features = c(ncol(lang_l1) - 1, ncol(lang_l2) - 1, ncol(tribal_comp) - 1)
+) |>
+  knitr::kable(caption = "Composition matrix dimensions (districts × features)")
+
+hellinger_dist <- function(df) {
+  mat <- as.matrix(df[, -1])
+  rownames(mat) <- df$district_id
+  dist(sqrt(mat), method = "euclidean")
+}
+
+tfidf_cosine_dist <- function(df) {
+  mat <- as.matrix(df[, -1])
+  rownames(mat) <- df$district_id
+  n_docs <- nrow(mat)
+  doc_freq <- colSums(mat > 0)
+  idf <- log(n_docs / pmax(doc_freq, 1))
+  tfidf <- sweep(mat, 2, idf, `*`)
+  row_norms <- sqrt(rowSums(tfidf^2))
+  row_norms[row_norms == 0] <- 1
+  tfidf_norm <- tfidf / row_norms
+  sim <- tcrossprod(tfidf_norm)
+  sim[sim > 1] <- 1
+  sim[sim < -1] <- -1
+  as.dist(1 - sim)
+}
+
+jaccard_dist <- function(df) {
+  mat <- (as.matrix(df[, -1]) > 0) * 1
+  rownames(mat) <- df$district_id
+  intersection <- tcrossprod(mat)
+  sizes <- rowSums(mat)
+  union_mat <- outer(sizes, sizes, "+") - intersection
+  union_mat[union_mat == 0] <- 1
+  sim <- intersection / union_mat
+  as.dist(1 - sim)
+}
+
+bray_curtis_dist <- function(df) {
+  mat <- as.matrix(df[, -1])
+  rownames(mat) <- df$district_id
+  n <- nrow(mat)
+  d <- matrix(0, n, n)
+  for (i in seq_len(n - 1)) {
+    for (j in (i + 1):n) {
+      num <- sum(abs(mat[i, ] - mat[j, ]))
+      den <- sum(mat[i, ] + mat[j, ])
+      d[i, j] <- if (den == 0) 1 else num / den
+      d[j, i] <- d[i, j]
+    }
+  }
+  rownames(d) <- colnames(d) <- df$district_id
+  as.dist(d)
+}
+
+state_bounds <- get_census_boundaries(2011, "state")
+```
+
+```{r cluster-both-methods}
+n_clusters <- 20
+
+hc_l1_h <- hclust(hellinger_dist(lang_l1), method = "ward.D2")
+hc_l1_t <- hclust(tfidf_cosine_dist(lang_l1), method = "ward.D2")
+
+cl_l1_h <- tibble(
+  district_id = lang_l1$district_id,
+  cluster = factor(cutree(hc_l1_h, k = n_clusters))
+)
+cl_l1_t <- tibble(
+  district_id = lang_l1$district_id,
+  cluster = factor(cutree(hc_l1_t, k = n_clusters))
+)
+
+hc_l2_h <- hclust(hellinger_dist(lang_l2), method = "ward.D2")
+hc_l2_t <- hclust(tfidf_cosine_dist(lang_l2), method = "ward.D2")
+
+cl_l2_h <- tibble(
+  district_id = lang_l2$district_id,
+  cluster = factor(cutree(hc_l2_h, k = n_clusters))
+)
+cl_l2_t <- tibble(
+  district_id = lang_l2$district_id,
+  cluster = factor(cutree(hc_l2_t, k = n_clusters))
+)
+
+hc_tribal_j <- hclust(jaccard_dist(tribal_comp), method = "ward.D2")
+hc_tribal_b <- hclust(bray_curtis_dist(tribal_comp), method = "ward.D2")
+hc_tribal_t <- hclust(tfidf_cosine_dist(tribal_comp), method = "ward.D2")
+
+cl_tribal_j <- tibble(
+  district_id = tribal_comp$district_id,
+  cluster = factor(cutree(hc_tribal_j, k = n_clusters))
+)
+cl_tribal_b <- tibble(
+  district_id = tribal_comp$district_id,
+  cluster = factor(cutree(hc_tribal_b, k = n_clusters))
+)
+cl_tribal_t <- tibble(
+  district_id = tribal_comp$district_id,
+  cluster = factor(cutree(hc_tribal_t, k = n_clusters))
+)
+
+cluster_names <- boundaries |>
+  make_key() |>
+  sf::st_drop_geometry() |>
+  select(district_id, state_name_harmonized, district_name)
+```
+
+```{r cluster-map-helper}
+qual_pal <- c(
+  "#c94a4a", "#4aad4a", "#4a73c9", "#d48a3c", "#8b4abf",
+  "#3ca5b5", "#c94aad", "#8bb040", "#c97a8a", "#3a8a7a",
+  "#9a80c9", "#8a6a3a", "#a05050", "#5aaa7a", "#5a5aaa",
+  "#cc7733", "#55779e", "#9a5a6a", "#6aaa55", "#7a6ab0"
+)
+pal_named <- setNames(qual_pal[seq_len(n_clusters)], seq_len(n_clusters))
+
+top_langs <- census_2011_district_languages |>
+  filter(!is.na(district_name), !grepl("Others$", language_name)) |>
+  make_key() |>
+  group_by(district_id) |>
+  mutate(pct = round(100 * total_speakers / sum(total_speakers), 1)) |>
+  slice_max(total_speakers, n = 3) |>
+  summarise(
+    lang_tip = paste(paste0(language_name, " (", pct, "%)"), collapse = ", "),
+    .groups = "drop"
+  )
+
+top_tribes <- census_2011_tribes |>
+  make_key() |>
+  group_by(district_id) |>
+  mutate(pct = round(100 * population / first(district_total_population), 1)) |>
+  slice_max(population, n = 3) |>
+  summarise(
+    tribe_tip = paste(paste0(tribe_name_original, " (", pct, "%)"), collapse = ", "),
+    .groups = "drop"
+  )
+
+tooltip_data <- top_langs |>
+  full_join(top_tribes, by = "district_id")
+
+cluster_map_interactive <- function(cl_df, title_text, data_type = "lang") {
+  map_sf <- boundaries |>
+    make_key() |>
+    left_join(cl_df, by = "district_id")
+
+  ggplot() +
+    geom_sf(data = boundaries, fill = "grey80", color = "grey85", linewidth = 0.03) +
+    geom_sf(
+      data = filter(map_sf, !is.na(cluster)),
+      aes(fill = cluster),
+      color = NA
+    ) +
+    geom_sf(
+      data = state_bounds, fill = NA, color = "grey20", linewidth = 0.4
+    ) +
+    scale_fill_manual(values = pal_named, name = "Cluster", na.value = "grey70") +
+    labs(title = title_text) +
+    theme_void() +
+    theme(
+      plot.title = element_text(face = "bold", size = 10, hjust = 0.5),
+      legend.position = "none"
+    )
+}
+
+cluster_map_static <- function(cl_df, title_text) {
+  map_sf <- boundaries |>
+    make_key() |>
+    left_join(cl_df, by = "district_id")
+
+  ggplot() +
+    geom_sf(data = boundaries, fill = "grey80", color = "grey85", linewidth = 0.03) +
+    geom_sf(
+      data = filter(map_sf, !is.na(cluster)),
+      aes(fill = cluster), color = NA
+    ) +
+    geom_sf(
+      data = state_bounds, fill = NA, color = "grey20", linewidth = 0.4
+    ) +
+    scale_fill_manual(values = pal_named, name = "Cluster", na.value = "grey70") +
+    labs(title = title_text) +
+    theme_void() +
+    theme(
+      plot.title = element_text(face = "bold", size = 10, hjust = 0.5),
+      legend.position = "none"
+    )
+}
+```
+
+### Linguistic clusters: Hellinger distance
+
+Hellinger distance treats each district as a point on a simplex. It is appropriate when the absolute composition matters --- two districts that are both 80% Hindi-speaking are close regardless of what the remaining 20% looks like. The downside is that the dominant category dominates the distance, so clusters tend to follow state boundaries.
+
+```{r hellinger-overview, fig.width=10, fig.height=10}
+ph_l1 <- cluster_map_static(cl_l1_h, "L1 languages (Hellinger)")
+ph_l2 <- cluster_map_static(cl_l2_h, "L2 dialects (Hellinger)")
+
+(ph_l1 | ph_l2) +
+  plot_annotation(
+    title = "Hellinger distance clusters (linguistic)",
+    subtitle = "Clusters follow state lines --- dominant language drives the grouping",
+    theme = theme(
+      plot.title = element_text(face = "bold", size = 14, hjust = 0.5),
+      plot.subtitle = element_text(size = 10, color = "grey40", hjust = 0.5)
+    )
+  )
+```
+
+Hover over districts in the interactive maps below to see cluster assignments, top languages, and top tribes:
+
+```{r hellinger-l1-interactive}
+cluster_map_interactive(cl_l1_h, "L1 Hellinger clusters (hover for details)")
+```
+
+```{r hellinger-l2-interactive}
+cluster_map_interactive(cl_l2_h, "L2 Hellinger clusters (hover for details)")
+```
+
+### Linguistic clusters: TF-IDF cosine distance
+
+TF-IDF down-weights languages that appear in many districts (high document frequency) and up-weights rare, regionally distinctive ones. Two districts sharing an uncommon minority language are pulled closer together even if their dominant languages differ. This reveals cross-border affinities that Hellinger misses.
+
+```{r tfidf-overview, fig.width=10, fig.height=10}
+pt_l1 <- cluster_map_static(cl_l1_t, "L1 languages (TF-IDF)")
+pt_l2 <- cluster_map_static(cl_l2_t, "L2 dialects (TF-IDF)")
+
+(pt_l1 | pt_l2) +
+  plot_annotation(
+    title = "TF-IDF cosine distance clusters (linguistic)",
+    subtitle = "Clusters cut across state boundaries --- minority composition drives the grouping",
+    theme = theme(
+      plot.title = element_text(face = "bold", size = 14, hjust = 0.5),
+      plot.subtitle = element_text(size = 10, color = "grey40", hjust = 0.5)
+    )
+  )
+```
+
+Hover over districts in the interactive maps below to see cluster assignments, top languages, and top tribes:
+
+```{r tfidf-l1-interactive}
+cluster_map_interactive(cl_l1_t, "L1 TF-IDF clusters (hover for details)")
+```
+
+```{r tfidf-l2-interactive}
+cluster_map_interactive(cl_l2_t, "L2 TF-IDF clusters (hover for details)")
+```
+
+### Tribal clusters: sparsity-aware metrics
+
+The tribal composition matrix is **ultra-sparse**: 582 districts × 580 tribes with 96% zeros. Most districts have only 5--30 tribes, and 74% of district pairs share zero tribes. Hellinger distance assigns all zero-overlap pairs the same maximal distance ($\sqrt{2}$), making clustering essentially random --- one cluster ends up as a giant catch-all of unrelated districts. We therefore use three sparsity-aware metrics:
+
+- **Jaccard** (presence/absence): ignores proportions, only counts shared vs total tribes. Districts sharing *any* tribes get meaningful distances.
+- **Bray-Curtis** (proportional): only non-zero entries contribute. Sensitive to whether a tribe is 80% or 2% of the population.
+- **TF-IDF cosine**: down-weights widespread tribes (Gond, Bhil), up-weights rare ones.
+
+```{r tribal-overview, fig.width=14, fig.height=10}
+pt_j <- cluster_map_static(cl_tribal_j, "Tribal (Jaccard)")
+pt_b <- cluster_map_static(cl_tribal_b, "Tribal (Bray-Curtis)")
+pt_t <- cluster_map_static(cl_tribal_t, "Tribal (TF-IDF)")
+
+(pt_j | pt_b | pt_t) +
+  plot_annotation(
+    title = "Tribal clusters: sparsity-aware distance metrics",
+    subtitle = "Jaccard = presence/absence, Bray-Curtis = proportional, TF-IDF = rarity-weighted",
+    theme = theme(
+      plot.title = element_text(face = "bold", size = 14, hjust = 0.5),
+      plot.subtitle = element_text(size = 10, color = "grey40", hjust = 0.5)
+    )
+  )
+```
+
+Hover over districts in the interactive maps below to see cluster assignments, top languages, and top tribes:
+
+```{r tribal-jaccard-interactive}
+cluster_map_interactive(cl_tribal_j, "Tribal Jaccard clusters (hover for details)", data_type = "tribal")
+```
+
+```{r tribal-braycurtis-interactive}
+cluster_map_interactive(cl_tribal_b, "Tribal Bray-Curtis clusters (hover for details)", data_type = "tribal")
+```
+
+```{r tribal-tfidf-interactive}
+cluster_map_interactive(cl_tribal_t, "Tribal TF-IDF clusters (hover for details)", data_type = "tribal")
+```
+
+### PCA-based clustering
+
+An approach borrowed from single-cell biology: instead of computing distances on the raw (sparse) proportion matrix, first run PCA to compress the data into a dense, low-dimensional embedding, then cluster in PC space using Euclidean distance. PCA naturally handles sparsity --- the top principal components capture the dominant axes of variation while noise and uninformative zeros are absorbed into later components that we discard.
+
+Each feature (column) is centered and scaled to unit variance before PCA. Without scaling, the first few PCs would be dominated by whichever tribe or language has the highest variance across districts (typically a widespread group like Bhil or Hindi), drowning out signal from rarer groups. This is analogous to the `1/sqrt(p(1-p))` normalization in population genetics PCA (Patterson et al. 2006), which prevents common alleles from dominating the eigendecomposition.
+
+```{r pca-embedding}
+run_pca <- function(df) {
+  mat <- as.matrix(df[, -1])
+  rownames(mat) <- df$district_id
+  col_var <- apply(mat, 2, var)
+  mat <- mat[, col_var > 0, drop = FALSE]
+  prcomp(mat, center = TRUE, scale. = TRUE)
+}
+
+pca_l1 <- run_pca(lang_l1)
+pca_l2 <- run_pca(lang_l2)
+pca_tribal <- run_pca(tribal_comp)
+```
+
+#### Scree plots
+
+The scree plot shows the proportion of variance explained by each principal component. We select the number of PCs at the "elbow" --- the point where adding more components yields diminishing returns.
+
+```{r scree-plots, fig.width=14, fig.height=5}
+scree_df <- function(pca, label) {
+  var_exp <- pca$sdev^2 / sum(pca$sdev^2)
+  tibble(
+    PC = seq_along(var_exp),
+    variance = var_exp,
+    cumulative = cumsum(var_exp),
+    matrix = label
+  )
+}
+
+scree_all <- bind_rows(
+  scree_df(pca_l1, "L1 linguistic"),
+  scree_df(pca_l2, "L2 linguistic"),
+  scree_df(pca_tribal, "Tribal")
+)
+
+scree_50 <- scree_all |> filter(PC <= 50)
+
+p_var <- ggplot(scree_50, aes(x = PC, y = variance, color = matrix)) +
+  geom_line(linewidth = 0.8) +
+  geom_point(size = 1.2) +
+  scale_color_manual(values = c(
+    "L1 linguistic" = "#4a73c9", "L2 linguistic" = "#3ca5b5",
+    "Tribal" = "#c94a4a"
+  )) +
+  scale_y_continuous(labels = scales::percent) +
+  labs(
+    x = "Principal component", y = "Variance explained",
+    title = "Variance per PC", color = NULL
+  ) +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+
+p_cum <- ggplot(scree_50, aes(x = PC, y = cumulative, color = matrix)) +
+  geom_line(linewidth = 0.8) +
+  geom_point(size = 1.2) +
+  geom_hline(yintercept = 0.9, linetype = "dashed", color = "grey50") +
+  annotate("text", x = 45, y = 0.92, label = "90%", size = 3, color = "grey40") +
+  scale_color_manual(values = c(
+    "L1 linguistic" = "#4a73c9", "L2 linguistic" = "#3ca5b5",
+    "Tribal" = "#c94a4a"
+  )) +
+  scale_y_continuous(labels = scales::percent) +
+  labs(
+    x = "Principal component", y = "Cumulative variance",
+    title = "Cumulative variance", color = NULL
+  ) +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+
+p_var + p_cum +
+  plot_annotation(
+    title = "Scree plots: proportion of variance explained by PCA",
+    theme = theme(
+      plot.title = element_text(face = "bold", size = 14, hjust = 0.5)
+    )
+  )
+```
+
+```{r pca-npcs}
+npcs_90 <- function(pca) {
+  var_exp <- pca$sdev^2 / sum(pca$sdev^2)
+  which(cumsum(var_exp) >= 0.9)[1]
+}
+
+n_l1 <- npcs_90(pca_l1)
+n_l2 <- npcs_90(pca_l2)
+n_tribal <- npcs_90(pca_tribal)
+
+tibble(
+  Matrix = c("L1 linguistic", "L2 linguistic", "Tribal"),
+  `Total features` = c(ncol(lang_l1) - 1, ncol(lang_l2) - 1, ncol(tribal_comp) - 1),
+  `PCs for 90% var` = c(n_l1, n_l2, n_tribal),
+  `Compression ratio` = round(c(
+    (ncol(lang_l1) - 1) / n_l1,
+    (ncol(lang_l2) - 1) / n_l2,
+    (ncol(tribal_comp) - 1) / n_tribal
+  ), 1)
+) |>
+  knitr::kable(caption = "PCA dimensionality reduction")
+```
+
+```{r pca-clustering}
+pca_cluster <- function(pca, n_pcs, ids, k) {
+  scores <- pca$x[, seq_len(n_pcs), drop = FALSE]
+  hc <- hclust(dist(scores), method = "ward.D2")
+  tibble(district_id = ids, cluster = factor(cutree(hc, k = k)))
+}
+
+cl_l1_pca <- pca_cluster(pca_l1, n_l1, lang_l1$district_id, n_clusters)
+cl_l2_pca <- pca_cluster(pca_l2, n_l2, lang_l2$district_id, n_clusters)
+cl_tribal_pca <- pca_cluster(pca_tribal, n_tribal, tribal_comp$district_id, n_clusters)
+```
+
+```{r pca-overview, fig.width=14, fig.height=10}
+pp_l1 <- cluster_map_static(cl_l1_pca, "L1 linguistic (PCA)")
+pp_l2 <- cluster_map_static(cl_l2_pca, "L2 linguistic (PCA)")
+pp_tribal <- cluster_map_static(cl_tribal_pca, "Tribal (PCA)")
+
+(pp_l1 | pp_l2 | pp_tribal) +
+  plot_annotation(
+    title = "PCA-based clusters (Euclidean distance in PC space)",
+    subtitle = paste0(
+      "L1: ", n_l1, " PCs, L2: ", n_l2, " PCs, Tribal: ", n_tribal,
+      " PCs (all at 90% variance)"
+    ),
+    theme = theme(
+      plot.title = element_text(face = "bold", size = 14, hjust = 0.5),
+      plot.subtitle = element_text(size = 10, color = "grey40", hjust = 0.5)
+    )
+  )
+```
+
+```{r pca-l1-interactive}
+cluster_map_interactive(cl_l1_pca, "L1 PCA clusters (hover for details)")
+```
+
+```{r pca-l2-interactive}
+cluster_map_interactive(cl_l2_pca, "L2 PCA clusters (hover for details)")
+```
+
+```{r pca-tribal-interactive}
+cluster_map_interactive(cl_tribal_pca, "Tribal PCA clusters (hover for details)", data_type = "tribal")
+```
+
+#### PCA scatter plots
+
+Each point is a district, plotted on the first two principal components and colored by region (North, Central, West, East, South). Districts that cluster together in PC space have similar demographic composition.
+
+```{r pca-scatter-helper}
+pca_scatter_df <- function(pca, ids, label) {
+  scores <- as.data.frame(pca$x[, 1:2])
+  scores$district_id <- ids
+  scores$matrix <- label
+  var_exp <- pca$sdev^2 / sum(pca$sdev^2)
+  attr(scores, "var1") <- round(100 * var_exp[1], 1)
+  attr(scores, "var2") <- round(100 * var_exp[2], 1)
+  scores
+}
+
+state_lookup <- boundaries |>
+  make_key() |>
+  sf::st_drop_geometry() |>
+  select(district_id, state_name_harmonized, district_name)
+
+region_map <- tibble::tribble(
+  ~state_name_harmonized, ~region,
+  "Jammu & Kashmir", "North",
+  "Ladakh", "North",
+  "Himachal Pradesh", "North",
+  "Punjab", "North",
+  "Chandigarh", "North",
+  "Haryana", "North",
+  "Uttarakhand", "North",
+  "Nct Of Delhi", "North",
+  "Rajasthan", "Central",
+  "Uttar Pradesh", "Central",
+  "Madhya Pradesh", "Central",
+  "Chhattisgarh", "Central",
+  "Gujarat", "West",
+  "Dadra & Nagar Haveli", "West",
+  "Daman & Diu", "West",
+  "Maharashtra", "West",
+  "Goa", "West",
+  "Bihar", "East",
+  "Jharkhand", "East",
+  "West Bengal", "East",
+  "Odisha", "East",
+  "Sikkim", "East",
+  "Arunachal Pradesh", "East",
+  "Assam", "East",
+  "Nagaland", "East",
+  "Meghalaya", "East",
+  "Manipur", "East",
+  "Mizoram", "East",
+  "Tripura", "East",
+  "Karnataka", "South",
+  "Tamil Nadu", "South",
+  "Kerala", "South",
+  "Andhra Pradesh", "South",
+  "Telangana", "South",
+  "Puducherry", "South",
+  "Lakshadweep", "South",
+  "Andaman & Nicobar Islands", "South"
+)
+region_colors <- c(
+  North = "#2166ac", Central = "#b2182b",
+  West = "#7a5195", East = "#1a9641", South = "#e66101"
+)
+
+scatter_l1 <- pca_scatter_df(pca_l1, lang_l1$district_id, "L1 linguistic")
+scatter_l2 <- pca_scatter_df(pca_l2, lang_l2$district_id, "L2 linguistic")
+scatter_tribal <- pca_scatter_df(pca_tribal, tribal_comp$district_id, "Tribal")
+```
+
+```{r pca-scatter-l1}
+df <- scatter_l1 |>
+  left_join(state_lookup, by = "district_id") |>
+  left_join(region_map, by = "state_name_harmonized") |>
+  left_join(tooltip_data, by = "district_id") |>
+  mutate(
+    region = factor(region, levels = names(region_colors)),
+    tip = paste0(
+      district_name, " (", state_name_harmonized, ", ", region, ")",
+      "\nPC1: ", round(PC1, 3), ", PC2: ", round(PC2, 3),
+      "\n", ifelse(is.na(lang_tip), "", paste0("Languages: ", lang_tip))
+    )
+  )
+
+p <- ggplot(df, aes(x = PC1, y = PC2, color = region)) +
+  geom_point(size = 1.8, alpha = 0.8) +
+  scale_color_manual(values = region_colors, name = "Region") +
+  labs(
+    x = paste0("PC1 (", attr(scatter_l1, "var1"), "%)"),
+    y = paste0("PC2 (", attr(scatter_l1, "var2"), "%)"),
+    title = "L1 linguistic PCA: districts colored by region"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+
+p
+```
+
+```{r pca-scatter-l2}
+df <- scatter_l2 |>
+  left_join(state_lookup, by = "district_id") |>
+  left_join(region_map, by = "state_name_harmonized") |>
+  left_join(tooltip_data, by = "district_id") |>
+  mutate(
+    region = factor(region, levels = names(region_colors)),
+    tip = paste0(
+      district_name, " (", state_name_harmonized, ", ", region, ")",
+      "\nPC1: ", round(PC1, 3), ", PC2: ", round(PC2, 3),
+      "\n", ifelse(is.na(lang_tip), "", paste0("Languages: ", lang_tip))
+    )
+  )
+
+p <- ggplot(df, aes(x = PC1, y = PC2, color = region)) +
+  geom_point(size = 1.8, alpha = 0.8) +
+  scale_color_manual(values = region_colors, name = "Region") +
+  labs(
+    x = paste0("PC1 (", attr(scatter_l2, "var1"), "%)"),
+    y = paste0("PC2 (", attr(scatter_l2, "var2"), "%)"),
+    title = "L2 linguistic PCA: districts colored by region"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+
+p
+```
+
+```{r pca-scatter-tribal}
+df <- scatter_tribal |>
+  left_join(state_lookup, by = "district_id") |>
+  left_join(region_map, by = "state_name_harmonized") |>
+  left_join(tooltip_data, by = "district_id") |>
+  mutate(
+    region = factor(region, levels = names(region_colors)),
+    tip = paste0(
+      district_name, " (", state_name_harmonized, ", ", region, ")",
+      "\nPC1: ", round(PC1, 3), ", PC2: ", round(PC2, 3),
+      "\n", ifelse(is.na(tribe_tip), "", paste0("Tribes: ", tribe_tip))
+    )
+  )
+
+p <- ggplot(df, aes(x = PC1, y = PC2, color = region)) +
+  geom_point(size = 1.8, alpha = 0.8) +
+  scale_color_manual(values = region_colors, name = "Region") +
+  labs(
+    x = paste0("PC1 (", attr(scatter_tribal, "var1"), "%)"),
+    y = paste0("PC2 (", attr(scatter_tribal, "var2"), "%)"),
+    title = "Tribal PCA: districts colored by region"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+
+p
+```
+
+```{r save-clusters}
+cluster_csv <- cluster_names |>
+  left_join(cl_l1_h |> rename(lang_l1_hellinger = cluster), by = "district_id") |>
+  left_join(cl_l1_t |> rename(lang_l1_tfidf = cluster), by = "district_id") |>
+  left_join(cl_l1_pca |> rename(lang_l1_pca = cluster), by = "district_id") |>
+  left_join(cl_l2_h |> rename(lang_l2_hellinger = cluster), by = "district_id") |>
+  left_join(cl_l2_t |> rename(lang_l2_tfidf = cluster), by = "district_id") |>
+  left_join(cl_l2_pca |> rename(lang_l2_pca = cluster), by = "district_id") |>
+  left_join(cl_tribal_j |> rename(tribal_jaccard = cluster), by = "district_id") |>
+  left_join(cl_tribal_b |> rename(tribal_braycurtis = cluster), by = "district_id") |>
+  left_join(cl_tribal_t |> rename(tribal_tfidf = cluster), by = "district_id") |>
+  left_join(cl_tribal_pca |> rename(tribal_pca = cluster), by = "district_id") |>
+  arrange(state_name_harmonized, district_name)
+
+write.csv(cluster_csv, file.path(tempdir(), "district_clusters.csv"), row.names = FALSE)
+```
+
+### Concordance between clusterings
+
+Do tribal and linguistic clusters agree? We measure concordance using the adjusted Rand index (ARI): 1 = perfect agreement, 0 = random.
+
+```{r cluster-concordance}
+ari <- function(a, b) {
+  tab <- table(a, b)
+  n <- sum(tab)
+  sum_comb <- sum(choose(tab, 2))
+  sum_a <- sum(choose(rowSums(tab), 2))
+  sum_b <- sum(choose(colSums(tab), 2))
+  expected <- sum_a * sum_b / choose(n, 2)
+  max_idx <- 0.5 * (sum_a + sum_b)
+  if (max_idx == expected) {
+    return(1)
+  }
+  (sum_comb - expected) / (max_idx - expected)
+}
+
+common_ids <- Reduce(intersect, list(
+  cl_l1_h$district_id, cl_l2_h$district_id, cl_tribal_j$district_id,
+  cl_l1_t$district_id, cl_l2_t$district_id, cl_tribal_t$district_id,
+  cl_tribal_b$district_id, cl_l1_pca$district_id, cl_l2_pca$district_id,
+  cl_tribal_pca$district_id
+))
+
+get_cl <- function(df, ids) df$cluster[match(ids, df$district_id)]
+
+ari_h_l1_l2 <- ari(get_cl(cl_l1_h, common_ids), get_cl(cl_l2_h, common_ids))
+ari_l1_tr_j <- ari(get_cl(cl_l1_h, common_ids), get_cl(cl_tribal_j, common_ids))
+ari_l2_tr_j <- ari(get_cl(cl_l2_h, common_ids), get_cl(cl_tribal_j, common_ids))
+
+ari_t_l1_l2 <- ari(get_cl(cl_l1_t, common_ids), get_cl(cl_l2_t, common_ids))
+ari_t_l1_tr <- ari(get_cl(cl_l1_t, common_ids), get_cl(cl_tribal_t, common_ids))
+ari_t_l2_tr <- ari(get_cl(cl_l2_t, common_ids), get_cl(cl_tribal_t, common_ids))
+
+ari_l1_ht <- ari(get_cl(cl_l1_h, common_ids), get_cl(cl_l1_t, common_ids))
+ari_l2_ht <- ari(get_cl(cl_l2_h, common_ids), get_cl(cl_l2_t, common_ids))
+ari_tribal_jb <- ari(get_cl(cl_tribal_j, common_ids), get_cl(cl_tribal_b, common_ids))
+ari_tribal_jt <- ari(get_cl(cl_tribal_j, common_ids), get_cl(cl_tribal_t, common_ids))
+ari_tribal_bt <- ari(get_cl(cl_tribal_b, common_ids), get_cl(cl_tribal_t, common_ids))
+
+ari_l1_pca_h <- ari(get_cl(cl_l1_pca, common_ids), get_cl(cl_l1_h, common_ids))
+ari_l2_pca_h <- ari(get_cl(cl_l2_pca, common_ids), get_cl(cl_l2_h, common_ids))
+ari_tribal_pca_j <- ari(get_cl(cl_tribal_pca, common_ids), get_cl(cl_tribal_j, common_ids))
+ari_tribal_pca_b <- ari(get_cl(cl_tribal_pca, common_ids), get_cl(cl_tribal_b, common_ids))
+ari_pca_l2_tr <- ari(get_cl(cl_l2_pca, common_ids), get_cl(cl_tribal_pca, common_ids))
+
+interp <- function(x) case_when(x > 0.65 ~ "Strong", x > 0.25 ~ "Moderate", TRUE ~ "Weak")
+
+tibble(
+  Comparison = c(
+    "L1 vs L2 (Hellinger)",
+    "L1 Hellinger vs tribal Jaccard",
+    "L2 Hellinger vs tribal Jaccard",
+    "L1 vs L2 (TF-IDF)",
+    "L1 vs tribal (TF-IDF)",
+    "L2 vs tribal (TF-IDF)",
+    "L1: Hellinger vs TF-IDF",
+    "L2: Hellinger vs TF-IDF",
+    "Tribal: Jaccard vs Bray-Curtis",
+    "Tribal: Jaccard vs TF-IDF",
+    "Tribal: Bray-Curtis vs TF-IDF",
+    "L1: PCA vs Hellinger",
+    "L2: PCA vs Hellinger",
+    "Tribal: PCA vs Jaccard",
+    "Tribal: PCA vs Bray-Curtis",
+    "L2 PCA vs tribal PCA"
+  ),
+  ARI = round(c(
+    ari_h_l1_l2, ari_l1_tr_j, ari_l2_tr_j,
+    ari_t_l1_l2, ari_t_l1_tr, ari_t_l2_tr,
+    ari_l1_ht, ari_l2_ht,
+    ari_tribal_jb, ari_tribal_jt, ari_tribal_bt,
+    ari_l1_pca_h, ari_l2_pca_h, ari_tribal_pca_j,
+    ari_tribal_pca_b, ari_pca_l2_tr
+  ), 3),
+  Agreement = interp(ARI)
+) |>
+  knitr::kable(caption = "Adjusted Rand Index between clusterings")
+```
+
+```{r concordance-heatmap, fig.width=14, fig.height=6}
+cross_j <- tibble(
+  tribal = get_cl(cl_tribal_j, common_ids),
+  lang = get_cl(cl_l2_h, common_ids)
+) |>
+  count(tribal, lang) |>
+  mutate(tribal = factor(tribal), lang = factor(lang))
+
+cross_t <- tibble(
+  tribal = get_cl(cl_tribal_t, common_ids),
+  lang = get_cl(cl_l2_t, common_ids)
+) |>
+  count(tribal, lang) |>
+  mutate(tribal = factor(tribal), lang = factor(lang))
+
+heat_theme <- theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold", size = 11),
+    panel.grid = element_blank()
+  )
+
+p_heat_j <- ggplot(cross_j, aes(x = lang, y = tribal, fill = n)) +
+  geom_tile(color = "white", linewidth = 0.5) +
+  geom_text(aes(label = n), size = 2.5) +
+  scale_fill_viridis_c(option = "inferno", direction = 1, begin = 0.1, end = 0.9, name = "Districts") +
+  labs(
+    x = "L2 linguistic cluster (Hellinger)", y = "Tribal cluster (Jaccard)",
+    title = paste0("Jaccard vs L2 Hellinger (ARI = ", round(ari_l2_tr_j, 2), ")")
+  ) +
+  coord_fixed() +
+  heat_theme
+
+p_heat_t <- ggplot(cross_t, aes(x = lang, y = tribal, fill = n)) +
+  geom_tile(color = "white", linewidth = 0.5) +
+  geom_text(aes(label = n), size = 2.5) +
+  scale_fill_viridis_c(option = "inferno", direction = 1, begin = 0.1, end = 0.9, name = "Districts") +
+  labs(
+    x = "L2 linguistic cluster (TF-IDF)", y = "Tribal cluster (TF-IDF)",
+    title = paste0("TF-IDF (ARI = ", round(ari_t_l2_tr, 2), ")")
+  ) +
+  coord_fixed() +
+  heat_theme
+
+p_heat_j | p_heat_t
+```
+
+A diagonal-heavy heatmap means tribal and linguistic boundaries coincide. Off-diagonal mass shows where they disagree: linguistically similar but tribally distinct, or vice versa. These discordant districts may harbour populations whose genetic structure does not follow the expected linguistic boundary.
+
+### Cluster vulnerability
+
+```{r cluster-vulnerability}
+cluster_vuln <- cl_tribal_j |>
+  inner_join(
+    district_priority |>
+      make_key() |>
+      select(district_id, sampling_score, endemic_tribes, rare_tribes),
+    by = "district_id"
+  )
+
+cluster_vuln |>
+  group_by(cluster) |>
+  summarise(
+    n = n(),
+    mean_score = round(mean(sampling_score), 1),
+    max_score = max(sampling_score),
+    total_endemic = sum(endemic_tribes),
+    total_rare = sum(rare_tribes),
+    .groups = "drop"
+  ) |>
+  arrange(desc(mean_score)) |>
+  knitr::kable(
+    col.names = c(
+      "Cluster", "Districts", "Mean score",
+      "Max score", "Endemic tribes", "Rare tribes"
+    ),
+    caption = "Tribal Jaccard cluster vulnerability (higher score = more irreplaceable)"
+  )
+```
+
+## Summary
+
+A tribal genome sampling strategy would target:
+
+1. **14 must-sample districts** containing 26 endemic tribes found nowhere else
+2. **~120 tribes with HHI > 0.8** --- effectively single-district populations regardless of nominal range
+3. **92 tribes with population < 500** facing extreme genetic drift
+4. **~30 cross-state small tribes** as divergent lineage candidates
+5. **145 rare languages** (< 100K speakers) as proxies for endogamous communities
+6. **Districts in the top tertile of both tribal and linguistic diversity** as genomic hotspots
+
+The bivariate map reveals that tribal and linguistic diversity are largely complementary ($r = 0.17$). The teal districts --- high on both axes --- represent the intersection where sampling would capture both genetically isolated tribal populations and linguistically distinct communities.

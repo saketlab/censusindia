@@ -29,10 +29,6 @@ library(ggplot2)
 library(ggrepel)
 ```
 
-## Sex ratio across decades
-
-Sex ratio in India is conventionally expressed as females per 1000 males. A ratio below 1000 indicates a male-skewed population.
-
 ```{r data}
 years <- c(1961, 1971, 1981, 1991, 2001, 2011)
 
@@ -57,8 +53,6 @@ ggplot(pop_geo) +
   theme(strip.text = element_text(face = "bold"), legend.position = "bottom")
 ```
 
-## National trend
-
 ```{r national-trend}
 national <- census_population_time_series |>
   filter(geography == "state", year %in% years) |>
@@ -74,8 +68,6 @@ ggplot(national, aes(year, sex_ratio)) +
   labs(x = "Year", y = "Females per 1000 males", title = "National sex ratio trend") +
   theme_minimal()
 ```
-
-## State-level trends
 
 ```{r state-trends, fig.height=8}
 state_trends <- census_population_time_series |>
@@ -123,8 +115,6 @@ ggplot(state_trends, aes(year, sex_ratio, group = state_name_harmonized)) +
   theme(legend.position = "none")
 ```
 
-## Highest and lowest sex ratios (2011)
-
 ```{r extremes}
 pop_2011 <- census_population_time_series |>
   filter(geography == "state", year == 2011) |>
@@ -137,8 +127,6 @@ head(pop_2011 |> select(state_name_harmonized, sex_ratio), 5)
 cat("\nLowest sex ratio (2011):\n")
 tail(pop_2011 |> select(state_name_harmonized, sex_ratio), 5)
 ```
-
-## Change from 1961 to 2011
 
 ```{r change-map}
 change_data <- census_population_time_series |>

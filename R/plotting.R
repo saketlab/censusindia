@@ -28,12 +28,21 @@ NULL
 #' @param reverse Logical. Reverse the color palette direction? Default FALSE.
 #' @param direction Numeric. Alternative to reverse: use -1 to reverse, 1 for default.
 #'   If both reverse and direction are specified, direction takes precedence.
+#' @param boundary_year Census year whose state boundaries to draw beneath the
+#'   data, keeping India's full claimed extent on the map even where the census
+#'   enumerates no districts. Defaults to the `year` column if present.
 #' @param na_color Color for missing values. Default is "grey80"
 #' @param show_state_boundaries Logical. Overlay state boundaries?
 #' @param state_boundary_color Color for state boundaries. Default is "black"
 #' @param state_boundary_width Width of state boundary lines. Default is 0.3
 #' @param trans Transformation for the color scale (e.g., "log10", "sqrt").
 #'   Default is "identity" (no transformation)
+#' @param midpoint Value to centre a diverging palette on, e.g. `0` for growth
+#'   or `1000` for a sex ratio. Without it the palette centres on the middle of
+#'   `limits`, which is rarely the meaningful value.
+#' @param oob How to treat values outside `limits`. The ggplot2 default censors
+#'   them to `na_color`, making them indistinguishable from genuinely missing
+#'   data; pass `scales::squish` to clamp them to the nearest end instead.
 #' @param limits Optional limits for the color scale as c(min, max)
 #' @param breaks Optional breaks for the legend
 #' @param labels Optional labels for the legend breaks
@@ -71,10 +80,13 @@ plot_map <- function(data,
                      reverse = FALSE,
                      direction = NULL,
                      na_color = "grey80",
+                     boundary_year = NULL,
                      show_state_boundaries = FALSE,
                      state_boundary_color = "black",
                      state_boundary_width = 0.3,
                      trans = "identity",
+                     midpoint = NULL,
+                     oob = NULL,
                      limits = NULL,
                      breaks = NULL,
                      labels = NULL) {
@@ -93,13 +105,26 @@ plot_map <- function(data,
     }
   }
 
+  # substitute() before anything touches fill_var. Testing is.character(fill_var)
+  # first forced the promise, so the documented unquoted form plot_map(d, value)
+  # died with "object 'value' not found" before reaching the data mask.
   fill_var_expr <- substitute(fill_var)
-  if (is.character(fill_var)) {
-    fill_var_name <- fill_var
+  fill_var_name <- if (is.character(fill_var_expr)) {
+    fill_var_expr
   } else if (is.name(fill_var_expr)) {
-    fill_var_name <- deparse(fill_var_expr)
+    nm <- deparse(fill_var_expr)
+    if (nm %in% names(data)) {
+      nm
+    } else {
+      v <- tryCatch(fill_var, error = function(e) NULL)
+      if (is.character(v) && length(v) == 1) v else nm
+    }
   } else {
-    fill_var_name <- as.character(fill_var_expr)
+    as.character(eval(fill_var_expr, parent.frame()))
+  }
+
+  if (!fill_var_name %in% names(data)) {
+    cli::cli_abort("{.arg fill_var} {.val {fill_var_name}} is not a column of {.arg data}.")
   }
 
   if (is.null(legend_title)) {
@@ -112,22 +137,34 @@ plot_map <- function(data,
 
   colors <- get_palette(palette, reverse)
 
-  p <- ggplot2::ggplot(data) +
-    ggplot2::geom_sf(ggplot2::aes(fill = .data[[fill_var_name]]),
-      color = NA
-    )
+  # The census enumerates no districts across parts of Jammu & Kashmir, so the
+  # data alone reaches only 35.995 N against India's claimed 37.078 N. The state
+  # outline drawn underneath is what keeps the national boundary correct, and it
+  # is never optional: publishing a truncated map of India is not acceptable.
+  base_sf <- census_base_shapes(
+    if (is.null(boundary_year)) detect_year(data) else boundary_year
+  )
 
-  if (show_state_boundaries) {
-    year <- detect_year(data)
-    if (!is.null(year)) {
-      states_sf <- get_census_boundaries(year, "state")
-      p <- p + ggplot2::geom_sf(
-        data = states_sf,
-        fill = NA,
-        color = state_boundary_color,
-        linewidth = state_boundary_width
-      )
-    }
+  p <- ggplot2::ggplot()
+
+  # Same reason as above: without this layer the map stops short in the north.
+  if (!is.null(base_sf)) {
+    p <- p + ggplot2::geom_sf(data = base_sf, fill = na_color, color = NA)
+  }
+
+  p <- p + ggplot2::geom_sf(
+    data = data,
+    ggplot2::aes(fill = .data[[fill_var_name]]),
+    color = NA
+  )
+
+  if (show_state_boundaries && !is.null(base_sf)) {
+    p <- p + ggplot2::geom_sf(
+      data = base_sf,
+      fill = NA,
+      color = state_boundary_color,
+      linewidth = state_boundary_width
+    )
   }
 
   scale_args <- list(
@@ -137,6 +174,12 @@ plot_map <- function(data,
     trans = trans
   )
 
+  if (!is.null(midpoint)) {
+    scale_args$rescaler <- function(x, to = c(0, 1), from = range(x, na.rm = TRUE)) {
+      scales::rescale_mid(x, to, from, mid = midpoint)
+    }
+  }
+  if (!is.null(oob)) scale_args$oob <- oob
   if (!is.null(limits)) scale_args$limits <- limits
   if (!is.null(breaks)) scale_args$breaks <- breaks
   if (!is.null(labels)) scale_args$labels <- labels
@@ -308,7 +351,12 @@ get_palette <- function(name, reverse = FALSE) {
 
   colors <- palettes[[name]]
   if (is.null(colors)) {
-    colors <- palettes[["viridis"]]
+    # Falling back to viridis meant a typo produced a plausible-looking map on the
+    # wrong ramp, with nothing to show the name had not been understood.
+    cli::cli_abort(c(
+      "Unknown palette {.val {name}}.",
+      "i" = "Available: {.val {names(palettes)}}."
+    ))
   }
 
   if (reverse) {
@@ -318,17 +366,46 @@ get_palette <- function(name, reverse = FALSE) {
   colors
 }
 
-#' Detect year from data
+#' State outline to draw beneath a map, resolved so it is never absent.
 #'
-#' Internal function to detect the census year from a data frame.
+#' Tries the requested vintage, then the nearest available, then the most recent.
+#' A NULL result would silently truncate India's northern boundary.
+#' @noRd
+census_base_shapes <- function(year) {
+  if (is.null(year) || is.na(year) || !is.numeric(year)) {
+    year <- max(BOUNDARY_YEARS)
+  }
+  candidates <- unique(c(
+    year,
+    BOUNDARY_YEARS[order(abs(BOUNDARY_YEARS - year))],
+    max(BOUNDARY_YEARS)
+  ))
+  for (y in candidates) {
+    got <- tryCatch(get_census_boundaries(y, "state"), error = function(e) NULL)
+    if (!is.null(got)) {
+      return(got)
+    }
+  }
+  NULL
+}
+
+#' Detect the boundary a data frame belongs to.
 #'
-#' @param data A data frame
-#' @return Integer year or NULL
-#'
-#' @keywords internal
+#' Prefers the stamp attach_geometry() leaves, then a `year` column.
+#' @param data A data frame or sf object.
+#' @return Integer year, or NULL when neither is present.
+#' @noRd
 detect_year <- function(data) {
+  stamped <- attr(data, "census_boundary_year")
+  if (!is.null(stamped) && !is.na(stamped)) {
+    return(stamped)
+  }
   if ("year" %in% names(data)) {
-    return(unique(data$year)[1])
+    y <- unique(data$year)
+    y <- suppressWarnings(as.numeric(y[!is.na(y)]))
+    if (length(y)) {
+      return(max(y))
+    }
   }
   NULL
 }

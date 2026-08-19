@@ -5,7 +5,7 @@
 \alias{census_2011_subdistrict_languages}
 \title{Census 2011 subdistrict languages (C-16)}
 \format{
-A tibble with 183,127 rows and 11 columns:
+A tibble with 144,134 rows and 11 columns:
 \describe{
 \item{state_code}{Numeric state code}
 \item{state_name_harmonized}{Harmonized state name for joining across datasets}
@@ -24,10 +24,12 @@ A tibble with 183,127 rows and 11 columns:
 Census of India 2011, C-16 Mother Tongue Tables.
 }
 \usage{
-data(census_2011_subdistrict_languages)
+census_2011_subdistrict_languages
 }
 \description{
 Mother tongue speakers by language at subdistrict level from the 2011
-Census C-16 tables, with male/female and rural/urban breakdowns.
+Census C-16 tables, with male/female and rural/urban breakdowns. The
+district rows that share each subdistrict's \code{district_code} are excluded,
+so these rows sum to the matching row of \link{census_2011_district_languages}.
 }
 \keyword{datasets}

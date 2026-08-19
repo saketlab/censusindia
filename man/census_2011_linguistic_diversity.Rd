@@ -5,7 +5,7 @@
 \alias{census_2011_linguistic_diversity}
 \title{Census 2011 linguistic diversity}
 \format{
-A tibble with 640 rows and 10 columns:
+A tibble with 640 rows and 11 columns:
 \describe{
 \item{state_name_harmonized}{Harmonized state name for joining across datasets}
 \item{state_code}{Numeric state code}
@@ -13,20 +13,25 @@ A tibble with 640 rows and 10 columns:
 \item{n_languages}{Number of distinct languages spoken}
 \item{total_speakers}{Total speakers across all languages}
 \item{shannon_entropy}{Shannon entropy of the language distribution}
-\item{effective_languages}{Effective number of languages (exp of Shannon entropy)}
+\item{effective_languages}{Effective number of languages (2^shannon_entropy)}
 \item{dominant_language}{Most-spoken language}
 \item{dominant_share}{Share of speakers of the dominant language}
 \item{district_name}{Name of the district}
+\item{coverage}{Share of district population in named mother tongues}
 }
 }
 \source{
 Census of India 2011, C-16 Mother Tongue Tables (derived).
 }
 \usage{
-data(census_2011_linguistic_diversity)
+census_2011_linguistic_diversity
 }
 \description{
 District-level linguistic diversity metrics derived from the 2011 Census
-C-16 mother tongue tables.
+C-16 mother tongue tables, counting named mother tongues only. C-16 files
+the unscheduled languages of the northeast under per-group "Others"
+residuals, which carry no language name and are excluded; \code{coverage}
+reports the share of the district the metrics are computed from, and falls
+below 0.9 in 34 districts and below 0.5 in 7.
 }
 \keyword{datasets}

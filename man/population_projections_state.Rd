@@ -19,7 +19,7 @@ Ministry of Health and Family Welfare, Government of India.
 Population Projections for India and States 2011-2036.
 }
 \usage{
-data(population_projections_state)
+population_projections_state
 }
 \description{
 MOHFW population projections at state level, based on the 2011 Census.

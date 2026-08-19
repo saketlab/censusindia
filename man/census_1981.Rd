@@ -34,10 +34,19 @@ Collection, 1901-2026: Digitised Subnational Population and Administrative
 Datasets." Harvard Dataverse. \doi{10.7910/DVN/ON8CP8}.
 }
 \usage{
-data(census_1981)
+census_1981
 }
 \description{
 State and district data from the 1981 Census with literacy and worker
 classification.
 }
+\section{Known defects}{
+
+The source is OCR'd and carries transcription errors. Of 420 rows with a
+rural and urban counterpart, 83 fail \code{rural + urban == total}; the largest
+gap is 101,809,324 in Himachal Pradesh \code{non_workers_males}, a powers-of-ten
+slip rather than rounding. District sums disagree with the state row in 19 of
+30 states. Check any column you rely on before trusting it.
+}
+
 \keyword{datasets}

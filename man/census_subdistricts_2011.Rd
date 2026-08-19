@@ -30,7 +30,7 @@ Collection, 1901-2026: Digitised Subnational Population and Administrative
 Datasets." Harvard Dataverse. \doi{10.7910/DVN/ON8CP8}.
 }
 \usage{
-data(census_subdistricts_2011)
+census_subdistricts_2011
 }
 \description{
 Subdistrict (tehsil/taluka) population from the 2011 Census.

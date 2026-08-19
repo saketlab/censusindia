@@ -36,10 +36,19 @@ Collection, 1901-2026: Digitised Subnational Population and Administrative
 Datasets." Harvard Dataverse. \doi{10.7910/DVN/ON8CP8}.
 }
 \usage{
-data(census_1971)
+census_1971
 }
 \description{
 State and district population from the 1971 Census with rural/urban
 breakdown and SC/ST populations.
 }
+\section{Known defects}{
+
+Population, males and females partition exactly into rural and urban. The
+SC/ST columns do not: one \code{sc_population} row and five \code{st_population} rows
+fail \code{rural + urban == total}, the largest gaps being 493,272 (Hooghly, SC)
+and 472,910 (Jhabua, ST). District coverage is also short of the state total
+for Mysore and Tamil Nadu.
+}
+
 \keyword{datasets}

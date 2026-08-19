@@ -1,0 +1,136 @@
+---
+title: "District population overview"
+output:
+  rmarkdown::html_vignette:
+    self_contained: false
+vignette: >
+  %\VignetteIndexEntry{District population overview}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 9,
+  fig.height = 7,
+  warning = FALSE,
+  message = FALSE,
+  dpi = 150
+)
+```
+
+```{r load}
+library(censusindia)
+library(dplyr)
+library(ggplot2)
+library(sf)
+library(scales)
+```
+
+```{r data}
+data(census_2011_pca)
+
+districts <- census_2011_pca |>
+  mutate(
+    sc_pct = 100 * sc_population / population_total,
+    st_pct = 100 * st_population / population_total
+  )
+
+boundaries <- get_census_boundaries(2011, "district")
+
+state_bounds <- get_census_boundaries(2011, "state")
+
+map_df <- boundaries |>
+  mutate(pop_key = paste0(
+    gsub("[^a-z0-9]", "", tolower(state_name_harmonized)), "_",
+    gsub("[^a-z0-9]", "", tolower(district_name))
+  )) |>
+  left_join(
+    districts |>
+      mutate(pop_key = paste0(
+        gsub("[^a-z0-9]", "", tolower(state_name_harmonized)), "_",
+        gsub("[^a-z0-9]", "", tolower(name))
+      )) |>
+      select(pop_key, population_total, sc_pct, st_pct),
+    by = "pop_key"
+  )
+```
+
+```{r map-population}
+ggplot() +
+  geom_sf(data = boundaries, fill = "grey80", color = "grey85", linewidth = 0.03) +
+  geom_sf(data = map_df, aes(fill = population_total), color = "grey60", linewidth = 0.05) +
+  geom_sf(data = state_bounds, fill = NA, color = "grey20", linewidth = 0.4) +
+  scale_fill_viridis_c(
+    option = "viridis", direction = 1, begin = 0.1, end = 0.9,
+    name = "Population", labels = label_comma(), trans = "log10",
+    na.value = "grey70"
+  ) +
+  labs(
+    title = "District population (Census 2011)",
+    subtitle = "Log scale — Thane (MH) at 11 million, Dibang Valley (AR) at 8,000"
+  ) +
+  theme_void() +
+  theme(
+    plot.title = element_text(face = "bold", size = 13, hjust = 0.5),
+    plot.subtitle = element_text(size = 10, color = "grey40", hjust = 0.5),
+    legend.position = c(0.15, 0.25)
+  )
+```
+
+```{r map-sc}
+ggplot() +
+  geom_sf(data = boundaries, fill = "grey80", color = "grey85", linewidth = 0.03) +
+  geom_sf(data = map_df, aes(fill = sc_pct), color = "grey60", linewidth = 0.05) +
+  geom_sf(data = state_bounds, fill = NA, color = "grey20", linewidth = 0.4) +
+  scale_fill_distiller(
+    palette = "YlOrRd", direction = 1,
+    name = "SC (%)", labels = label_number(suffix = "%"),
+    na.value = "grey70"
+  ) +
+  labs(
+    title = "Scheduled Caste population share (Census 2011)"
+  ) +
+  theme_void() +
+  theme(
+    plot.title = element_text(face = "bold", size = 13, hjust = 0.5),
+    legend.position = c(0.15, 0.25)
+  )
+```
+
+```{r map-st}
+ggplot() +
+  geom_sf(data = boundaries, fill = "grey80", color = "grey85", linewidth = 0.03) +
+  geom_sf(data = map_df, aes(fill = st_pct), color = "grey60", linewidth = 0.05) +
+  geom_sf(data = state_bounds, fill = NA, color = "grey20", linewidth = 0.4) +
+  scale_fill_distiller(
+    palette = "Greens", direction = 1,
+    name = "ST (%)", labels = label_number(suffix = "%"),
+    na.value = "grey70"
+  ) +
+  labs(
+    title = "Scheduled Tribe population share (Census 2011)"
+  ) +
+  theme_void() +
+  theme(
+    plot.title = element_text(face = "bold", size = 13, hjust = 0.5),
+    legend.position = c(0.15, 0.25)
+  )
+```
+
+```{r table-top-bottom}
+districts |>
+  arrange(desc(population_total)) |>
+  slice(c(1:10, (n() - 9):n())) |>
+  mutate(
+    rank = c(1:10, (nrow(districts) - 9):nrow(districts)),
+    population_total = format(population_total, big.mark = ",")
+  ) |>
+  select(rank, name, state_name_harmonized, population_total) |>
+  knitr::kable(
+    col.names = c("Rank", "District", "State/UT", "Population"),
+    caption = "Ten most and least populous districts (Census 2011)"
+  )
+```

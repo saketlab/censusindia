@@ -2,15 +2,15 @@ Package: censusindia
 Title: Census of India data for R
 Version: 0.0.0.9000
 Authors@R:
-    person("Saket", "Choudhary", email = "saketkc@gmail.com",
-           role = c("aut", "cre"))
+    person("Saket", "Choudhary", , "saketc@iitb.ac.in", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0001-5202-7633"))
 Description: Digitised Census of India data from 1901 to 2011: population time
     series, primary census abstracts at state and district levels, mother
     tongue tables, SC/ST and tribal populations, and administrative
     directories. Census variables can be retrieved with geographic boundaries
     attached for mapping.
 License: MIT + file LICENSE
-URL: https://saketlab.github.io/censusindia/, https://github.com/saketlab/censusindia
+URL: https://censusindia.saketlab.org/, https://github.com/saketlab/censusindia
 BugReports: https://github.com/saketlab/censusindia/issues
 Depends:
     R (>= 4.1.0)
@@ -23,6 +23,7 @@ Imports:
     tibble
 Suggests:
     biscale,
+    DT,
     ggplot2,
     gganimate,
     ggrepel,
@@ -39,6 +40,6 @@ VignetteBuilder: knitr
 Config/testthat/edition: 3
 Encoding: UTF-8
 LazyData: true
-LazyDataCompression: xz
+LazyDataCompression: gzip
 Roxygen: list(markdown = TRUE)
 Config/roxygen2/version: 8.0.0

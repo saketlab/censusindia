@@ -10,7 +10,7 @@ get_census(
   variables = NULL,
   state = NULL,
   geometry = FALSE,
-  sector = "total"
+  sector = c("total", "rural", "urban")
 )
 }
 \arguments{

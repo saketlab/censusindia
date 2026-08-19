@@ -29,10 +29,6 @@ library(ggplot2)
 library(tidyr)
 ```
 
-## State ranking changes (1901-2011)
-
-State populations have shifted substantially over 110 years.
-
 ```{r rankings, fig.height=10}
 rankings <- census_population_time_series |>
   filter(geography == "state", year %in% c(1901, 2011)) |>
@@ -81,8 +77,6 @@ ggplot(rankings, aes(x = factor(year), y = rank, group = state_name_harmonized))
   )
 ```
 
-## State population trajectories
-
 ```{r trajectories, fig.height=12, fig.width=12}
 state_trajectories <- census_population_time_series |>
   filter(geography == "state") |>
@@ -130,8 +124,6 @@ ggplot(state_trajectories, aes(year, pop_scaled)) +
     strip.text = element_text(size = 8)
   )
 ```
-
-## Decadal growth rates
 
 ```{r growth-rates, fig.height=10}
 growth_data <- census_population_time_series |>

@@ -22,3 +22,6 @@
 ^Meta$
 ^vignettes/.*\.csv$
 ^vignettes/clustering-methodology\.md$
+^parquet$
+^geoparquet$
+^\.positai$

@@ -29,7 +29,7 @@ A tibble with 751,594 rows and 28 columns:
 Census of India 2011, Primary Census Abstract.
 }
 \usage{
-data(census_2011_demographics)
+census_2011_demographics
 }
 \description{
 Population, SC/ST, and literacy counts from the 2011 Primary Census

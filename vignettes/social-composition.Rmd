@@ -31,10 +31,6 @@ library(ggridges)
 library(patchwork)
 ```
 
-## SC/ST/General composition
-
-Each district has a different mix of Scheduled Caste, Scheduled Tribe, and general population. Ternary plots show these three-way proportions at a glance.
-
 ```{r composition, fig.height=8, fig.width=10}
 composition <- census_2011_pca |>
   filter(geography == "district") |>
@@ -60,8 +56,6 @@ ggtern(composition, aes(x = sc_pct, y = st_pct, z = general_pct)) +
     ggtern.panel.background = element_rect(fill = "white")
   )
 ```
-
-## Regional patterns
 
 ```{r regional, fig.height=10, fig.width=12}
 regions <- tibble::tribble(
@@ -136,8 +130,6 @@ ggtern(composition_region, aes(x = sc_pct, y = st_pct, z = general_pct)) +
   )
 ```
 
-## SC population distribution by state
-
 ```{r sc-distribution, fig.height=12}
 state_order <- composition |>
   group_by(state_name_harmonized) |>
@@ -160,8 +152,6 @@ composition |>
   theme_minimal() +
   theme(legend.position = "right")
 ```
-
-## ST population distribution by state
 
 ```{r st-distribution, fig.height=12}
 state_order_st <- composition |>
@@ -186,13 +176,12 @@ composition |>
   theme(legend.position = "right")
 ```
 
-## Linguistic diversity vs social composition
-
 ```{r diversity-composition, fig.height=6, fig.width=10}
 diversity <- census_2011_mother_tongue |>
   filter(language_level == "L1", district_code != "000", !grepl("Others", language_name)) |>
-  group_by(state_name, district_code, area_name) |>
-  mutate(proportion = total_persons / sum(total_persons)) |>
+  group_by(state_name, district_code, language_name) |>
+  summarise(speakers = sum(total_persons), .groups = "drop_last") |>
+  mutate(proportion = speakers / sum(speakers)) |>
   summarise(
     effective_languages = 2^(-sum(proportion * log2(proportion), na.rm = TRUE)),
     .groups = "drop"

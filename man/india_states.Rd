@@ -15,7 +15,7 @@ A tibble with 36 rows and 5 columns:
 }
 }
 \usage{
-data(india_states)
+india_states
 }
 \description{
 States and union territories with codes, abbreviations, and regions.

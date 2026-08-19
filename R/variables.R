@@ -15,8 +15,15 @@
 #' @export
 list_census_variables <- function(year = NULL, geography = NULL, category = NULL) {
   vars <- censusindia::census_variables
-  if (!is.null(year)) vars <- vars |> dplyr::filter(grepl(as.character(year), .data$years))
-  if (!is.null(geography)) vars <- vars |> dplyr::filter(grepl(geography, .data$geographies))
+  in_list <- function(col, value) {
+    vapply(strsplit(col, ",", fixed = TRUE), function(v) {
+      any(trimws(v) == as.character(value))
+    }, logical(1))
+  }
+  if (!is.null(year)) vars <- vars[in_list(vars$years, year) & !is.na(vars$years), ]
+  if (!is.null(geography)) {
+    vars <- vars[in_list(vars$geographies, geography) & !is.na(vars$geographies), ]
+  }
   if (!is.null(category)) vars <- vars |> dplyr::filter(.data$category == .env$category)
   vars
 }
@@ -44,18 +51,17 @@ list_census_geographies <- function() {
     1941L, "district", "Population time series",
     1951L, "state", "Population time series",
     1951L, "district", "Population time series",
-    1961L, "state", "Population time series",
-    1961L, "district", "Population time series + Literacy",
+    1961L, "district", "Literacy table",
     1971L, "state", "Primary Census Abstract",
     1971L, "district", "Primary Census Abstract",
     1981L, "state", "Primary Census Abstract (detailed)",
     1981L, "district", "Primary Census Abstract (detailed)",
     1991L, "state", "Population time series",
     1991L, "district", "Population time series",
-    2001L, "state", "Population time series",
-    2001L, "district", "Population time series",
-    2011L, "state", "Population time series",
-    2011L, "district", "Population time series",
+    2001L, "state", "Primary Census Abstract",
+    2001L, "district", "Primary Census Abstract",
+    2011L, "state", "Primary Census Abstract",
+    2011L, "district", "Primary Census Abstract",
     2011L, "subdistrict", "Subdistrict directory"
   )
 }

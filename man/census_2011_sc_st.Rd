@@ -5,12 +5,13 @@
 \alias{census_2011_sc_st}
 \title{Census 2011 Scheduled Castes and Scheduled Tribes (A-10/A-11)}
 \format{
-A tibble with 14,028 rows and 8 columns:
+A tibble with 14,028 rows and 9 columns:
 \describe{
 \item{year}{Census year (2011)}
 \item{state_name_harmonized}{Harmonized state name for joining across datasets}
 \item{district_name}{Name of the district}
-\item{category}{"SC" or "ST"}
+\item{category}{\code{"Scheduled Caste"} or \code{"Scheduled Tribe"}, spelled out}
+\item{category_code}{\code{"SC"} or \code{"ST"}, for filtering by the short form}
 \item{caste_tribe_name}{Name of the caste or tribe}
 \item{population}{Population of the caste or tribe}
 \item{percentage}{Share of district population}
@@ -21,10 +22,24 @@ A tibble with 14,028 rows and 8 columns:
 Census of India 2011, A-10 (SC) and A-11 (ST) tables.
 }
 \usage{
-data(census_2011_sc_st)
+census_2011_sc_st
 }
 \description{
-District-level population of individual Scheduled Castes and Scheduled
-Tribes from the 2011 Census A-10 and A-11 tables.
+District-level Scheduled Caste and Scheduled Tribe population from the 2011
+Census A-10 and A-11 tables.
+}
+\details{
+The two categories are not symmetric. Scheduled Tribes are enumerated by
+name, 581 of them. Scheduled Castes are not: all 582 SC rows carry the single
+label \code{"All Scheduled Castes"}, one per district. Nothing in this package
+resolves caste below that aggregate.
+
+Filter with either spelling: \code{category} holds the long form, \code{category_code}
+holds \code{SC}/\code{ST}. \code{\link[=census_sc_st]{census_sc_st()}} accepts both.
+
+ST rows include \code{"Generic Tribes etc."}, the residual for members who
+returned no specific tribe: 585 rows, 2,804,148 people.
+\link{census_2011_tribes} is this table's ST rows with that residual removed and
+the names harmonised.
 }
 \keyword{datasets}

@@ -5,7 +5,7 @@
 \alias{census_2011_pca}
 \title{Census 2011 Primary Census Abstract (PCA)}
 \format{
-A tibble with 593 rows and 19 columns:
+A tibble with 640 rows and 19 columns:
 \describe{
 \item{year}{Census year (2011)}
 \item{geography}{Geographic level ("district")}
@@ -34,10 +34,16 @@ Collection, 1901-2026: Digitised Subnational Population and Administrative
 Datasets." Harvard Dataverse. \doi{10.7910/DVN/ON8CP8}.
 }
 \usage{
-data(census_2011_pca)
+census_2011_pca
 }
 \description{
 District-level population, SC/ST, literacy, and worker statistics from
-the 2011 Census.
+the 2011 Census. Covers all 640 districts; \code{population_total} sums to
+1,210,854,977, the 2011 India total.
+}
+\details{
+Aggregated at district level from the village-level 2011 PCA that also
+backs \link{census_2011_demographics}, \link{census_2011_workers} and
+\link{census_2011_marginal_detail}. For the 2001 round see \link{census_2001_pca}.
 }
 \keyword{datasets}

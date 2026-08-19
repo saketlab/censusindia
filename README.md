@@ -46,21 +46,15 @@ ggplot(mh) +
 
 ## Vignettes
 
-- [Population maps](https://saketlab.github.io/censusindia/articles/population-maps.html)
-- [Population dynamics](https://saketlab.github.io/censusindia/articles/population-dynamics.html)
-- [Sex ratio evolution](https://saketlab.github.io/censusindia/articles/sex-ratio.html)
-- [SC/ST population distribution](https://saketlab.github.io/censusindia/articles/sc-st-population.html)
-- [Social composition](https://saketlab.github.io/censusindia/articles/social-composition.html)
-- [Linguistic diversity](https://saketlab.github.io/censusindia/articles/linguistic-diversity.html)
+- [Getting started](https://censusindia.saketlab.org/articles/getting-started.html)
+- [Primary Census Abstract, 2001 and 2011](https://censusindia.saketlab.org/articles/primary-census-abstract.html)
+- [Population maps](https://censusindia.saketlab.org/articles/population-maps.html)
+- [Population dynamics](https://censusindia.saketlab.org/articles/population-dynamics.html)
+- [Population projections](https://censusindia.saketlab.org/articles/population-projections.html)
+- [Sex ratio evolution](https://censusindia.saketlab.org/articles/sex-ratio.html)
+- [SC/ST population distribution](https://censusindia.saketlab.org/articles/sc-st-population.html)
+- [Social composition](https://censusindia.saketlab.org/articles/social-composition.html)
+- [Linguistic diversity](https://censusindia.saketlab.org/articles/linguistic-diversity.html)
+- [Tribal isolation and vulnerability](https://censusindia.saketlab.org/articles/tribal-isolation.html)
+- [District population overview](https://censusindia.saketlab.org/articles/district-population.html)
 
-## Data source
-
-Most datasets are derived from:
-
-> Jolad, Shivakumar and Singh, Madhav (2026). "Indian Census Data Collection, 1901-2026: Digitised Subnational Population and Administrative Datasets." Harvard Dataverse. https://doi.org/10.7910/DVN/ON8CP8
-
-The 2011 mother tongue data comes from the Census of India C-16 tables.
-
-## License
-
-MIT

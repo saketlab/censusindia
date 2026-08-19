@@ -26,8 +26,6 @@ library(dplyr)
 library(ggplot2)
 ```
 
-## State population
-
 ```{r data}
 years <- c(1941, 1951, 1961, 1971, 1981, 1991, 2001, 2011)
 
@@ -46,8 +44,6 @@ ggplot(pop_geo) +
   theme_void() +
   theme(strip.text = element_text(face = "bold"), legend.position = "bottom")
 ```
-
-## Decadal growth rate
 
 ```{r growth}
 growth_years <- c(1951, 1961, 1971, 1981, 1991, 2001, 2011)

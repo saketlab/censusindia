@@ -23,7 +23,7 @@ Collection, 1901-2026: Digitised Subnational Population and Administrative
 Datasets." Harvard Dataverse. \doi{10.7910/DVN/ON8CP8}.
 }
 \usage{
-data(census_1961_literacy)
+census_1961_literacy
 }
 \description{
 District-level literacy rates from the 1961 Census.

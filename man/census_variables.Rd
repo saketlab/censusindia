@@ -15,7 +15,7 @@ A tibble with 23 rows and 5 columns:
 }
 }
 \usage{
-data(census_variables)
+census_variables
 }
 \description{
 Available census variables with labels, years, geographic levels, and

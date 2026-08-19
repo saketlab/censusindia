@@ -88,21 +88,7 @@ get_population <- function(year = NULL,
 
 #' @noRd
 filter_population_by_state <- function(data, state) {
-  state_lookup <- censusindia::india_states
-
-  state_match <- if (toupper(state) %in% state_lookup$state_abbr) {
-    state_lookup$state_name_harmonized[state_lookup$state_abbr == toupper(state)]
-  } else {
-    # Try harmonized name match
-    hit <- state_lookup$state_name_harmonized[
-      tolower(state_lookup$state_name_harmonized) == tolower(state) |
-        tolower(state_lookup$state_name) == tolower(state)
-    ]
-    if (length(hit) > 0) hit[1] else state
-  }
-
+  wanted <- resolve_states(state, present = unique(data$state_name_harmonized))
   data |>
-    dplyr::filter(
-      tolower(.data$state_name_harmonized) == tolower(state_match)
-    )
+    dplyr::filter(tolower(.data$state_name_harmonized) %in% tolower(.env$wanted))
 }

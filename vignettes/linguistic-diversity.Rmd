@@ -22,10 +22,6 @@ knitr::opts_chunk$set(
 )
 ```
 
-The 2011 Census recorded over 19,500 languages and dialects across India. Shannon entropy and the effective number of languages summarize this diversity at the district level.
-
-## Load data
-
 ```{r load-packages}
 library(censusindia)
 library(dplyr)
@@ -40,26 +36,27 @@ census_2011_mother_tongue |>
   summarise(n_languages = n_distinct(language_name))
 ```
 
-The C-16 tables classify languages as:
-
-- **L1**: 22 Scheduled Languages recognized in the Constitution
-- **L2**: Dialects and variants within each scheduled language
-
-## Calculate Shannon entropy
-
-The **effective number of languages** ($2^H$) gives an intuitive interpretation: a district with $2^H = 4$ has diversity equivalent to four equally-spoken languages.
-
 ```{r calculate-entropy}
 calculate_diversity <- function(data, level) {
   data |>
     filter(language_level == level, district_code != "000", !grepl("Others", language_name)) |>
-    group_by(state_code, state_name, state_name_harmonized, district_code, area_name) |>
-    mutate(proportion = total_persons / sum(total_persons)) |>
+    group_by(state_code, state_name, state_name_harmonized, district_code, language_name) |>
+    summarise(speakers = sum(total_persons), .groups = "drop_last") |>
+    mutate(proportion = speakers / sum(speakers)) |>
     summarise(
       n_languages = n(),
       shannon_entropy = -sum(proportion * log2(proportion), na.rm = TRUE),
       effective_languages = 2^shannon_entropy,
       .groups = "drop"
+    ) |>
+    inner_join(
+      census_2011_pca |>
+        transmute(
+          state_code = sprintf("%02d", state_code),
+          district_code = sprintf("%03d", district_code),
+          district = name
+        ),
+      by = c("state_code", "district_code")
     )
 }
 
@@ -73,33 +70,12 @@ cat("\nL2 (Dialects):\n")
 summary(diversity_l2$effective_languages)
 ```
 
-## Prepare map data
-
 ```{r prepare-maps}
-districts_sf <- get_census_boundaries(2011, "district") |>
-  mutate(district_key = tolower(gsub("[^a-z0-9 ]", "", district_name)))
+map_l1 <- attach_geometry(diversity_l1, 2011, geography = "district")
+map_l2 <- attach_geometry(diversity_l2, 2011, geography = "district")
 
-prepare_diversity <- function(div_data) {
-  div_data |>
-    mutate(district_key = tolower(gsub("[^a-z0-9 ]", "", gsub(" District$", "", area_name))))
-}
-
-map_l1 <- left_join(
-  districts_sf,
-  prepare_diversity(diversity_l1) |> select(state_name_harmonized, district_key, effective_languages, n_languages),
-  by = c("state_name_harmonized", "district_key")
-)
-
-map_l2 <- left_join(
-  districts_sf,
-  prepare_diversity(diversity_l2) |> select(state_name_harmonized, district_key, effective_languages, n_languages),
-  by = c("state_name_harmonized", "district_key")
-)
+c(l1 = sum(!sf::st_is_empty(map_l1$geometry)), l2 = sum(!sf::st_is_empty(map_l2$geometry)))
 ```
-
-## L1: Scheduled languages
-
-### Diversity index (Shannon entropy)
 
 ```{r plot-l1-diversity, fig.width=10, fig.height=12}
 plot_map(
@@ -116,8 +92,6 @@ plot_map(
 )
 ```
 
-### Number of languages spoken
-
 ```{r plot-l1-count, fig.width=10, fig.height=12}
 plot_map(
   map_l1,
@@ -129,10 +103,6 @@ plot_map(
   show_state_boundaries = TRUE
 )
 ```
-
-## L2: Dialects
-
-### Diversity index (Shannon entropy)
 
 ```{r plot-l2-diversity, fig.width=10, fig.height=12}
 plot_map(
@@ -149,8 +119,6 @@ plot_map(
 )
 ```
 
-### Number of dialects spoken
-
 ```{r plot-l2-count, fig.width=10, fig.height=12}
 plot_map(
   map_l2,
@@ -163,18 +131,16 @@ plot_map(
 )
 ```
 
-## Most diverse districts
-
 ```{r compare-levels}
 cat("Top 10 by scheduled languages (L1):\n")
 diversity_l1 |>
   arrange(desc(effective_languages)) |>
-  select(state_name_harmonized, area_name, effective_languages) |>
+  select(state_name_harmonized, district, effective_languages) |>
   head(10)
 
 cat("\nTop 10 by dialects (L2):\n")
 diversity_l2 |>
   arrange(desc(effective_languages)) |>
-  select(state_name_harmonized, area_name, effective_languages) |>
+  select(state_name_harmonized, district, effective_languages) |>
   head(10)
 ```

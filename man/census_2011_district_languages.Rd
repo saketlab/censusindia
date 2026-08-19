@@ -24,7 +24,7 @@ A tibble with 38,993 rows and 11 columns:
 Census of India 2011, C-16 Mother Tongue Tables.
 }
 \usage{
-data(census_2011_district_languages)
+census_2011_district_languages
 }
 \description{
 Mother tongue speakers by language at district level from the 2011

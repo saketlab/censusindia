@@ -14,10 +14,13 @@ plot_map(
   reverse = FALSE,
   direction = NULL,
   na_color = "grey80",
+  boundary_year = NULL,
   show_state_boundaries = FALSE,
   state_boundary_color = "black",
   state_boundary_width = 0.3,
   trans = "identity",
+  midpoint = NULL,
+  oob = NULL,
   limits = NULL,
   breaks = NULL,
   labels = NULL
@@ -54,6 +57,10 @@ If both reverse and direction are specified, direction takes precedence.}
 
 \item{na_color}{Color for missing values. Default is "grey80"}
 
+\item{boundary_year}{Census year whose state boundaries to draw beneath the
+data, keeping India's full claimed extent on the map even where the census
+enumerates no districts. Defaults to the \code{year} column if present.}
+
 \item{show_state_boundaries}{Logical. Overlay state boundaries?}
 
 \item{state_boundary_color}{Color for state boundaries. Default is "black"}
@@ -62,6 +69,14 @@ If both reverse and direction are specified, direction takes precedence.}
 
 \item{trans}{Transformation for the color scale (e.g., "log10", "sqrt").
 Default is "identity" (no transformation)}
+
+\item{midpoint}{Value to centre a diverging palette on, e.g. \code{0} for growth
+or \code{1000} for a sex ratio. Without it the palette centres on the middle of
+\code{limits}, which is rarely the meaningful value.}
+
+\item{oob}{How to treat values outside \code{limits}. The ggplot2 default censors
+them to \code{na_color}, making them indistinguishable from genuinely missing
+data; pass \code{scales::squish} to clamp them to the nearest end instead.}
 
 \item{limits}{Optional limits for the color scale as c(min, max)}
 

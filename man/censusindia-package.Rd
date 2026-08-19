@@ -11,18 +11,18 @@ Digitised Census of India data from 1901 to 2011: population time series, primar
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://saketlab.github.io/censusindia/}
+  \item \url{https://censusindia.saketlab.org/}
   \item \url{https://github.com/saketlab/censusindia}
   \item Report bugs at \url{https://github.com/saketlab/censusindia/issues}
 }
 
 }
 \author{
-\strong{Maintainer}: Saket Choudhary \email{saketkc@gmail.com}
+\strong{Maintainer}: Saket Choudhary \email{saketc@iitb.ac.in} (\href{https://orcid.org/0000-0001-5202-7633}{ORCID})
 
 Authors:
 \itemize{
-  \item Saket Choudhary \email{saketkc@gmail.com}
+  \item Saket Choudhary \email{saketc@iitb.ac.in} (\href{https://orcid.org/0000-0001-5202-7633}{ORCID})
 }
 
 }

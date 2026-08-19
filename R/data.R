@@ -17,6 +17,16 @@
 #'   \item{variation_absolute}{Absolute change from previous census}
 #'   \item{variation_percent}{Percentage change from previous census}
 #' }
+#' @section Coverage limits:
+#' Sikkim, Mizoram and Daman & Diu are absent from every year, so 2011 sums to
+#' 1,208,903,947 across 626 districts rather than 1,210,854,977 across 640.
+#' [get_census()] uses the Primary Census Abstract for 2001 and 2011 instead.
+#' District rows also fall short of their state totals before 1961 (57 districts
+#' carry no population in 1901-1941) and in 1981, where all 27 Assam districts
+#' are missing while the state estimate is present. The `year` column further
+#' carries 1900, 1910, 1940, 1948, 1950, 1960, 1962 and 2021, which are not
+#' censuses; use [census_years()] before any `lag()`.
+#'
 #' @source Jolad, Shivakumar and Singh, Madhav (2026). "Indian Census Data
 #'   Collection, 1901-2026: Digitised Subnational Population and Administrative
 #'   Datasets." Harvard Dataverse. \doi{10.7910/DVN/ON8CP8}.
@@ -71,6 +81,13 @@
 #'   \item{st_population_rural}{Rural Scheduled Tribe population}
 #'   \item{st_population_urban}{Urban Scheduled Tribe population}
 #' }
+#' @section Known defects:
+#' Population, males and females partition exactly into rural and urban. The
+#' SC/ST columns do not: one `sc_population` row and five `st_population` rows
+#' fail `rural + urban == total`, the largest gaps being 493,272 (Hooghly, SC)
+#' and 472,910 (Jhabua, ST). District coverage is also short of the state total
+#' for Mysore and Tamil Nadu.
+#'
 #' @source Jolad, Shivakumar and Singh, Madhav (2026). "Indian Census Data
 #'   Collection, 1901-2026: Digitised Subnational Population and Administrative
 #'   Datasets." Harvard Dataverse. \doi{10.7910/DVN/ON8CP8}.
@@ -103,6 +120,13 @@
 #'   \item{other_workers_persons}{Other workers}
 #'   \item{non_workers_persons}{Non-workers}
 #' }
+#' @section Known defects:
+#' The source is OCR'd and carries transcription errors. Of 420 rows with a
+#' rural and urban counterpart, 83 fail `rural + urban == total`; the largest
+#' gap is 101,809,324 in Himachal Pradesh `non_workers_males`, a powers-of-ten
+#' slip rather than rounding. District sums disagree with the state row in 19 of
+#' 30 states. Check any column you rely on before trusting it.
+#'
 #' @source Jolad, Shivakumar and Singh, Madhav (2026). "Indian Census Data
 #'   Collection, 1901-2026: Digitised Subnational Population and Administrative
 #'   Datasets." Harvard Dataverse. \doi{10.7910/DVN/ON8CP8}.
@@ -196,9 +220,14 @@
 #' Census 2011 Primary Census Abstract (PCA)
 #'
 #' District-level population, SC/ST, literacy, and worker statistics from
-#' the 2011 Census.
+#' the 2011 Census. Covers all 640 districts; `population_total` sums to
+#' 1,210,854,977, the 2011 India total.
 #'
-#' @format A tibble with 593 rows and 19 columns:
+#' Aggregated at district level from the village-level 2011 PCA that also
+#' backs [census_2011_demographics], [census_2011_workers] and
+#' [census_2011_marginal_detail]. For the 2001 round see [census_2001_pca].
+#'
+#' @format A tibble with 640 rows and 19 columns:
 #' \describe{
 #'   \item{year}{Census year (2011)}
 #'   \item{geography}{Geographic level ("district")}
@@ -224,6 +253,79 @@
 #'   Collection, 1901-2026: Digitised Subnational Population and Administrative
 #'   Datasets." Harvard Dataverse. \doi{10.7910/DVN/ON8CP8}.
 "census_2011_pca"
+
+#' Census 2001 Primary Census Abstract (PCA)
+#'
+#' District-level population, SC/ST, literacy, and worker statistics from
+#' the 2001 Census. Covers 593 districts; `population_total` sums to
+#' 1,028,610,328, the 2001 India total.
+#'
+#' Use 2001 boundaries with [attach_geometry()]. Districts are 2001 vintage,
+#' so the 2011 boundary file has no polygon for several of them and will
+#' mismatch others: `North Cachar Hills` (renamed Dima Hasao in 2010) and an
+#' undivided `Medinipur` (split into Purba and Paschim in 2002) both resolve
+#' to the wrong 2011 district. See [census_2011_pca] for the 2011 round.
+#'
+#' Until version 0.0.0.9000 this table shipped as `census_2011_pca` with a
+#' hard-coded `year` of 2011.
+#'
+#' @format A tibble with 593 rows and 19 columns:
+#' \describe{
+#'   \item{year}{Census year (2001)}
+#'   \item{geography}{Geographic level ("district")}
+#'   \item{state_code}{Numeric state code}
+#'   \item{state_name}{Name of the state}
+#'   \item{state_name_harmonized}{Harmonized state name for joining across datasets}
+#'   \item{district_code}{Numeric district code}
+#'   \item{name}{Name of the district}
+#'   \item{households}{Number of households}
+#'   \item{population_total}{Total population}
+#'   \item{population_male}{Male population}
+#'   \item{population_female}{Female population}
+#'   \item{population_0_6}{Population aged 0-6 years}
+#'   \item{sc_population}{Scheduled Caste population}
+#'   \item{st_population}{Scheduled Tribe population}
+#'   \item{literate_total}{Total literate population}
+#'   \item{workers_total}{Total workers}
+#'   \item{main_workers}{Main workers}
+#'   \item{marginal_workers}{Marginal workers}
+#'   \item{non_workers}{Non-workers}
+#' }
+#' @source Census of India 2001, Primary Census Abstract.
+"census_2001_pca"
+
+#' Census 2001 Primary Census Abstract, full indicator set
+#'
+#' The complete published 2001 PCA at district level: every indicator split by
+#' sex, and each district given for total, rural and urban. 593 districts x 3
+#' sectors = 1,779 rows.
+#'
+#' [census_2001_pca] is the narrower 19-column view of the same data, kept for
+#' the columns it shares with [census_2011_pca].
+#'
+#' @format A tibble with 1,779 rows and 47 columns. Beyond the identifiers
+#'   (`year`, `geography`, `state_code`, `state_name`, `district_code`, `name`,
+#'   `sector`) each indicator appears with a \code{_total}, \code{_male} and \code{_female} suffix:
+#' \describe{
+#'   \item{households}{Number of households}
+#'   \item{population_total, population_male, population_female}{Total population}
+#'   \item{pop_0_6_total, pop_0_6_male, pop_0_6_female}{Population aged 0-6 years}
+#'   \item{sc_total, sc_male, sc_female}{Scheduled Caste population}
+#'   \item{st_total, st_male, st_female}{Scheduled Tribe population}
+#'   \item{literate_total, literate_male, literate_female}{Literate population}
+#'   \item{illiterate_total, illiterate_male, illiterate_female}{Illiterate population}
+#'   \item{workers_total, workers_male, workers_female}{All workers}
+#'   \item{main_workers_total, main_workers_male, main_workers_female}{Main workers}
+#'   \item{marginal_workers_total, marginal_workers_male, marginal_workers_female}{Marginal workers}
+#'   \item{main_cultivators_total, main_agri_labour_total,
+#'     main_hh_industry_total, main_other_total}{Main workers by category}
+#'   \item{marginal_cultivators_total, marginal_agri_labour_total,
+#'     marginal_hh_industry_total, marginal_other_total}{Marginal workers by category}
+#'   \item{non_workers_total, non_workers_male, non_workers_female}{Non-workers}
+#' }
+#' @source Census of India 2001, Primary Census Abstract (series
+#'   `PC01_PCA_TOT`), downloaded by `data-raw/fetch_2001_pca.py`.
+"census_2001_pca_full"
 
 #' Population projections -- state level (2011-2036)
 #'
@@ -281,6 +383,12 @@
 #'   \item{females}{Projected female population}
 #'   \item{population}{Projected total population (males + females)}
 #' }
+#' @section Do not aggregate:
+#' District values do not reconcile to the state table. Summing all districts at
+#' 2021 gives 2,715,393,155 against an India projection of 1,363,006,000, a
+#' factor of 1.99, and all 37 states/UTs are outside 1 percent. Use
+#' [population_projections_district] instead, which sums to its state table.
+#'
 #' @source Ministry of Health and Family Welfare, Government of India.
 #'   Population Projections for India and States 2011-2036. District
 #'   scaling from India_Population_Estimates project using spatial
@@ -397,9 +505,11 @@
 #' Census 2011 subdistrict languages (C-16)
 #'
 #' Mother tongue speakers by language at subdistrict level from the 2011
-#' Census C-16 tables, with male/female and rural/urban breakdowns.
+#' Census C-16 tables, with male/female and rural/urban breakdowns. The
+#' district rows that share each subdistrict's `district_code` are excluded,
+#' so these rows sum to the matching row of [census_2011_district_languages].
 #'
-#' @format A tibble with 183,127 rows and 11 columns:
+#' @format A tibble with 144,134 rows and 11 columns:
 #' \describe{
 #'   \item{state_code}{Numeric state code}
 #'   \item{state_name_harmonized}{Harmonized state name for joining across datasets}
@@ -419,9 +529,13 @@
 #' Census 2011 linguistic diversity
 #'
 #' District-level linguistic diversity metrics derived from the 2011 Census
-#' C-16 mother tongue tables.
+#' C-16 mother tongue tables, counting named mother tongues only. C-16 files
+#' the unscheduled languages of the northeast under per-group "Others"
+#' residuals, which carry no language name and are excluded; `coverage`
+#' reports the share of the district the metrics are computed from, and falls
+#' below 0.9 in 34 districts and below 0.5 in 7.
 #'
-#' @format A tibble with 640 rows and 10 columns:
+#' @format A tibble with 640 rows and 11 columns:
 #' \describe{
 #'   \item{state_name_harmonized}{Harmonized state name for joining across datasets}
 #'   \item{state_code}{Numeric state code}
@@ -429,25 +543,40 @@
 #'   \item{n_languages}{Number of distinct languages spoken}
 #'   \item{total_speakers}{Total speakers across all languages}
 #'   \item{shannon_entropy}{Shannon entropy of the language distribution}
-#'   \item{effective_languages}{Effective number of languages (exp of Shannon entropy)}
+#'   \item{effective_languages}{Effective number of languages (2^shannon_entropy)}
 #'   \item{dominant_language}{Most-spoken language}
 #'   \item{dominant_share}{Share of speakers of the dominant language}
 #'   \item{district_name}{Name of the district}
+#'   \item{coverage}{Share of district population in named mother tongues}
 #' }
 #' @source Census of India 2011, C-16 Mother Tongue Tables (derived).
 "census_2011_linguistic_diversity"
 
 #' Census 2011 Scheduled Castes and Scheduled Tribes (A-10/A-11)
 #'
-#' District-level population of individual Scheduled Castes and Scheduled
-#' Tribes from the 2011 Census A-10 and A-11 tables.
+#' District-level Scheduled Caste and Scheduled Tribe population from the 2011
+#' Census A-10 and A-11 tables.
 #'
-#' @format A tibble with 14,028 rows and 8 columns:
+#' The two categories are not symmetric. Scheduled Tribes are enumerated by
+#' name, 581 of them. Scheduled Castes are not: all 582 SC rows carry the single
+#' label `"All Scheduled Castes"`, one per district. Nothing in this package
+#' resolves caste below that aggregate.
+#'
+#' Filter with either spelling: `category` holds the long form, `category_code`
+#' holds `SC`/`ST`. [census_sc_st()] accepts both.
+#'
+#' ST rows include `"Generic Tribes etc."`, the residual for members who
+#' returned no specific tribe: 585 rows, 2,804,148 people.
+#' [census_2011_tribes] is this table's ST rows with that residual removed and
+#' the names harmonised.
+#'
+#' @format A tibble with 14,028 rows and 9 columns:
 #' \describe{
 #'   \item{year}{Census year (2011)}
 #'   \item{state_name_harmonized}{Harmonized state name for joining across datasets}
 #'   \item{district_name}{Name of the district}
-#'   \item{category}{"SC" or "ST"}
+#'   \item{category}{`"Scheduled Caste"` or `"Scheduled Tribe"`, spelled out}
+#'   \item{category_code}{`"SC"` or `"ST"`, for filtering by the short form}
 #'   \item{caste_tribe_name}{Name of the caste or tribe}
 #'   \item{population}{Population of the caste or tribe}
 #'   \item{percentage}{Share of district population}
@@ -459,7 +588,21 @@
 #' Census 2011 Scheduled Tribes (A-11)
 #'
 #' District-level population of individual Scheduled Tribes from the 2011
-#' Census A-11 tables, with original (un-harmonized) tribe names retained.
+#' Census A-11 tables. `tribe_name` is harmonised; `tribe_name_original` keeps
+#' the source string verbatim, including the full synonym list the census
+#' publishes ("Gond, Arakh, Arrakh, Agaria, ...") and any parenthetical
+#' district qualifier.
+#'
+#' Harmonisation takes the first synonym and drops the qualifier, so
+#' `"Thoti (in Adilabad, Hyderabad, ...)"` becomes `"Thoti"`. That collapses 581
+#' source strings to 483 tribe names, and it is deliberate: the same tribe is
+#' written differently across states, sometimes differing only in whitespace.
+#'
+#' These are the ST rows of [census_2011_sc_st] with `"Generic Tribes etc."`
+#' removed, which is why the population here sums to 103,409,280 rather than the
+#' 106,213,428 in that table. Neither figure equals the 104,545,716 in
+#' `census_2011_pca$st_population`; the A-11 tables and the Primary Census
+#' Abstract do not reconcile, so pick one source per analysis and say which.
 #'
 #' @format A tibble with 12,861 rows and 8 columns:
 #' \describe{

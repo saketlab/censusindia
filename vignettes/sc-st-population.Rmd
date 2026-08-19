@@ -31,8 +31,6 @@ library(biscale)
 library(patchwork)
 ```
 
-Scheduled Castes (SC) and Scheduled Tribes (ST) are constitutionally recognized groups in India. SC populations concentrate in the Indo-Gangetic plain; ST populations cluster along the central tribal belt, the northeast, and the Western Ghats.
-
 ```{r data}
 sc_st_2011 <- census_2011_pca |>
   mutate(
@@ -50,10 +48,6 @@ sc_st_1971 <- census_1971 |>
   attach_geometry(year = 1971, geography = "district")
 ```
 
-## Scheduled Caste population
-
-### SC: 2011
-
 ```{r sc-map-2011, fig.height=10}
 plot_map(
   sc_st_2011,
@@ -65,8 +59,6 @@ plot_map(
   show_state_boundaries = TRUE
 )
 ```
-
-### SC: 1971 vs 2011
 
 ```{r compare-sc}
 compare_maps(
@@ -81,10 +73,6 @@ compare_maps(
 )
 ```
 
-## Scheduled Tribe population
-
-### ST: 2011
-
 ```{r st-map-2011, fig.height=10}
 plot_map(
   sc_st_2011,
@@ -96,8 +84,6 @@ plot_map(
   show_state_boundaries = TRUE
 )
 ```
-
-### ST: 1971 vs 2011
 
 ```{r compare-st}
 compare_maps(
@@ -111,8 +97,6 @@ compare_maps(
   palette = "greens"
 )
 ```
-
-## State-level summary (2011)
 
 ```{r state-summary}
 state_summary <- census_2011_pca |>
@@ -141,10 +125,6 @@ state_summary |>
   head(5)
 ```
 
-## Bivariate choropleth: SC and ST together
-
-A bivariate choropleth shows both SC and ST percentages simultaneously. One axis represents SC concentration, the other ST concentration.
-
 ```{r bivariate-map, fig.height=10}
 boundaries <- get_census_boundaries(2011, "district")
 
@@ -169,8 +149,6 @@ legend <- bi_legend(pal = "BlueOr", dim = 3, xlab = "SC % ", ylab = "ST % ", siz
 
 map + inset_element(legend, left = 0.7, bottom = 0.05, right = 0.95, top = 0.3)
 ```
-
-## SC vs ST scatter plot
 
 ```{r scatter, fig.height=6}
 scatter_data <- sf::st_drop_geometry(sc_st_2011) |>

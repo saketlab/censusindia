@@ -1,0 +1,587 @@
+---
+title: "Population projections"
+output:
+  rmarkdown::html_vignette:
+    self_contained: true
+vignette: >
+  %\VignetteIndexEntry{Population projections}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  echo = TRUE,
+  fig.width = 9,
+  fig.height = 6,
+  fig.align = "center",
+  warning = FALSE,
+  message = FALSE,
+  dev = "png",
+  dpi = 150
+)
+```
+
+```{r load}
+library(censusindia)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+
+state <- get_population(geography = "state") |>
+  filter(state_name_harmonized != "India")
+india <- get_population(geography = "state") |>
+  filter(state_name_harmonized == "India")
+dist <- get_population(geography = "district")
+lgd <- get_population(geography = "district", boundary = "lgd")
+```
+
+```{r design}
+INK <- "#1c1c1c"
+INK_MUTED <- "#6b6b6b"
+ACCENT <- get_palette("blues")[8]
+DIV_LOW <- get_palette("blue_red")[2]
+DIV_MID <- "grey92"
+DIV_HIGH <- get_palette("blue_red")[10]
+YEAR_COLS <- c(`2011` = "#999999", `2031` = ACCENT)
+
+theme_proj <- theme_minimal(base_size = 11) +
+  theme(
+    plot.title = element_text(face = "bold", size = rel(1.15), colour = INK),
+    plot.subtitle = element_text(colour = INK_MUTED, margin = margin(b = 10)),
+    plot.caption = element_text(colour = INK_MUTED, size = rel(0.8), hjust = 0),
+    plot.title.position = "plot",
+    plot.caption.position = "plot",
+    axis.title = element_text(colour = INK_MUTED, size = rel(0.9)),
+    axis.text = element_text(colour = INK_MUTED),
+    panel.grid.minor = element_blank(),
+    panel.grid.major = element_line(colour = "grey92", linewidth = 0.3),
+    strip.text = element_text(face = "bold", size = rel(0.8), colour = INK),
+    legend.position = "bottom",
+    legend.key.height = unit(0.35, "cm")
+  )
+theme_set(theme_proj)
+
+theme_map <- theme_void(base_size = 11) +
+  theme(
+    plot.title = element_text(face = "bold", colour = INK),
+    plot.subtitle = element_text(colour = INK_MUTED, margin = margin(b = 8)),
+    legend.position = "right", legend.key.width = unit(0.4, "cm")
+  )
+
+SRC <- "Source: MOHFW, Population Projections for India and States 2011-2036 (Census 2011 base)"
+```
+
+```{r national, fig.height = 8}
+nat <- india |>
+  arrange(year) |>
+  mutate(
+    increment = population - lag(population),
+    sex_ratio = 1000 * females / males
+  )
+
+ends <- filter(nat, year %in% c(2011, 2036))
+
+p_pop <- ggplot(nat, aes(year, population / 1e9)) +
+  geom_line(linewidth = 0.8, colour = ACCENT) +
+  geom_point(data = ends, size = 2.2, colour = ACCENT) +
+  geom_text(
+    data = ends,
+    aes(label = sprintf("%.2f B", population / 1e9)),
+    vjust = -1.1, size = 3.4, colour = INK
+  ) +
+  scale_y_continuous(labels = scales::number_format(accuracy = 0.1), expand = expansion(mult = c(0.05, 0.15))) +
+  labs(
+    x = NULL, y = "Billions",
+    title = sprintf(
+      "India's population is projected to increase by %.0f million between 2011 and 2036",
+      diff(range(ends$population)) / 1e6
+    )
+  )
+
+p_inc <- ggplot(filter(nat, !is.na(increment)), aes(year, increment / 1e6)) +
+  geom_col(fill = ACCENT, width = 0.7) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.08))) +
+  labs(
+    x = NULL, y = "Millions added",
+    title = sprintf(
+      "Annual additions fall from %.1f to %.1f million",
+      nat$increment[2] / 1e6, nat$increment[nrow(nat)] / 1e6
+    )
+  )
+
+p_sr <- ggplot(nat, aes(year, sex_ratio)) +
+  geom_line(linewidth = 0.8, colour = ACCENT) +
+  scale_y_continuous(expand = expansion(mult = c(0.1, 0.1))) +
+  labs(
+    x = NULL, y = "Females per 1,000 males",
+    title = sprintf(
+      "National sex ratio is projected to rise from %.0f to %.0f",
+      nat$sex_ratio[1], nat$sex_ratio[nrow(nat)]
+    ),
+    caption = SRC
+  )
+
+patchwork::wrap_plots(p_pop, p_inc, p_sr, ncol = 1)
+```
+
+```{r trajectories, fig.height = 10, fig.width = 9.5}
+india_idx <- india |>
+  mutate(index = 100 * population / population[year == 2011]) |>
+  select(year, india_index = index)
+
+idx <- state |>
+  group_by(state_name_harmonized) |>
+  mutate(
+    index = 100 * population / population[year == 2011],
+    final = index[year == 2036]
+  ) |>
+  ungroup() |>
+  mutate(state_name_harmonized = reorder(state_name_harmonized, -final)) |>
+  left_join(india_idx, by = "year")
+
+ggplot(idx, aes(year)) +
+  geom_hline(yintercept = 100, colour = "grey85", linewidth = 0.3) +
+  geom_line(aes(y = india_index), colour = "grey70", linewidth = 0.5) +
+  geom_line(aes(y = index), colour = ACCENT, linewidth = 0.7) +
+  facet_wrap(~state_name_harmonized, ncol = 6, labeller = label_wrap_gen(18)) +
+  scale_x_continuous(breaks = c(2011, 2036), labels = c("'11", "'36")) +
+  scale_y_log10(breaks = c(100, 200, 400, 800)) +
+  labs(
+    x = NULL, y = "Population index (2011 = 100, log scale)",
+    title = "Population projections per state (basis 2011 population)",
+    subtitle = "Log scale: parallel slopes = equal growth rates. Ordered by 2036 index. Grey line = India",
+    caption = SRC
+  )
+```
+
+```{r growth-heatmap, fig.height = 9}
+gr <- state |>
+  arrange(state_name_harmonized, year) |>
+  group_by(state_name_harmonized) |>
+  mutate(growth = 100 * (population / lag(population) - 1)) |>
+  mutate(final_growth = growth[year == 2036]) |>
+  ungroup() |>
+  filter(!is.na(growth)) |>
+  mutate(state_name_harmonized = reorder(state_name_harmonized, final_growth))
+
+ggplot(gr, aes(year, state_name_harmonized, fill = growth)) +
+  geom_tile(colour = "white", linewidth = 0.25) +
+  scale_fill_gradient2(
+    low = DIV_LOW, mid = DIV_MID, high = DIV_HIGH, midpoint = 0,
+    limits = c(-0.5, 2.5), oob = scales::squish,
+    name = "Annual growth (%)"
+  ) +
+  scale_x_continuous(expand = c(0, 0), breaks = seq(2015, 2035, 5)) +
+  labs(
+    x = NULL, y = NULL,
+    title = "Year-on-year growth rate by state, 2012-2036",
+    subtitle = "Ordered by 2036 growth rate. Blue = shrinking. Scale capped at 2.5% (Daman & Diu, D&NH run to 12%)",
+    caption = SRC
+  ) +
+  theme(panel.grid = element_blank(), legend.key.width = unit(1.6, "cm"))
+```
+
+```{r terminal-growth, fig.height = 8}
+XMAX <- 2.3
+
+term <- gr |>
+  filter(year == 2036) |>
+  mutate(
+    state_name_harmonized = reorder(state_name_harmonized, growth),
+    shrinking = growth < 0,
+    shown = pmin(growth, XMAX)
+  )
+
+ggplot(term, aes(shown, state_name_harmonized)) +
+  geom_vline(xintercept = 0, colour = "grey60", linewidth = 0.4) +
+  geom_segment(aes(x = 0, xend = shown, yend = state_name_harmonized, colour = shrinking), linewidth = 0.5) +
+  geom_point(aes(colour = shrinking), size = 2.4) +
+  geom_text(
+    data = filter(term, growth > XMAX),
+    aes(label = sprintf("%.1f%% >", growth)), hjust = 1.15, size = 3, colour = INK
+  ) +
+  scale_colour_manual(values = c(`FALSE` = DIV_HIGH, `TRUE` = DIV_LOW), guide = "none") +
+  scale_x_continuous(limits = c(NA, XMAX)) +
+  labs(
+    x = "Growth in the final projected year (%)", y = NULL,
+    title = "Tamil Nadu is the only state shrinking in 2036",
+    subtitle = "Two UTs run off-scale; their values are labelled",
+    caption = SRC
+  )
+```
+
+```{r share, fig.height = 8}
+shares <- state |>
+  filter(year %in% c(2011, 2036)) |>
+  left_join(select(india, year, national = population), by = "year") |>
+  mutate(share = 100 * population / national) |>
+  select(state_name_harmonized, year, share) |>
+  pivot_wider(names_from = year, values_from = share, names_prefix = "s") |>
+  mutate(change = s2036 - s2011) |>
+  filter(s2011 > 0.5) |>
+  mutate(state_name_harmonized = reorder(state_name_harmonized, change))
+
+ggplot(shares, aes(y = state_name_harmonized)) +
+  geom_segment(aes(x = s2011, xend = s2036, yend = state_name_harmonized),
+    colour = "grey75", linewidth = 0.8
+  ) +
+  geom_point(aes(x = s2011), colour = "grey55", size = 2.4) +
+  geom_point(aes(x = s2036, colour = change > 0), size = 2.8) +
+  scale_colour_manual(
+    values = c(`FALSE` = DIV_LOW, `TRUE` = DIV_HIGH),
+    labels = c(`FALSE` = "Losing share", `TRUE` = "Gaining share"), name = NULL
+  ) +
+  labs(
+    x = "Share of India's population (%)", y = NULL,
+    title = "Bihar gains the most national share, Tamil Nadu loses the most",
+    subtitle = "Grey point = 2011, coloured point = 2036. States above 0.5% share in 2011",
+    caption = SRC
+  )
+```
+
+```{r increment, fig.height = 8}
+incr <- state |>
+  filter(year %in% c(2011, 2036)) |>
+  select(state_name_harmonized, year, population) |>
+  pivot_wider(names_from = year, values_from = population, names_prefix = "p") |>
+  mutate(added = p2036 - p2011) |>
+  arrange(desc(added)) |>
+  mutate(
+    cum_share = 100 * cumsum(added) / sum(added),
+    rank = row_number()
+  )
+
+p_add <- incr |>
+  slice_head(n = 20) |>
+  ggplot(aes(added / 1e6, reorder(state_name_harmonized, added))) +
+  geom_col(width = 0.7, fill = ACCENT) +
+  labs(
+    x = "Millions added", y = NULL,
+    title = "Where India's next 311 million people are added",
+    subtitle = "Top 20 states by absolute increment, 2011-2036"
+  )
+
+p_cum <- ggplot(incr, aes(rank, cum_share)) +
+  geom_hline(yintercept = c(50, 75), colour = "grey85", linewidth = 0.3, linetype = "dashed") +
+  geom_step(colour = ACCENT, linewidth = 0.8) +
+  scale_x_continuous(breaks = c(1, 5, 10, 20, 30, 37)) +
+  scale_y_continuous(limits = c(0, 100)) +
+  labs(
+    x = "Number of states (ranked by increment)", y = "Cumulative share of increment (%)",
+    title = "Uttar Pradesh and Bihar supply a third of the increment",
+    caption = SRC
+  )
+
+patchwork::wrap_plots(p_add, p_cum, ncol = 1, heights = c(1.6, 1))
+```
+
+```{r sex-ratio-states, fig.height = 8}
+sr <- state |>
+  filter(year %in% c(2011, 2036)) |>
+  mutate(sex_ratio = 1000 * females / males) |>
+  select(state_name_harmonized, year, sex_ratio) |>
+  pivot_wider(names_from = year, values_from = sex_ratio, names_prefix = "sr") |>
+  mutate(state_name_harmonized = reorder(state_name_harmonized, sr2036))
+
+ggplot(sr, aes(y = state_name_harmonized)) +
+  geom_vline(xintercept = 1000, colour = "grey80", linewidth = 0.4, linetype = "dashed") +
+  geom_segment(aes(x = sr2011, xend = sr2036, yend = state_name_harmonized),
+    colour = "grey75", linewidth = 0.8
+  ) +
+  geom_point(aes(x = sr2011), colour = "grey55", size = 2.4) +
+  geom_point(aes(x = sr2036, colour = sr2036 > sr2011), size = 2.8) +
+  scale_colour_manual(
+    values = c(`FALSE` = DIV_HIGH, `TRUE` = DIV_LOW),
+    labels = c(`FALSE` = "Worsening", `TRUE` = "Improving"), name = NULL
+  ) +
+  labs(
+    x = "Females per 1,000 males", y = NULL,
+    title = "Projected sex ratio, 2011 to 2036",
+    subtitle = "Grey point = 2011, coloured point = 2036. Dashed line = parity",
+    caption = SRC
+  )
+```
+
+```{r convergence, fig.width = 10, fig.height = 6.5}
+conv <- incr |> mutate(cagr = 100 * ((p2036 / p2011)^(1 / 25) - 1))
+
+ggplot(conv, aes(p2011 / 1e6, cagr)) +
+  geom_hline(yintercept = 0, colour = "grey85", linewidth = 0.3) +
+  geom_point(colour = ACCENT, size = 2.6, alpha = 0.85) +
+  ggrepel::geom_text_repel(aes(label = state_name_harmonized),
+    size = 2.9, colour = INK, max.overlaps = 30, seed = 1, min.segment.length = 0.2,
+    box.padding = 0.4, point.padding = 0.2
+  ) +
+  scale_x_log10(labels = scales::comma) +
+  labs(
+    x = "Population in 2011, millions (log scale)", y = "Annualised growth 2011-2036 (%)",
+    title = "Size versus pace of growth",
+    subtitle = "Daman & Diu and Dadra & Nagar Haveli grow through in-migration",
+    caption = SRC
+  )
+```
+
+```{r rankings, fig.height = 8}
+rank_data <- state |>
+  filter(year %in% c(2011, 2036)) |>
+  group_by(year) |>
+  mutate(rank = rank(-population, ties.method = "first")) |>
+  ungroup() |>
+  filter(rank <= 15) |>
+  select(state_name_harmonized, year, rank) |>
+  group_by(state_name_harmonized) |>
+  mutate(delta = if (n() < 2) NA_real_ else rank[year == 2036] - rank[year == 2011]) |>
+  ungroup() |>
+  mutate(moved = case_when(
+    is.na(delta) ~ "Entered / left",
+    delta < 0 ~ "Rose",
+    delta > 0 ~ "Fell",
+    .default = "Unchanged"
+  ))
+
+ggplot(rank_data, aes(factor(year), rank, group = state_name_harmonized)) +
+  geom_line(aes(colour = moved), linewidth = 0.9) +
+  geom_point(aes(colour = moved), size = 2.6) +
+  geom_text(
+    aes(label = state_name_harmonized, hjust = ifelse(year == 2011, 1.08, -0.08)),
+    size = 3, colour = INK
+  ) +
+  scale_colour_manual(values = c(
+    Rose = DIV_HIGH, Fell = DIV_LOW,
+    Unchanged = "grey70", `Entered / left` = "#009E73"
+  ), name = NULL) +
+  scale_y_reverse(breaks = 1:15) +
+  scale_x_discrete(expand = expansion(mult = c(0.45, 0.45))) +
+  labs(
+    x = NULL, y = "Rank by population",
+    title = "Bihar overtakes Maharashtra for second place by 2036",
+    caption = SRC
+  ) +
+  theme(panel.grid.major.x = element_blank())
+```
+
+```{r district-growth-map, fig.height = 8}
+dist <- population_projections_district |>
+  select(state_name_harmonized, district, year, males, females, population)
+
+dist_wide <- dist |>
+  filter(year %in% c(2011, 2031)) |>
+  select(state_name_harmonized, district, year, population) |>
+  pivot_wider(names_from = year, values_from = population, names_prefix = "p") |>
+  mutate(growth_pct = 100 * (p2031 / p2011 - 1))
+
+states_sf <- get_census_boundaries(2011, "state")
+
+# One 640-district join serves both choropleths.
+dist_geo <- dist_wide |>
+  select(state_name_harmonized, district, growth_pct) |>
+  left_join(
+    dist |>
+      filter(year == 2031) |>
+      transmute(state_name_harmonized, district, sex_ratio = 1000 * females / males),
+    by = c("state_name_harmonized", "district")
+  ) |>
+  attach_geometry(year = 2011, geography = "district")
+
+ggplot(dist_geo) +
+  geom_sf(aes(fill = growth_pct), colour = NA) +
+  geom_sf(data = states_sf, fill = NA, colour = "white", linewidth = 0.25) +
+  scale_fill_gradient2(
+    low = DIV_LOW, mid = DIV_MID, high = DIV_HIGH, midpoint = 0,
+    limits = c(-30, 60), oob = scales::squish, na.value = "grey85",
+    name = "Growth (%)"
+  ) +
+  labs(
+    title = "Projected district population growth, 2011-2031",
+    subtitle = sprintf(
+      "Census 2011 boundaries, %d districts. White = no change, grey = unmatched",
+      nrow(dist_wide)
+    )
+  ) +
+  theme_map
+```
+
+```{r district-sexratio-map, fig.height = 8}
+ggplot(dist_geo) +
+  geom_sf(aes(fill = sex_ratio), colour = NA) +
+  geom_sf(data = states_sf, fill = NA, colour = "white", linewidth = 0.25) +
+  scale_fill_gradient2(
+    low = DIV_HIGH, mid = DIV_MID, high = DIV_LOW, midpoint = 1000,
+    limits = c(800, 1100), oob = scales::squish, na.value = "grey85",
+    name = "F per 1,000 M"
+  ) +
+  labs(
+    title = "Projected district sex ratio, 2031",
+    subtitle = "Census 2011 boundaries. White = parity, red = male surplus, blue = female surplus"
+  ) +
+  theme_map
+```
+
+```{r district-spread, fig.height = 9}
+spread <- dist_wide |>
+  group_by(state_name_harmonized) |>
+  filter(n() >= 5) |>
+  mutate(med = median(growth_pct), flat = diff(range(growth_pct)) < 0.5) |>
+  ungroup() |>
+  mutate(state_name_harmonized = reorder(state_name_harmonized, med))
+
+# States where MOHFW applied one rate to every district, read off the data.
+uniform <- spread |>
+  filter(flat) |>
+  distinct(state_name_harmonized) |>
+  pull() |>
+  as.character() |>
+  sort()
+
+ggplot(spread, aes(growth_pct, state_name_harmonized)) +
+  geom_vline(xintercept = 0, colour = "grey80", linewidth = 0.4) +
+  geom_boxplot(outlier.shape = NA, colour = "grey55", fill = "grey96", linewidth = 0.35, width = 0.6) +
+  geom_jitter(height = 0.18, size = 1.3, alpha = 0.55, colour = ACCENT) +
+  labs(
+    x = "District growth 2011-2031 (%)", y = NULL,
+    title = "Within-state spread of district growth rates",
+    subtitle = paste(
+      "One point per district. States with at least 5 districts, ordered by median.",
+      paste(strwrap(sprintf(
+        "MOHFW applied a single state-wide rate to every district in %s, so those %d states
+         collapse to one value.",
+        knitr::combine_words(uniform), length(uniform)
+      ), width = 105), collapse = "\n"),
+      sep = "\n"
+    ),
+    caption = SRC
+  )
+```
+
+```{r district-size, fig.height = 5}
+size_dist <- dist |>
+  filter(year %in% c(2011, 2031)) |>
+  mutate(year = factor(year))
+
+ggplot(size_dist, aes(population, fill = year, colour = year)) +
+  geom_density(alpha = 0.35, linewidth = 0.6) +
+  scale_x_log10(labels = scales::comma) +
+  scale_fill_manual(values = YEAR_COLS, name = NULL) +
+  scale_colour_manual(values = YEAR_COLS, name = NULL) +
+  labs(
+    x = "District population (log scale)", y = "Density",
+    title = sprintf(
+      "Median district grows from %.2f to %.2f million",
+      median(dist$population[dist$year == 2011]) / 1e6,
+      median(dist$population[dist$year == 2031]) / 1e6
+    ),
+    caption = SRC
+  )
+```
+
+```{r district-lorenz, fig.height = 5.5}
+lorenz <- dist |>
+  filter(year %in% c(2011, 2031)) |>
+  group_by(year) |>
+  arrange(population, .by_group = TRUE) |>
+  mutate(
+    cum_pop = 100 * cumsum(population) / sum(population),
+    cum_dist = 100 * row_number() / n()
+  ) |>
+  ungroup() |>
+  mutate(year = factor(year))
+
+gini <- function(x) {
+  x <- sort(x)
+  n <- length(x)
+  sum((2 * seq_len(n) - n - 1) * x) / (n^2 * mean(x))
+}
+
+gini_2011 <- gini(dist$population[dist$year == 2011])
+gini_2031 <- gini(dist$population[dist$year == 2031])
+
+ggplot(lorenz, aes(cum_dist, cum_pop, colour = year)) +
+  geom_abline(slope = 1, intercept = 0, colour = "grey85", linewidth = 0.4) +
+  geom_line(aes(linetype = year), linewidth = 0.9) +
+  annotate("text",
+    x = 62, y = 22, hjust = 0, size = 3.4, colour = INK,
+    label = sprintf("Gini 2011 = %.3f\nGini 2031 = %.3f", gini_2011, gini_2031)
+  ) +
+  scale_colour_manual(values = YEAR_COLS, name = NULL) +
+  scale_linetype_manual(values = c(`2011` = "solid", `2031` = "22"), name = NULL) +
+  labs(
+    x = "Cumulative share of districts (%)", y = "Cumulative share of population (%)",
+    title = sprintf(
+      "Population concentration across districts holds at a Gini of %.2f", gini_2011
+    ),
+    subtitle = "The 2031 curve lies on top of 2011. Grey diagonal = perfectly even distribution",
+    caption = SRC
+  )
+```
+
+```{r district-extremes, fig.height = 9}
+extremes <- bind_rows(
+  slice_max(dist_wide, growth_pct, n = 20) |> mutate(grp = "Fastest growing"),
+  slice_min(dist_wide, growth_pct, n = 20) |> mutate(grp = "Slowest growing")
+) |>
+  mutate(label = paste0(district, " \u2014 ", state_name_harmonized))
+
+ggplot(extremes, aes(growth_pct, reorder(label, growth_pct), fill = growth_pct > 0)) +
+  geom_vline(xintercept = 0, colour = "grey80", linewidth = 0.4) +
+  geom_col(width = 0.7) +
+  facet_wrap(~grp, scales = "free", ncol = 1) +
+  scale_fill_manual(values = c(`TRUE` = DIV_HIGH, `FALSE` = DIV_LOW), guide = "none") +
+  labs(
+    x = "Growth 2011-2031 (%)", y = NULL,
+    title = "The 20 fastest and 20 slowest growing districts",
+    subtitle = sprintf(
+      "Panels use different x-scales: %+.0f%% at the top, %+.0f%% at the bottom",
+      max(extremes$growth_pct), min(extremes$growth_pct)
+    ),
+    caption = SRC
+  )
+```
+
+```{r lgd-check, fig.height = 8}
+lgd_ratio <- lgd |>
+  filter(year == 2021) |>
+  group_by(state_name_harmonized) |>
+  summarise(lgd_sum = sum(population), districts = n(), .groups = "drop") |>
+  inner_join(
+    state |> filter(year == 2021) |> select(state_name_harmonized, state_total = population),
+    by = "state_name_harmonized"
+  ) |>
+  mutate(
+    ratio = lgd_sum / state_total,
+    state_name_harmonized = reorder(state_name_harmonized, ratio)
+  )
+
+ggplot(lgd_ratio, aes(ratio, state_name_harmonized)) +
+  geom_vline(xintercept = 1, colour = "grey60", linewidth = 0.5) +
+  geom_segment(aes(x = 1, xend = ratio, yend = state_name_harmonized),
+    colour = "grey80", linewidth = 0.5
+  ) +
+  geom_point(colour = DIV_HIGH, size = 2.4) +
+  scale_x_continuous(breaks = c(0, 0.5, 1, 1.5, 2, 2.5)) +
+  labs(
+    x = "Sum of LGD districts / state projection, 2021", y = NULL,
+    title = "population_projections_district_lgd does not reconcile to the state table",
+    subtitle = "Values should sit on the grey line at 1.0. Use population_projections_district instead",
+    caption = SRC
+  )
+```
+
+```{r claims, include = FALSE}
+# The titles above make four editorial claims. If a data rebuild invalidates one,
+# fail the vignette build rather than shipping a false sentence.
+stopifnot(
+  # "Tamil Nadu is the only state shrinking in 2036"
+  identical(as.character(term$state_name_harmonized[term$shrinking]), "Tamil Nadu"),
+  # "Bihar gains the most national share, Tamil Nadu loses the most"
+  identical(as.character(shares$state_name_harmonized[which.max(shares$change)]), "Bihar"),
+  identical(as.character(shares$state_name_harmonized[which.min(shares$change)]), "Tamil Nadu"),
+  # "Uttar Pradesh and Bihar supply a third of the increment"
+  identical(incr$state_name_harmonized[1:2], c("Uttar Pradesh", "Bihar")),
+  round(incr$cum_share[2]) == 33,
+  # "Bihar overtakes Maharashtra for second place by 2036"
+  rank_data$rank[rank_data$state_name_harmonized == "Bihar" & rank_data$year == 2036] == 2
+)
+```

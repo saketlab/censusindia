@@ -27,9 +27,21 @@ Collection, 1901-2026: Digitised Subnational Population and Administrative
 Datasets." Harvard Dataverse. \doi{10.7910/DVN/ON8CP8}.
 }
 \usage{
-data(census_population_time_series)
+census_population_time_series
 }
 \description{
 Decadal population at state and district levels, 1901-2011.
 }
+\section{Coverage limits}{
+
+Sikkim, Mizoram and Daman & Diu are absent from every year, so 2011 sums to
+1,208,903,947 across 626 districts rather than 1,210,854,977 across 640.
+\code{\link[=get_census]{get_census()}} uses the Primary Census Abstract for 2001 and 2011 instead.
+District rows also fall short of their state totals before 1961 (57 districts
+carry no population in 1901-1941) and in 1981, where all 27 Assam districts
+are missing while the state estimate is present. The \code{year} column further
+carries 1900, 1910, 1940, 1948, 1950, 1960, 1962 and 2021, which are not
+censuses; use \code{\link[=census_years]{census_years()}} before any \code{lag()}.
+}
+
 \keyword{datasets}

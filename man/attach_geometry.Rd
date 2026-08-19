@@ -4,7 +4,12 @@
 \alias{attach_geometry}
 \title{Attach geographic boundaries to census data}
 \usage{
-attach_geometry(data, year, geography = NULL)
+attach_geometry(
+  data,
+  year,
+  geography = NULL,
+  unmatched = c("warn", "error", "ignore")
+)
 }
 \arguments{
 \item{data}{A data frame containing census data with state/district names.}
@@ -13,6 +18,11 @@ attach_geometry(data, year, geography = NULL)
 
 \item{geography}{Geographic level: "state" or "district". If NULL (default),
 auto-detects based on available columns.}
+
+\item{unmatched}{What to do when rows get no geometry, or when two rows are
+given the same polygon: \code{"warn"} (default), \code{"error"}, or \code{"ignore"}.
+Name matching falls back to substring and edit distance, so a district can
+be handed a wrong-but-similar shape; this is how the check surfaces.}
 }
 \value{
 An sf object with geometry attached.
@@ -24,6 +34,7 @@ available columns.
 \examples{
 \dontrun{
 library(dplyr)
+
 data(census_2011_pca)
 
 # Attach district boundaries
