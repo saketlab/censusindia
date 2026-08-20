@@ -15,6 +15,7 @@ plot_map(
   direction = NULL,
   na_color = "grey80",
   boundary_year = NULL,
+  base_layer = TRUE,
   show_state_boundaries = FALSE,
   state_boundary_color = "black",
   state_boundary_width = 0.3,
@@ -23,7 +24,9 @@ plot_map(
   oob = NULL,
   limits = NULL,
   breaks = NULL,
-  labels = NULL
+  labels = NULL,
+  font_family = NULL,
+  legend_position = "right"
 )
 }
 \arguments{
@@ -61,6 +64,12 @@ If both reverse and direction are specified, direction takes precedence.}
 data, keeping India's full claimed extent on the map even where the census
 enumerates no districts. Defaults to the \code{year} column if present.}
 
+\item{base_layer}{Logical. Draw India's full state outline beneath the
+data? Default \code{TRUE}: districts alone reach only 35.995 N against
+India's claimed 37.078 N, since the census enumerates none across part
+of Jammu & Kashmir. Set \code{FALSE} for a map already scoped to one state
+or region.}
+
 \item{show_state_boundaries}{Logical. Overlay state boundaries?}
 
 \item{state_boundary_color}{Color for state boundaries. Default is "black"}
@@ -83,6 +92,13 @@ data; pass \code{scales::squish} to clamp them to the nearest end instead.}
 \item{breaks}{Optional breaks for the legend}
 
 \item{labels}{Optional labels for the legend breaks}
+
+\item{font_family}{Font family for all map text. Default \code{NULL} uses the
+system default; e.g. \code{"Arial"}.}
+
+\item{legend_position}{One of \code{"right"} (default), \code{"left"}, \code{"bottom"},
+\code{"top"}, or \code{"none"}. \code{"bottom"}/\code{"top"} also turns the colorbar
+horizontal.}
 }
 \value{
 A ggplot2 object

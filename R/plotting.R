@@ -31,6 +31,8 @@ NULL
 #' @param boundary_year Census year whose state boundaries to draw beneath the
 #'   data, keeping India's full claimed extent on the map even where the census
 #'   enumerates no districts. Defaults to the `year` column if present.
+#' @param base_layer Logical. Draw India's full state outline beneath the
+#'   data? Default TRUE
 #' @param na_color Color for missing values. Default is "grey80"
 #' @param show_state_boundaries Logical. Overlay state boundaries?
 #' @param state_boundary_color Color for state boundaries. Default is "black"
@@ -46,6 +48,11 @@ NULL
 #' @param limits Optional limits for the color scale as c(min, max)
 #' @param breaks Optional breaks for the legend
 #' @param labels Optional labels for the legend breaks
+#' @param font_family Font family for all map text. Default `NULL` uses the
+#'   system default; e.g. `"Arial"`.
+#' @param legend_position One of `"right"` (default), `"left"`, `"bottom"`,
+#'   `"top"`, or `"none"`. `"bottom"`/`"top"` also turns the colorbar
+#'   horizontal.
 #'
 #' @return A ggplot2 object
 #'
@@ -81,6 +88,7 @@ plot_map <- function(data,
                      direction = NULL,
                      na_color = "grey80",
                      boundary_year = NULL,
+                     base_layer = TRUE,
                      show_state_boundaries = FALSE,
                      state_boundary_color = "black",
                      state_boundary_width = 0.3,
@@ -89,7 +97,9 @@ plot_map <- function(data,
                      oob = NULL,
                      limits = NULL,
                      breaks = NULL,
-                     labels = NULL) {
+                     labels = NULL,
+                     font_family = NULL,
+                     legend_position = "right") {
   if (!requireNamespace("ggplot2", quietly = TRUE)) {
     stop("Package 'ggplot2' is required. Please install it.")
   }
@@ -137,13 +147,11 @@ plot_map <- function(data,
 
   colors <- get_palette(palette, reverse)
 
-  # The census enumerates no districts across parts of Jammu & Kashmir, so the
-  # data alone reaches only 35.995 N against India's claimed 37.078 N. The state
-  # outline drawn underneath is what keeps the national boundary correct, and it
-  # is never optional: publishing a truncated map of India is not acceptable.
-  base_sf <- census_base_shapes(
-    if (is.null(boundary_year)) detect_year(data) else boundary_year
-  )
+  base_sf <- if (base_layer) {
+    census_base_shapes(
+      if (is.null(boundary_year)) detect_year(data) else boundary_year
+    )
+  }
 
   p <- ggplot2::ggplot()
 
@@ -158,6 +166,12 @@ plot_map <- function(data,
     color = NA
   )
 
+  if (show_state_boundaries && is.null(base_sf)) {
+    cli::cli_warn(c(
+      "{.arg show_state_boundaries} has no effect with {.code base_layer = FALSE}.",
+      "i" = "The boundary overlay is drawn from the same base layer that {.arg base_layer} disables."
+    ))
+  }
   if (show_state_boundaries && !is.null(base_sf)) {
     p <- p + ggplot2::geom_sf(
       data = base_sf,
@@ -184,17 +198,23 @@ plot_map <- function(data,
   if (!is.null(breaks)) scale_args$breaks <- breaks
   if (!is.null(labels)) scale_args$labels <- labels
 
+  bar_size <- if (legend_position %in% c("bottom", "top")) c(6, 0.4) else c(0.4, 4)
+  scale_args$guide <- ggplot2::guide_colorbar(
+    barwidth = ggplot2::unit(bar_size[1], "cm"),
+    barheight = ggplot2::unit(bar_size[2], "cm")
+  )
+
   p <- p + do.call(ggplot2::scale_fill_gradientn, scale_args)
 
   if (!is.null(title) || !is.null(subtitle)) {
     p <- p + ggplot2::labs(title = title, subtitle = subtitle)
   }
 
-  p <- p + ggplot2::theme_void() +
+  p <- p + ggplot2::theme_void(base_family = if (is.null(font_family)) "" else font_family) +
     ggplot2::theme(
       plot.title = ggplot2::element_text(hjust = 0.5, size = 12, face = "bold"),
       plot.subtitle = ggplot2::element_text(hjust = 0.5, size = 10),
-      legend.position = "right",
+      legend.position = legend_position,
       legend.title = ggplot2::element_text(size = 9),
       legend.text = ggplot2::element_text(size = 8),
       plot.margin = ggplot2::margin(5, 5, 5, 5)

@@ -1,9 +1,9 @@
 # censusindia
 
-Digitised Census of India data from 1901 to 2011 for R. Population time series,
-primary census abstracts, mother tongue tables, SC/ST and tribal populations,
-linguistic diversity indices, MOHFW population projections through 2036, and
-administrative directories at state, district, and subdistrict levels.
+censusindia is an R package to query Census of India data, 1901 to 2011, at state,
+district, and subdistrict level. It also provides MoHFW population projections through
+2036. All data including population counts, primary census abstracts, mother tongue tables, and 
+SC/ST tables can be 'attached' to district-boundary GeoJSONs for quick visualisation.
 
 ## Installation
 
@@ -27,21 +27,60 @@ list_census_geographies()
 # MOHFW population projections (2011-2036)
 get_population(2031, "state")
 get_population(2031, "district")
+
+# mother tongue speakers by district (2011)
+census_languages() |> dplyr::filter(district_name == "Pune")
 ```
 
-## Example
+## Examples
+
+Linguistic diversity by district:
 
 ```r
 library(censusindia)
-library(ggplot2)
+library(dplyr)
 
-mh <- get_census(1971, "district", state = "Maharashtra", geometry = TRUE)
+ling <- census_2011_linguistic_diversity |>
+  rename(district = district_name) |>
+  attach_geometry(2011, geography = "district")
 
-ggplot(mh) +
-  geom_sf(aes(fill = population)) +
-  scale_fill_viridis_c() +
-  theme_minimal() +
-  labs(title = "Population by district, Maharashtra 1971")
+plot_map(ling, "effective_languages",
+  title = "Linguistic diversity by district, 2011",
+  legend_title = "Effective\nlanguages",
+  palette = "reds", show_state_boundaries = TRUE, trans = "log2"
+)
+```
+
+![Linguistic diversity by district, 2011](man/figures/README-map.png)
+
+Projected district-level population, Maharashtra 2011 vs 2031:
+
+```r
+mh_2011 <- get_population(2011, "district", state = "Maharashtra") |>
+  attach_geometry(2011, geography = "district")
+mh_2031 <- get_population(2031, "district", state = "Maharashtra") |>
+  attach_geometry(2011, geography = "district")
+
+compare_maps(
+  list("2011" = mh_2011, "2031" = mh_2031),
+  fill_var = "population",
+  title = "Projected population by district, Maharashtra: 2011 vs 2031",
+  palette = "oranges",
+  base_layer = FALSE
+)
+```
+
+![Projected population by district, Maharashtra: 2011 vs 2031](man/figures/README-projection.png)
+
+Languages spoken in a district, ranked by speakers:
+
+```r
+library(dplyr)
+
+census_languages() |>
+  filter(district_name == "Pune") |>
+  arrange(desc(total_speakers)) |>
+  select(language_name, total_speakers)
 ```
 
 ## Vignettes

@@ -21,6 +21,13 @@ template:
     code_font: {google: "JetBrains Mono"}
   includes:
     in_header: |
+      <script async src="https://www.googletagmanager.com/gtag/js?id=G-V71CLNJRTR"></script>
+      <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-V71CLNJRTR');
+      </script>
       <script>
         (function(){
           var stored = localStorage.getItem('bs-color-scheme');
