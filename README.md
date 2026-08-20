@@ -8,7 +8,8 @@ SC/ST tables can be 'attached' to district-boundary GeoJSONs for quick visualisa
 ## Installation
 
 ```r
-install.packages('censusindia', repos = c('https://saketlab.r-universe.dev', 'https://cloud.r-project.org'))
+install.packages("pak")
+pak::pak("saketlab/censusindia")
 ```
 
 ## Quickstart
