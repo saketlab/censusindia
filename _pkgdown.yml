@@ -7,6 +7,10 @@ template:
   bootstrap: 5
   light-switch: true
   preset: default
+  opengraph:
+    image:
+      src: man/figures/social-card.png
+      alt: "censusindia: Census of India data for R, 1901-2011"
   bslib:
     primary: "#c07828"
     secondary: "#6b7689"
@@ -41,16 +45,12 @@ template:
       <meta name="author" content="Saket Choudhary">
       <meta name="robots" content="index, follow">
       <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
-      <link rel="canonical" href="https://censusindia.saketlab.org/">
+      <meta name="description" content="Digitised Census of India data from 1901 to 2011 for R. Population, literacy, SC/ST, workers, mother tongue, and tribal data with geographic boundaries for mapping.">
       <meta property="og:type" content="website">
-      <meta property="og:url" content="https://censusindia.saketlab.org/">
-      <meta property="og:title" content="censusindia - India Census Data for R">
-      <meta property="og:description" content="R package for accessing digitised India Census data from 1901-2011. Includes population time series, administrative boundaries, and tools for choropleth mapping.">
       <meta property="og:site_name" content="censusindia">
       <meta property="og:locale" content="en_US">
+      <meta property="og:description" content="Digitised Census of India data from 1901 to 2011 for R. Population, literacy, SC/ST, workers, mother tongue, and tribal data with geographic boundaries for mapping.">
       <meta name="twitter:card" content="summary_large_image">
-      <meta name="twitter:title" content="censusindia - India Census Data for R">
-      <meta name="twitter:description" content="R package for accessing digitised India Census data from 1901-2011.">
       <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -71,7 +71,7 @@ template:
         },
         "url": "https://censusindia.saketlab.org/",
         "downloadUrl": "https://github.com/saketlab/censusindia",
-        "softwareVersion": "0.1.0",
+        "license": "https://opensource.org/licenses/MIT",
         "programmingLanguage": "R"
       }
       </script>

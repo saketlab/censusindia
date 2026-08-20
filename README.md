@@ -51,7 +51,10 @@ plot_map(ling, "effective_languages",
 )
 ```
 
-![Linguistic diversity by district, 2011](man/figures/README-map.png)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="man/figures/README-map-dark.png">
+  <img src="man/figures/README-map.png" alt="Linguistic diversity by district, 2011">
+</picture>
 
 Projected district-level population, Maharashtra 2011 vs 2031:
 
@@ -70,7 +73,10 @@ compare_maps(
 )
 ```
 
-![Projected population by district, Maharashtra: 2011 vs 2031](man/figures/README-projection.png)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="man/figures/README-projection-dark.png">
+  <img src="man/figures/README-projection.png" alt="Projected population by district, Maharashtra: 2011 vs 2031">
+</picture>
 
 Languages spoken in a district, ranked by speakers:
 
