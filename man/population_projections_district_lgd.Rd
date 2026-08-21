@@ -16,9 +16,9 @@ A tibble with 15,700 rows and 6 columns:
 }
 }
 \source{
-Ministry of Health and Family Welfare, Government of India.
-Population Projections for India and States 2011-2036. District
-scaling from India_Population_Estimates project using spatial
+International Institute for Population Sciences. Projection of
+District Level Annual Population by Quinquennial Agegroup and Sex.
+District scaling from Census 2011 to LGD boundaries via spatial
 overlap analysis.
 }
 \usage{

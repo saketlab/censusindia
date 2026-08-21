@@ -364,8 +364,8 @@
 #'   \item{females}{Projected female population}
 #'   \item{population}{Projected total population (males + females)}
 #' }
-#' @source Ministry of Health and Family Welfare, Government of India.
-#'   Population Projections for India and States 2011-2036.
+#' @source International Institute for Population Sciences. Projection of
+#'   District Level Annual Population by Quinquennial Agegroup and Sex.
 "population_projections_district"
 
 #' Population projections -- district level, LGD boundaries (2012-2031)
@@ -389,9 +389,9 @@
 #' factor of 1.99, and all 37 states/UTs are outside 1 percent. Use
 #' [population_projections_district] instead, which sums to its state table.
 #'
-#' @source Ministry of Health and Family Welfare, Government of India.
-#'   Population Projections for India and States 2011-2036. District
-#'   scaling from India_Population_Estimates project using spatial
+#' @source International Institute for Population Sciences. Projection of
+#'   District Level Annual Population by Quinquennial Agegroup and Sex.
+#'   District scaling from Census 2011 to LGD boundaries via spatial
 #'   overlap analysis.
 "population_projections_district_lgd"
 

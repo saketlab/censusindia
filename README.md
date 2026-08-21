@@ -104,3 +104,11 @@ census_languages() |>
 - [Tribal isolation and vulnerability](https://censusindia.saketlab.org/articles/tribal-isolation.html)
 - [District population overview](https://censusindia.saketlab.org/articles/district-population.html)
 
+## Data sources
+
+- Population time series (1901-2011), 1961 literacy, 1971/1981 PCA, 2011 subdistrict and PCA tables: Jolad, S. & Singh, M. (2026). [Indian Census Data Collection, 1901-2026: Digitised Subnational Population and Administrative Datasets](https://doi.org/10.7910/DVN/ON8CP8). Harvard Dataverse.
+- 2001 and 2011 Primary Census Abstract, C-16 mother tongue tables, A-10/A-11 SC/ST tables: [Census of India](https://censusindia.gov.in), Office of the Registrar General & Census Commissioner, India.
+- Population projections, state level (2011-2036): Ministry of Health and Family Welfare, Government of India. [Population Projections for India and States 2011-2036](https://www.india.gov.in/my-government/documents/details/population-projections-for-india-and-states-2011-2036) | [PDF](https://drive.google.com/file/d/1PmoEUi936-dJ2KiKl7SDj5SqgCPYIfx2/view?usp=sharing).
+- Population projections, district level (2011-2031): International Institute for Population Sciences. [Projection of District Level Annual Population by Quinquennial Agegroup and Sex](https://www.iipsindia.ac.in/sites/default/files/1_3.pdf).
+- District/state boundary GeoJSONs: via [bharatviz.org](https://bharatviz.org), collated from Jolad & Singh (2026) and [ramSeraph/indian_admin_boundaries](https://github.com/ramSeraph/indian_admin_boundaries).
+

@@ -65,10 +65,7 @@ data, keeping India's full claimed extent on the map even where the census
 enumerates no districts. Defaults to the \code{year} column if present.}
 
 \item{base_layer}{Logical. Draw India's full state outline beneath the
-data? Default \code{TRUE}: districts alone reach only 35.995 N against
-India's claimed 37.078 N, since the census enumerates none across part
-of Jammu & Kashmir. Set \code{FALSE} for a map already scoped to one state
-or region.}
+data? Default TRUE}
 
 \item{show_state_boundaries}{Logical. Overlay state boundaries?}
 
