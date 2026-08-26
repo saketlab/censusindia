@@ -25,6 +25,8 @@ knitr::opts_chunk$set(
 ```{r load-packages}
 library(censusindia)
 library(dplyr)
+library(ggplot2)
+library(patchwork)
 ```
 
 ```{r load-data}
@@ -36,6 +38,30 @@ census_2011_mother_tongue |>
   summarise(n_languages = n_distinct(language_name))
 ```
 
+Both measures below are computed from each language's population share $p_i$
+in a district, but they weight rare languages differently:
+
+- **Shannon entropy**, $S = -\sum_i p_i \log(p_i)$. We report it as the
+  *effective number of languages*, $2^S$: Hill's (1973) "numbers
+  equivalent," the count of equally-sized languages that would produce the
+  same $S$. It is more sensitive to a long tail of small languages than a
+  raw language count (Grin & Fürst, 2022).
+- **Greenberg's Diversity Index**, $G = 1 - \sum_i p_i^2$ (Greenberg, 1956).
+  It is the probability that two speakers picked at random from the
+  district speak different mother tongues. $G$ is markedly *less* sensitive
+  than $S$ to small language communities, since each contributes only an
+  infinitesimal $p_i^2$ term, a district can gain several tiny languages
+  without moving $G$ noticeably (Grin & Fürst, 2022, Sec. 4.1).
+
+> Grin, F., & Fürst, G. (2022). Measuring Linguistic Diversity: A
+> Multi-level Metric. *Social Indicators Research*.
+> <https://doi.org/10.1007/s11205-022-02934-5>
+>
+> Greenberg, J. H. (1956). The Measurement of Linguistic Diversity.
+> *Language*, 32(1), 109–115. <https://www.jstor.org/stable/410659>
+
+
+
 ```{r calculate-entropy}
 calculate_diversity <- function(data, level) {
   data |>
@@ -45,8 +71,11 @@ calculate_diversity <- function(data, level) {
     mutate(proportion = speakers / sum(speakers)) |>
     summarise(
       n_languages = n(),
+      # log2, not ln (Grin & Fürst 2022 use ln), to match the base of
+      # 2^shannon_entropy below.
       shannon_entropy = -sum(proportion * log2(proportion), na.rm = TRUE),
       effective_languages = 2^shannon_entropy,
+      greenberg_index = 1 - sum(proportion^2),
       .groups = "drop"
     ) |>
     inner_join(
@@ -70,6 +99,29 @@ cat("\nL2 (Dialects):\n")
 summary(diversity_l2$effective_languages)
 ```
 
+We can compare Shannon entropy (via effective number of languages) and the Greenberg
+Diversity Index:
+
+```{r compare-entropy-gdi, fig.width=6, fig.height=6}
+levels <- list(L1 = diversity_l1, L2 = diversity_l2)
+for (level in names(levels)) {
+  d <- levels[[level]]
+  cat(
+    level, "correlation (effective_languages vs greenberg_index):",
+    cor(d$effective_languages, d$greenberg_index), "\n"
+  )
+}
+
+ggplot(diversity_l1, aes(greenberg_index, effective_languages)) +
+  geom_point(alpha = 0.5, color = "firebrick") +
+  labs(
+    title = "L1: entropy vs Greenberg index",
+    x = "Greenberg Diversity Index",
+    y = "Effective languages (Shannon)"
+  ) +
+  theme_census()
+```
+
 ```{r prepare-maps}
 map_l1 <- attach_geometry(diversity_l1, 2011, geography = "district")
 map_l2 <- attach_geometry(diversity_l2, 2011, geography = "district")
@@ -77,11 +129,11 @@ map_l2 <- attach_geometry(diversity_l2, 2011, geography = "district")
 c(l1 = sum(!sf::st_is_empty(map_l1$geometry)), l2 = sum(!sf::st_is_empty(map_l2$geometry)))
 ```
 
-```{r plot-l1-diversity, fig.width=10, fig.height=12}
+```{r plot-l1-diversity, fig.width=16, fig.height=12}
 plot_map(
   map_l1,
   fill_var = "effective_languages",
-  title = "Linguistic diversity: Scheduled languages (L1)",
+  title = "Shannon: Scheduled languages (L1)",
   subtitle = "Effective number of languages per district",
   legend_title = "Effective\nLanguages",
   palette = "reds",
@@ -89,6 +141,15 @@ plot_map(
   trans = "log2",
   limits = c(1, 18),
   breaks = c(1, 2, 4, 8, 16)
+) | plot_map(
+  map_l1,
+  fill_var = "greenberg_index",
+  title = "Greenberg: Scheduled languages (L1)",
+  subtitle = "Greenberg Diversity Index per district",
+  legend_title = "Greenberg\nIndex",
+  palette = "reds",
+  show_state_boundaries = TRUE,
+  limits = c(0, 1)
 )
 ```
 
@@ -104,11 +165,11 @@ plot_map(
 )
 ```
 
-```{r plot-l2-diversity, fig.width=10, fig.height=12}
+```{r plot-l2-diversity, fig.width=16, fig.height=12}
 plot_map(
   map_l2,
   fill_var = "effective_languages",
-  title = "Linguistic diversity: Dialects (L2)",
+  title = "Shannon: Dialects (L2)",
   subtitle = "Effective number of dialects per district",
   legend_title = "Effective\nLanguages",
   palette = "reds",
@@ -116,6 +177,15 @@ plot_map(
   trans = "log2",
   limits = c(1, 35),
   breaks = c(1, 2, 4, 8, 16, 32)
+) | plot_map(
+  map_l2,
+  fill_var = "greenberg_index",
+  title = "Greenberg: Dialects (L2)",
+  subtitle = "Greenberg Diversity Index per district",
+  legend_title = "Greenberg\nIndex",
+  palette = "reds",
+  show_state_boundaries = TRUE,
+  limits = c(0, 1)
 )
 ```
 
@@ -144,3 +214,17 @@ diversity_l2 |>
   select(state_name_harmonized, district, effective_languages) |>
   head(10)
 ```
+
+# Readings
+
+For India specifically, Jolad & Agarwal document how the Census's own
+categorisation (grouping "mother tongues" under scheduled languages) masks
+much of this diversity:
+
+> Jolad, S., & Agarwal, A. (2022, March 8). India's Linguistic Diversity:
+> How the Census obscures it. *The India Forum*.
+> <https://www.theindiaforum.in/article/what-census-obscures>
+>
+> Jolad, S., & Agarwal, A. (2021). Mapping India's Language and Mother
+> Tongue Diversity and its Exclusion in the Indian Census.
+> <https://doi.org/10.31235/osf.io/sjxc6>
