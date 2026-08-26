@@ -75,6 +75,7 @@ calculate_diversity <- function(data, level) {
       # 2^shannon_entropy below.
       shannon_entropy = -sum(proportion * log2(proportion), na.rm = TRUE),
       effective_languages = 2^shannon_entropy,
+      # Thanks to Shivakumar Jolad for highlighting this measure
       greenberg_index = 1 - sum(proportion^2),
       .groups = "drop"
     ) |>
