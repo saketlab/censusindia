@@ -162,8 +162,11 @@ reference:
   contents:
   - get_population
   - population_projections_state
+  - population_projections_state_age
   - population_projections_district
+  - population_projections_district_age
   - population_projections_district_lgd
+  - population_projections_district_lgd_age
 
 - title: "Census Data Access"
   desc: "Retrieve census datasets"
