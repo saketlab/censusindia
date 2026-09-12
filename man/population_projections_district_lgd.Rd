@@ -8,7 +8,10 @@
 A tibble with 15,700 rows and 6 columns:
 \describe{
 \item{year}{Projection year (annual, 2012-2031)}
-\item{state_name_harmonized}{Harmonized state name for joining}
+\item{state_name_harmonized}{Harmonized state name for joining. Dadra &
+Nagar Haveli and Daman & Diu appear merged as one UT (their 2020
+administrative merger); the LGD source has no district-level way to
+split them back apart.}
 \item{district}{District name (LGD naming convention)}
 \item{males}{Projected male population}
 \item{females}{Projected female population}
@@ -26,15 +29,20 @@ population_projections_district_lgd
 }
 \description{
 MOHFW population projections scaled to current Local Government
-Directory (LGD) district boundaries (785 districts). Annual
-projections from 2012 to 2031, aggregated across age groups.
+Directory (LGD) district boundaries. Annual projections from 2012 to
+2031, summed across age groups from \link{population_projections_district_lgd_age}.
 }
-\section{Do not aggregate}{
+\section{Known defects}{
 
-District values do not reconcile to the state table. Summing all districts at
-2021 gives 2,715,393,155 against an India projection of 1,363,006,000, a
-factor of 1.99, and all 37 states/UTs are outside 1 percent. Use
-\link{population_projections_district} instead, which sums to its state table.
+Summing districts to state level reconciles to within 0.2 percent of the
+India state projection for every state except Himachal Pradesh (~7.6
+percent short). Bastar and Kondagaon (Chhattisgarh) and Medinipur East
+(West Bengal) have no population in any year: the source PDF's
+age-by-district table never extracted a row for them (a different MOHFW
+table has their totals; see \link{population_projections_district}). Chamba
+(Himachal Pradesh) is missing 2017-2021 and 2027-2031 the same way; West
+(Delhi) is missing 2027-2031. Use \link{population_projections_district} for a
+table with no such gaps.
 }
 
 \keyword{datasets}

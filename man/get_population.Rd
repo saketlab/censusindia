@@ -9,7 +9,8 @@ get_population(
   geography = c("state", "district"),
   state = NULL,
   boundary = c("census2011", "lgd"),
-  geometry = FALSE
+  geometry = FALSE,
+  by_age = FALSE
 )
 }
 \arguments{
@@ -27,11 +28,17 @@ Ignored for state geography.}
 
 \item{geometry}{If \code{TRUE}, attaches geographic boundaries (Census 2011).
 Only works with \code{boundary = "census2011"} for district level.}
+
+\item{by_age}{If \code{TRUE}, returns single years of age 0-14 and 5-year
+bands 15-19 through 80+ instead of totals. See
+\link{population_projections_state_age}, \link{population_projections_district_age}
+and \link{population_projections_district_lgd_age}. State coverage by age is
+23 major states plus an "India" row and one North-East aggregate row.}
 }
 \value{
 A tibble (or sf object if \code{geometry = TRUE}) with columns:
 \code{year}, \code{state_name_harmonized}, \code{males}, \code{females}, \code{population},
-and \code{district} for district-level data.
+\code{district} for district-level data, and \code{age_group} if \code{by_age = TRUE}.
 }
 \description{
 MOHFW population projections (2011-2036) at state or district level,
@@ -63,5 +70,8 @@ get_population(2021, "district", state = "Kerala")
 
 # LGD boundary districts
 get_population(2021, "district", boundary = "lgd")
+
+# Age-stratified state projections
+get_population(2021, "state", by_age = TRUE)
 
 }

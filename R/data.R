@@ -371,29 +371,114 @@
 #' Population projections -- district level, LGD boundaries (2012-2031)
 #'
 #' MOHFW population projections scaled to current Local Government
-#' Directory (LGD) district boundaries (785 districts). Annual
-#' projections from 2012 to 2031, aggregated across age groups.
+#' Directory (LGD) district boundaries. Annual projections from 2012 to
+#' 2031, summed across age groups from [population_projections_district_lgd_age].
 #'
 #' @format A tibble with 15,700 rows and 6 columns:
 #' \describe{
 #'   \item{year}{Projection year (annual, 2012-2031)}
-#'   \item{state_name_harmonized}{Harmonized state name for joining}
+#'   \item{state_name_harmonized}{Harmonized state name for joining. Dadra &
+#'     Nagar Haveli and Daman & Diu appear merged as one UT (their 2020
+#'     administrative merger); the LGD source has no district-level way to
+#'     split them back apart.}
 #'   \item{district}{District name (LGD naming convention)}
 #'   \item{males}{Projected male population}
 #'   \item{females}{Projected female population}
 #'   \item{population}{Projected total population (males + females)}
 #' }
-#' @section Do not aggregate:
-#' District values do not reconcile to the state table. Summing all districts at
-#' 2021 gives 2,715,393,155 against an India projection of 1,363,006,000, a
-#' factor of 1.99, and all 37 states/UTs are outside 1 percent. Use
-#' [population_projections_district] instead, which sums to its state table.
+#' @section Known defects:
+#' Summing districts to state level reconciles to within 0.2 percent of the
+#' India state projection for every state except Himachal Pradesh (~7.6
+#' percent short). Bastar and Kondagaon (Chhattisgarh) and Medinipur East
+#' (West Bengal) have no population in any year: the source PDF's
+#' age-by-district table never extracted a row for them (a different MOHFW
+#' table has their totals; see [population_projections_district]). Chamba
+#' (Himachal Pradesh) is missing 2017-2021 and 2027-2031 the same way; West
+#' (Delhi) is missing 2027-2031. Use [population_projections_district] for a
+#' table with no such gaps.
 #'
 #' @source International Institute for Population Sciences. Projection of
 #'   District Level Annual Population by Quinquennial Agegroup and Sex.
 #'   District scaling from Census 2011 to LGD boundaries via spatial
 #'   overlap analysis.
 "population_projections_district_lgd"
+
+#' Population projections -- district level, LGD boundaries, by age group (2012-2031)
+#'
+#' Age-stratified detail behind [population_projections_district_lgd]: single
+#' years of age for 0-14, five-year bands from 15-19 through 80+. Fixes the
+#' same double-counted "All ages" row bug documented on that table.
+#'
+#' @format A tibble with 455,300 rows and 7 columns:
+#' \describe{
+#'   \item{year}{Projection year (annual, 2012-2031)}
+#'   \item{state_name_harmonized}{Harmonized state name for joining. See
+#'     [population_projections_district_lgd] for the Dadra & Nagar Haveli /
+#'     Daman & Diu merged-UT caveat.}
+#'   \item{district}{District name (LGD naming convention)}
+#'   \item{age_group}{Single years "0".."14", then 5-year bands "15-19"
+#'     through "80+". Non-overlapping: summing all rows for a district-year
+#'     reproduces [population_projections_district_lgd].}
+#'   \item{males}{Projected male population}
+#'   \item{females}{Projected female population}
+#'   \item{population}{Projected total population (males + females)}
+#' }
+#' @source Same as [population_projections_district_lgd].
+"population_projections_district_lgd_age"
+
+#' Population projections -- district level, Census 2011 boundaries, by age group (2012-2031)
+#'
+#' Age-stratified detail behind [population_projections_district], on Census
+#' 2011 district boundaries (no LGD spatial apportionment involved). Same
+#' age-group scheme as [population_projections_district_lgd_age]: single
+#' years 0-14, then 5-year bands through 80+.
+#'
+#' Khargone (West Nimar, Madhya Pradesh), Ukhrul (Manipur) and Paschim
+#' Medinipur (West Bengal) each have two source rows per age with different
+#' values, an OCR artifact. The two rows are summed rather than picking one.
+#'
+#' @format A tibble with 369,460 rows and 7 columns:
+#' \describe{
+#'   \item{year}{Projection year (annual, 2012-2031)}
+#'   \item{state_name_harmonized}{Harmonized state name for joining}
+#'   \item{district}{District name (Census 2011 naming convention)}
+#'   \item{age_group}{Single years "0".."14", then 5-year bands "15-19"
+#'     through "80+"}
+#'   \item{males}{Projected male population}
+#'   \item{females}{Projected female population}
+#'   \item{population}{Projected total population (males + females)}
+#' }
+#' @source Same as [population_projections_district].
+"population_projections_district_age"
+
+#' Population projections -- state level, by age group (2011-2036)
+#'
+#' Age-stratified population reshaped directly from the MOHFW report's own
+#' Table 18, wide-by-year to tidy long. Summing to state-year reproduces
+#' [population_projections_state] to within report rounding (Uttar Pradesh
+#' 2016: 216,089 vs 216,087 thousand).
+#'
+#' Coverage is narrower than [population_projections_state]: the report only
+#' breaks out 23 major states individually plus an "India" total, lumping the
+#' smaller North East states (Sikkim, Arunachal Pradesh, Nagaland, Manipur,
+#' Mizoram, Tripura, Meghalaya) into one "North East States Excluding Assam"
+#' row. Chandigarh, small UTs and Ladakh are not in this table at all.
+#'
+#' @format A tibble with 2,448 rows and 5 columns:
+#' \describe{
+#'   \item{year}{Projection year (2011-2036, at 5-year intervals: 2011, 2016,
+#'     2021, 2026, 2031, 2036)}
+#'   \item{state_name_harmonized}{Harmonized state name for joining where the
+#'     report breaks the state out individually; "India" and "North East
+#'     States Excluding Assam" pass through verbatim as aggregate rows}
+#'   \item{age_group}{Five-year bands "0-4" through "80+"}
+#'   \item{males}{Projected male population, in thousands}
+#'   \item{females}{Projected female population, in thousands}
+#'   \item{population}{Projected total population, in thousands}
+#' }
+#' @source Ministry of Health and Family Welfare, Government of India.
+#'   Population Projections for India and States 2011-2036, Table 18.
+"population_projections_state_age"
 
 #' Census 2011 demographics (PCA)
 #'

@@ -15,10 +15,15 @@
 #'   Ignored for state geography.
 #' @param geometry If `TRUE`, attaches geographic boundaries (Census 2011).
 #'   Only works with `boundary = "census2011"` for district level.
+#' @param by_age If `TRUE`, returns single years of age 0-14 and 5-year
+#'   bands 15-19 through 80+ instead of totals. See
+#'   [population_projections_state_age], [population_projections_district_age]
+#'   and [population_projections_district_lgd_age]. State coverage by age is
+#'   23 major states plus an "India" row and one North-East aggregate row.
 #'
 #' @return A tibble (or sf object if `geometry = TRUE`) with columns:
 #'   `year`, `state_name_harmonized`, `males`, `females`, `population`,
-#'   and `district` for district-level data.
+#'   `district` for district-level data, and `age_group` if `by_age = TRUE`.
 #'
 #' @details
 #' State-level data covers 2011-2036 for 38 entries (36 states/UTs plus
@@ -45,21 +50,25 @@
 #' # LGD boundary districts
 #' get_population(2021, "district", boundary = "lgd")
 #'
+#' # Age-stratified state projections
+#' get_population(2021, "state", by_age = TRUE)
+#'
 #' @export
 get_population <- function(year = NULL,
                            geography = c("state", "district"),
                            state = NULL,
                            boundary = c("census2011", "lgd"),
-                           geometry = FALSE) {
+                           geometry = FALSE,
+                           by_age = FALSE) {
   geography <- match.arg(geography)
   boundary <- match.arg(boundary)
 
   if (geography == "state") {
-    data <- censusindia::population_projections_state
+    data <- if (by_age) censusindia::population_projections_state_age else censusindia::population_projections_state
   } else if (boundary == "lgd") {
-    data <- censusindia::population_projections_district_lgd
+    data <- if (by_age) censusindia::population_projections_district_lgd_age else censusindia::population_projections_district_lgd
   } else {
-    data <- censusindia::population_projections_district
+    data <- if (by_age) censusindia::population_projections_district_age else censusindia::population_projections_district
   }
 
   if (!is.null(year)) {
