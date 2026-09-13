@@ -22,6 +22,9 @@
 ^Meta$
 ^vignettes/.*\.csv$
 ^vignettes/clustering-methodology\.md$
+# These analysis articles are built by pkgdown. Building them again as package
+# vignettes makes the r-universe source job exceed its time limit.
+^vignettes/(district-population|linguistic-diversity|population-dynamics|population-maps|population-projections|primary-census-abstract|sc-st-population|sex-ratio|social-composition|tribal-isolation)\.Rmd$
 ^parquet$
 ^geoparquet$
 ^\.positai$
