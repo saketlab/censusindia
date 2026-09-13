@@ -1,6 +1,6 @@
 Package: censusindia
 Title: Census of India data for R
-Version: 0.1.0
+Version: 0.1.1
 Authors@R:
     person("Saket", "Choudhary", , "saketc@iitb.ac.in", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0001-5202-7633"))
