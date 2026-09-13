@@ -60,7 +60,7 @@ get_cached_geometry <- function(year, geography) {
   }
 
   filename <- sprintf(
-    "india-census-%d-%s.geojson", year,
+    "india-census-%d-%s.geojson.gz", year,
     if (geography == "state") "states" else "districts"
   )
   geojson_path <- system.file("extdata", filename, package = "censusindia")
@@ -69,7 +69,7 @@ get_cached_geometry <- function(year, geography) {
     return(NULL)
   }
 
-  shapes <- sf::st_read(geojson_path, quiet = TRUE)
+  shapes <- sf::st_read(paste0("/vsigzip/", geojson_path), quiet = TRUE)
   shapes <- repair_geometry(shapes)
   shapes <- relabel_boundaries(shapes, year, geography)
   assign(cache_key, shapes, envir = .geometry_cache)
