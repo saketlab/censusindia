@@ -1,15 +1,21 @@
 Package: censusindia
-Title: Census of India data for R
-Version: 0.1.2
+Title: Census of India Data, 1901-2011, with Boundaries and Projections
+Version: 0.2.0
 Authors@R:
-    person("Saket", "Choudhary", , "saketc@iitb.ac.in", role = c("aut", "cre"),
+    person("Saket", "Choudhary", , "saketc@iitb.ac.in", role = c("aut", "cre", "cph"),
            comment = c(ORCID = "0000-0001-5202-7633"))
-Description: Digitised Census of India data from 1901 to 2011: population time
-    series, primary census abstracts at state and district levels, mother
-    tongue tables, SC/ST and tribal populations, and administrative
-    directories. Census variables can be retrieved with geographic boundaries
-    attached for mapping.
+Description: Tables from every decennial Census of India from 1901 to 2011:
+    population time series, Primary Census Abstracts at state, district and
+    sub-district level, mother tongue tables, and Scheduled Caste and
+    Scheduled Tribe populations, together with Ministry of Health and Family
+    Welfare population projections to 2036. Historical series are drawn
+    from Jolad and Singh (2026) <doi:10.7910/DVN/ON8CP8>. Census variables
+    can be returned with state or district boundaries of the matching
+    census year attached for mapping. Boundary files and the largest
+    village-level tables are downloaded on first use and cached locally.
 License: MIT + file LICENSE
+Copyright: See file COPYRIGHTS for the data included in and downloaded by
+    this package.
 URL: https://censusindia.saketlab.org/, https://github.com/saketlab/censusindia
 BugReports: https://github.com/saketlab/censusindia/issues
 Depends:
@@ -17,29 +23,24 @@ Depends:
 Imports:
     cli,
     dplyr,
-    rlang,
+    rlang (>= 1.0.0),
     sf,
+    stats,
     stringr,
-    tibble
+    tibble,
+    tools,
+    utils
 Suggests:
-    biscale,
-    DT,
     ggplot2,
-    gganimate,
-    ggrepel,
-    ggridges,
-    ggtern,
-    gifski,
     patchwork,
+    s2,
     scales,
-    tidyr,
-    testthat (>= 3.0.0),
-    knitr,
-    rmarkdown
-VignetteBuilder: knitr
+    testthat (>= 3.0.0)
+Config/Needs/website: biscale, DT, gganimate, ggrepel, ggridges, ggtern,
+    gifski, knitr, rmarkdown, tidyr
 Config/testthat/edition: 3
 Encoding: UTF-8
 LazyData: true
-LazyDataCompression: gzip
+LazyDataCompression: xz
 Roxygen: list(markdown = TRUE)
 Config/roxygen2/version: 8.1.0

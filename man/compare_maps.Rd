@@ -39,19 +39,15 @@ A patchwork object
 Compare maps across years
 }
 \examples{
-\dontrun{
+\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 # Compare ST percentage across years
 library(dplyr)
 
-# Prepare 1971 data
-data(census_1971)
 st_1971 <- census_1971 |>
   filter(geography == "district") |>
   mutate(st_pct = 100 * st_population_total / population_total) |>
   attach_geometry(1971)
 
-# Prepare 2011 data
-data(census_2011_pca)
 st_2011 <- census_2011_pca |>
   mutate(st_pct = 100 * st_population / population_total) |>
   attach_geometry(2011)
@@ -63,6 +59,5 @@ compare_maps(
   title = "ST Population \% by District",
   palette = "red_blue"
 )
-}
-
+\dontshow{\}) # examplesIf}
 }

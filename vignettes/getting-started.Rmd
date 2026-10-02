@@ -243,7 +243,7 @@ clear_geometry_cache()
 
 ## Population Projections
 
-`get_population()` reads the [MoHFW projections](https://main.mohfw.gov.in/sites/default/files/Population%20Projection%20Report%202011-2036%20-%20upload_compressed_0.pdf),
+`get_population()` reads the [MoHFW projections](https://nhm.gov.in/New_Updates_2018/Report_Population_Projection_2019.pdf),
 which run past the last census. The state table is annual, 2011 to 2036, with
 males and females for 36 states plus India and Ladakh.
 
@@ -282,16 +282,18 @@ c(
 
 ## Going below district level
 
-2011 also ships the abstract at the village/ward level:
+2011 also has the abstract at the village/ward level. The three tables
+together are 63 MB, so they are downloaded on first use and cached
+(`census_cache_dir()` says where):
 
 ```{r detail-use}
-census_2011_demographics |>
+census_2011_demographics() |>
   filter(level == "district", sector == "total") |>
   summarise(districts = n(), population = sum(population_total))
 ```
 
-Worker classification is available in the `census_2011_workers` table and
-`census_2011_marginal_detail` provides the marginal-worker duration split.
+Worker classification is available from `census_2011_workers()` and
+`census_2011_marginal_detail()` provides the marginal-worker duration split.
 Tribal and language information is also available:
 
 ```{r communities}

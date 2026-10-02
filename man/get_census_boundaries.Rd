@@ -13,15 +13,16 @@ get_census_boundaries(year, geography = c("state", "district"))
 }
 \value{
 An sf object containing the geographic boundaries with harmonized state names.
+
+Boundary files are downloaded on first use; see \code{\link[=census_cache_dir]{census_cache_dir()}}.
 }
 \description{
 State or district boundaries for a given census year.
 }
 \examples{
-\dontrun{
+\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 boundaries <- get_census_boundaries(1971, "district")
 ggplot2::ggplot(boundaries) +
   ggplot2::geom_sf()
-}
-
+\dontshow{\}) # examplesIf}
 }

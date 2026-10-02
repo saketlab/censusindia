@@ -7,7 +7,8 @@
 at_level(data, level = "district", sector = "total")
 }
 \arguments{
-\item{data}{One of the village-level 2011 tables.}
+\item{data}{A table with a \code{level} column, such as one of the village-level
+2011 tables or \link{census_1981}.}
 
 \item{level}{Geographic level, e.g. \code{"district"} or \code{"state"}.}
 
@@ -17,10 +18,11 @@ at_level(data, level = "district", sector = "total")
 \code{data} filtered to that level and sector.
 }
 \description{
-The village-level 2011 tables (\link{census_2011_demographics},
-\link{census_2011_workers}, \link{census_2011_marginal_detail}) stack seven levels from
-India down to ward, and three sectors. Summing without filtering counts every
-population several times over.
+The village-level 2011 tables (\code{\link[=census_2011_demographics]{census_2011_demographics()}},
+\code{\link[=census_2011_workers]{census_2011_workers()}}, \code{\link[=census_2011_marginal_detail]{census_2011_marginal_detail()}}) stack seven levels
+from India down to ward, and three sectors. Summing without filtering counts
+every population several times over. \link{census_1981} stacks levels and sectors
+the same way.
 }
 \details{
 India, state, district, subdistrict and village are exact: each level sums to
@@ -34,7 +36,7 @@ carry 8,443,675. Ward rows differ from their town by 3,738,272 across 295
 towns. Treat both as a lookup, not an additive slice.
 }
 \examples{
-census_2011_demographics |>
-  at_level("district") |>
+census_1981 |>
+  at_level("state") |>
   nrow()
 }

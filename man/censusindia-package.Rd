@@ -4,11 +4,11 @@
 \name{censusindia-package}
 \alias{censusindia}
 \alias{censusindia-package}
-\title{censusindia: Census of India data for R}
+\title{censusindia: Census of India Data, 1901-2011, with Boundaries and Projections}
 \description{
 \if{html}{\figure{logo.png}{options: style='float: right' alt='logo' width='120'}}
 
-Digitised Census of India data from 1901 to 2011: population time series, primary census abstracts at state and district levels, mother tongue tables, SC/ST and tribal populations, and administrative directories. Census variables can be retrieved with geographic boundaries attached for mapping.
+Tables from every decennial Census of India from 1901 to 2011: population time series, Primary Census Abstracts at state, district and sub-district level, mother tongue tables, and Scheduled Caste and Scheduled Tribe populations, together with Ministry of Health and Family Welfare population projections to 2036. Historical series are drawn from Jolad and Singh (2026) \doi{10.7910/DVN/ON8CP8}. Census variables can be returned with state or district boundaries of the matching census year attached for mapping. Boundary files and the largest village-level tables are downloaded on first use and cached locally.
 }
 \seealso{
 Useful links:
@@ -20,11 +20,11 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: Saket Choudhary \email{saketc@iitb.ac.in} (\href{https://orcid.org/0000-0001-5202-7633}{ORCID})
+\strong{Maintainer}: Saket Choudhary \email{saketc@iitb.ac.in} (\href{https://orcid.org/0000-0001-5202-7633}{ORCID}) [copyright holder]
 
 Authors:
 \itemize{
-  \item Saket Choudhary \email{saketc@iitb.ac.in} (\href{https://orcid.org/0000-0001-5202-7633}{ORCID})
+  \item Saket Choudhary \email{saketc@iitb.ac.in} (\href{https://orcid.org/0000-0001-5202-7633}{ORCID}) [copyright holder]
 }
 
 }

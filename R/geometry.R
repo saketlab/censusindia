@@ -1,18 +1,25 @@
-# Census years with a boundary file in inst/extdata.
 BOUNDARY_YEARS <- c(1941L, 1951L, 1961L, 1971L, 1981L, 1991L, 2001L, 2011L)
 
-.geometry_cache <- new.env(parent = emptyenv())
+nearest_boundary_year <- function(year) BOUNDARY_YEARS[which.min(abs(BOUNDARY_YEARS - year))]
+
+boundary_file <- function(year, geography) {
+  sprintf("india-census-%d-%s.geojson.gz", year, ifelse(geography == "state", "states", "districts"))
+}
+
+.session_cache <- new.env(parent = emptyenv())
 
 #' Clear geometry cache
 #'
+#' Releases the boundaries and downloaded tables held in memory for the
+#' session.
+#'
 #' @return Invisible NULL
 #' @export
+#' @seealso [clear_census_cache()] to delete downloaded files from disk.
 #' @examples
-#' \dontrun{
 #' clear_geometry_cache()
-#' }
 clear_geometry_cache <- function() {
-  rm(list = ls(envir = .geometry_cache), envir = .geometry_cache)
+  rm(list = ls(envir = .session_cache), envir = .session_cache)
   invisible(NULL)
 }
 
@@ -53,37 +60,14 @@ repair_geometry <- function(shapes) {
 
 #' @noRd
 get_cached_geometry <- function(year, geography) {
-  cache_key <- paste0(year, "_", geography)
-
-  if (exists(cache_key, envir = .geometry_cache)) {
-    return(get(cache_key, envir = .geometry_cache))
-  }
-
-  filename <- sprintf(
-    "india-census-%d-%s.geojson.gz", year,
-    if (geography == "state") "states" else "districts"
-  )
-  geojson_path <- system.file("extdata", filename, package = "censusindia")
-
-  if (geojson_path == "") {
-    return(NULL)
-  }
-
-  shapes <- sf::st_read(paste0("/vsigzip/", geojson_path), quiet = TRUE)
-  shapes <- repair_geometry(shapes)
-  shapes <- relabel_boundaries(shapes, year, geography)
-  assign(cache_key, shapes, envir = .geometry_cache)
-  shapes
+  rlang::env_cache(.session_cache, paste0(year, "_", geography), {
+    path <- census_file(boundary_file(year, geography))
+    shapes <- sf::st_read(paste0("/vsigzip/", path), quiet = TRUE)
+    relabel_boundaries(repair_geometry(shapes), year, geography)
+  })
 }
 
-# Districts the upstream shapefile ships as "Unknown", identified by centroid,
-# area and adjacency:
-#   2001 Gujarat  (70.86 E, 22.43 N, 12,460 km2), adjacent to Amreli/Bhavnagar
-#                 -> Rajkot
-#   2001 Manipur  (93.55 E, 24.86 N,    877 km2), adjacent to Imphal West,
-#                 Senapati, Churachandpur -> Imphal East
-# Left unlabelled, "Imphal East *" fell through to edit-distance matching and was
-# handed the Imphal West polygon, so two districts drew the same shape.
+# polygons the upstream file names "Unknown", identified by centroid, area and adjacency
 .boundary_relabels <- data.frame(
   year = c(2001L, 2001L),
   geography = c("district", "district"),
@@ -123,22 +107,14 @@ add_geometry <- function(data, year, geography, unmatched = "warn") {
     return(data)
   }
 
-  shapes <- get_cached_geometry(year, geography)
-
-  if (is.null(shapes)) {
-    closest_year <- BOUNDARY_YEARS[which.min(abs(BOUNDARY_YEARS - year))]
-    shapes <- get_cached_geometry(closest_year, geography)
-
-    if (!is.null(shapes)) {
-      cli::cli_warn(c(
-        "Exact boundaries for {.val {year}} not available.",
-        "i" = "Using {.val {closest_year}} boundaries instead."
-      ))
-    } else {
-      cli::cli_warn("No geographic boundaries available for {.val {geography}} level")
-      return(data)
-    }
+  closest_year <- nearest_boundary_year(year)
+  if (closest_year != year) {
+    cli::cli_warn(c(
+      "Exact boundaries for {.val {year}} not available.",
+      "i" = "Using {.val {closest_year}} boundaries instead."
+    ))
   }
+  shapes <- get_cached_geometry(closest_year, geography)
 
   out <- if (geography == "state") {
     join_state_geometry(data, shapes, year)
@@ -150,8 +126,7 @@ add_geometry <- function(data, year, geography, unmatched = "warn") {
   }
 
   out <- report_join_quality(out, unmatched)
-  # plot_map() needs the vintage to know which outline belongs underneath;
-  # guessing is how the national boundary went missing.
+  # plot_map() reads this to pick the outline drawn underneath
   attr(out, "census_boundary_year") <- year
   out
 }
@@ -454,9 +429,7 @@ normalize_name <- function(x) {
   x <- stringr::str_squish(x)
   x <- stringr::str_replace_all(x, "twenty four", "24")
   x <- stringr::str_replace_all(x, "twenty-four", "24")
-  # Sources disagree on "&" vs "and". Stripping the ampersand as punctuation left
-  # "lahul spiti" against the shapefile's "lahul and spiti", so Lahul & Spiti got
-  # no geometry. Spell it out on both sides before punctuation goes.
+  # spell out "&" before punctuation goes, so "lahul & spiti" matches "lahul and spiti"
   x <- stringr::str_replace_all(x, "&", " and ")
   x <- stringr::str_replace_all(x, "[^a-z0-9 ]", "")
   stringr::str_squish(x)
@@ -478,17 +451,13 @@ normalize_name <- function(x) {
 #'
 #' @return An sf object with geometry attached.
 #'
-#' @examples
-#' \dontrun{
-#' library(dplyr)
+#' Boundary files are downloaded on first use; see [census_cache_dir()].
 #'
-#' data(census_2011_pca)
-#'
+#' @examplesIf interactive()
 #' # Attach district boundaries
 #' census_2011_pca |>
-#'   mutate(st_pct = 100 * st_population / population_total) |>
+#'   dplyr::mutate(st_pct = 100 * st_population / population_total) |>
 #'   attach_geometry(2011)
-#' }
 #'
 #' @export
 attach_geometry <- function(data, year, geography = NULL,
@@ -519,12 +488,12 @@ attach_geometry <- function(data, year, geography = NULL,
 #' @param geography Geographic level: "state" or "district".
 #' @return An sf object containing the geographic boundaries with harmonized state names.
 #'
-#' @examples
-#' \dontrun{
+#' Boundary files are downloaded on first use; see [census_cache_dir()].
+#'
+#' @examplesIf interactive()
 #' boundaries <- get_census_boundaries(1971, "district")
 #' ggplot2::ggplot(boundaries) +
 #'   ggplot2::geom_sf()
-#' }
 #'
 #' @export
 get_census_boundaries <- function(year, geography = c("state", "district")) {
@@ -534,14 +503,11 @@ get_census_boundaries <- function(year, geography = c("state", "district")) {
     cli::cli_abort("Package {.pkg sf} is required for geometry support.")
   }
 
-  shapes <- get_cached_geometry(year, geography)
-
-  if (is.null(shapes)) {
+  if (!year %in% BOUNDARY_YEARS) {
     cli::cli_abort(c(
       "Boundaries not available for year {.val {year}}",
-      "i" = "Available years: 1941, 1951, 1961, 1971, 1981, 1991, 2001, 2011"
+      "i" = "Available years: {BOUNDARY_YEARS}"
     ))
   }
-
-  shapes
+  get_cached_geometry(year, geography)
 }

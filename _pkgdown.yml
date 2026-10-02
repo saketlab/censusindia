@@ -144,18 +144,24 @@ reference:
   - census_2011_pca
   - census_2001_pca
   - census_2001_pca_full
-  - census_2011_demographics
-  - census_2011_workers
-  - census_2011_marginal_detail
-  - census_2011_mother_tongue
   - census_2011_district_languages
-  - census_2011_subdistrict_languages
   - census_2011_linguistic_diversity
   - census_2011_sc_st
   - census_2011_tribes
   - census_subdistricts_2011
   - census_variables
   - india_states
+
+- title: "Downloaded Datasets"
+  desc: "Large tables fetched on first use and cached"
+  contents:
+  - census_2011_demographics
+  - census_2011_workers
+  - census_2011_marginal_detail
+  - census_2011_mother_tongue
+  - census_2011_subdistrict_languages
+  - census_cache_dir
+  - census_download
 
 - title: "Population Projections"
   desc: "MOHFW population projections (2011-2036)"

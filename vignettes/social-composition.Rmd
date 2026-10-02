@@ -177,7 +177,7 @@ composition |>
 ```
 
 ```{r diversity-composition, fig.height=6, fig.width=10}
-diversity <- census_2011_mother_tongue |>
+diversity <- census_2011_mother_tongue() |>
   filter(language_level == "L1", district_code != "000", !grepl("Others", language_name)) |>
   group_by(state_name, district_code, language_name) |>
   summarise(speakers = sum(total_persons), .groups = "drop_last") |>

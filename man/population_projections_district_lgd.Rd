@@ -31,16 +31,16 @@ population_projections_district_lgd
 \description{
 MOHFW population projections scaled to current Local Government
 Directory (LGD) district boundaries. Annual projections from 2012 to
-2031, summed across age groups from \link{population_projections_district_lgd_age}.
+2031, summed across age groups from \code{\link[=population_projections_district_lgd_age]{population_projections_district_lgd_age()}}.
 }
 \section{Known defects}{
 
-Derived from \link{population_projections_district_age} by area overlap, so
+Derived from \code{\link[=population_projections_district_age]{population_projections_district_age()}} by area overlap, so
 district sums do not exactly reproduce \link{population_projections_state},
 and Karnataka inherits the age tables' disagreement with
 \link{population_projections_district}.
 Theni (Tamil Nadu) is NA for 2017-2031, and Moga (Punjab) and Tapi
-(Gujarat) for 2022-2026, as in \link{population_projections_district_age}. Use
+(Gujarat) for 2022-2026, as in \code{\link[=population_projections_district_age]{population_projections_district_age()}}. Use
 \link{population_projections_district} for totals in those years.
 }
 

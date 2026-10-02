@@ -31,8 +31,8 @@ Only works with \code{boundary = "census2011"} for district level.}
 
 \item{by_age}{If \code{TRUE}, returns single years of age 0-14 and 5-year
 bands 15-19 through 80+ instead of totals. See
-\link{population_projections_state_age}, \link{population_projections_district_age}
-and \link{population_projections_district_lgd_age}. State coverage by age is
+\link{population_projections_state_age}, \code{\link[=population_projections_district_age]{population_projections_district_age()}}
+and \code{\link[=population_projections_district_lgd_age]{population_projections_district_lgd_age()}}. State coverage by age is
 23 major states plus an "India" row and one North-East aggregate row.}
 }
 \value{

@@ -15,3 +15,6 @@ Numeric vector.
 \description{
 Females per 1,000 males, the convention the Census of India reports.
 }
+\examples{
+sex_ratio(census_2011_pca$population_female, census_2011_pca$population_male) |> head()
+}

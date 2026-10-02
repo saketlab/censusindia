@@ -29,7 +29,7 @@ census_languages <- function(level = c("district", "subdistrict"),
   d <- if (level == "district") {
     censusindia::census_2011_district_languages
   } else {
-    censusindia::census_2011_subdistrict_languages
+    census_2011_subdistrict_languages()
   }
   if (!is.null(language_group)) {
     d <- d |> dplyr::filter(.data$language_group %in% .env$language_group)
@@ -39,10 +39,11 @@ census_languages <- function(level = c("district", "subdistrict"),
 
 #' Census rows at one geographic level
 #'
-#' The village-level 2011 tables ([census_2011_demographics],
-#' [census_2011_workers], [census_2011_marginal_detail]) stack seven levels from
-#' India down to ward, and three sectors. Summing without filtering counts every
-#' population several times over.
+#' The village-level 2011 tables ([census_2011_demographics()],
+#' [census_2011_workers()], [census_2011_marginal_detail()]) stack seven levels
+#' from India down to ward, and three sectors. Summing without filtering counts
+#' every population several times over. [census_1981] stacks levels and sectors
+#' the same way.
 #'
 #' India, state, district, subdistrict and village are exact: each level sums to
 #' its parent for every numeric column, and rural + urban sums to total.
@@ -54,14 +55,15 @@ census_languages <- function(level = c("district", "subdistrict"),
 #' carry 8,443,675. Ward rows differ from their town by 3,738,272 across 295
 #' towns. Treat both as a lookup, not an additive slice.
 #'
-#' @param data One of the village-level 2011 tables.
+#' @param data A table with a `level` column, such as one of the village-level
+#'   2011 tables or [census_1981].
 #' @param level Geographic level, e.g. `"district"` or `"state"`.
 #' @param sector `"total"`, `"rural"` or `"urban"`.
 #'
 #' @return `data` filtered to that level and sector.
 #' @examples
-#' census_2011_demographics |>
-#'   at_level("district") |>
+#' census_1981 |>
+#'   at_level("state") |>
 #'   nrow()
 #' @export
 at_level <- function(data, level = "district", sector = "total") {

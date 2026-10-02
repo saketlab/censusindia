@@ -17,8 +17,8 @@
 #'   Only works with `boundary = "census2011"` for district level.
 #' @param by_age If `TRUE`, returns single years of age 0-14 and 5-year
 #'   bands 15-19 through 80+ instead of totals. See
-#'   [population_projections_state_age], [population_projections_district_age]
-#'   and [population_projections_district_lgd_age]. State coverage by age is
+#'   [population_projections_state_age], [population_projections_district_age()]
+#'   and [population_projections_district_lgd_age()]. State coverage by age is
 #'   23 major states plus an "India" row and one North-East aggregate row.
 #'
 #' @return A tibble (or sf object if `geometry = TRUE`) with columns:
@@ -75,9 +75,9 @@ get_population <- function(year = NULL,
   if (geography == "state") {
     data <- if (by_age) censusindia::population_projections_state_age else censusindia::population_projections_state
   } else if (boundary == "lgd") {
-    data <- if (by_age) censusindia::population_projections_district_lgd_age else censusindia::population_projections_district_lgd
+    data <- if (by_age) population_projections_district_lgd_age() else censusindia::population_projections_district_lgd
   } else {
-    data <- if (by_age) censusindia::population_projections_district_age else censusindia::population_projections_district
+    data <- if (by_age) population_projections_district_age() else censusindia::population_projections_district
   }
 
   if (!is.null(state)) {

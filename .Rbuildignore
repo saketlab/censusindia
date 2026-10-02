@@ -20,11 +20,15 @@
 ^data/2026$
 ^doc$
 ^Meta$
-^vignettes/.*\.csv$
-^vignettes/clustering-methodology\.md$
-# These analysis articles are built by pkgdown. Building them again as package
-# vignettes makes the r-universe source job exceed its time limit.
-^vignettes/(district-population|linguistic-diversity|population-dynamics|population-maps|population-projections|primary-census-abstract|sc-st-population|sex-ratio|social-composition|tribal-isolation)\.Rmd$
+^vignettes$
 ^parquet$
 ^geoparquet$
 ^\.positai$
+^\.gstack$
+^Rplots\.pdf$
+^\.DS_Store$
+^\.Rhistory$
+^man/figures/logo_.*$
+^man/figures/social-card\.png$
+^CRAN-SUBMISSION$
+^CLAUDE\.md$

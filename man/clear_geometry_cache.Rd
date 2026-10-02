@@ -10,10 +10,12 @@ clear_geometry_cache()
 Invisible NULL
 }
 \description{
-Clear geometry cache
+Releases the boundaries and downloaded tables held in memory for the
+session.
 }
 \examples{
-\dontrun{
 clear_geometry_cache()
 }
+\seealso{
+\code{\link[=clear_census_cache]{clear_census_cache()}} to delete downloaded files from disk.
 }

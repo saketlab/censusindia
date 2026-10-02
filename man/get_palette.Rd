@@ -18,3 +18,7 @@ A character vector of colors
 Get color palettes for maps. Available palettes: "viridis", "red_blue",
 "blue_red", "greens", "oranges", "reds", "blues", "purple_green".
 }
+\examples{
+get_palette("blues")
+get_palette("red_blue", reverse = TRUE)
+}

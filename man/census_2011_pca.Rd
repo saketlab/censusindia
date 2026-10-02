@@ -43,7 +43,7 @@ the 2011 Census. Covers all 640 districts; \code{population_total} sums to
 }
 \details{
 Aggregated at district level from the village-level 2011 PCA that also
-backs \link{census_2011_demographics}, \link{census_2011_workers} and
-\link{census_2011_marginal_detail}. For the 2001 round see \link{census_2001_pca}.
+backs \code{\link[=census_2011_demographics]{census_2011_demographics()}}, \code{\link[=census_2011_workers]{census_2011_workers()}} and
+\code{\link[=census_2011_marginal_detail]{census_2011_marginal_detail()}}. For the 2001 round see \link{census_2001_pca}.
 }
 \keyword{datasets}

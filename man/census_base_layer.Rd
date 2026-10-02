@@ -29,3 +29,9 @@ degrees of latitude.
 \code{\link[=plot_map]{plot_map()}} adds this automatically. Use it directly when hand-rolling a map
 with \code{\link[ggplot2:geom_sf]{ggplot2::geom_sf()}}.
 }
+\examples{
+\dontshow{if (interactive() && requireNamespace("ggplot2", quietly = TRUE)) withAutoprint(\{ # examplesIf}
+ggplot2::ggplot() +
+  census_base_layer(2011)
+\dontshow{\}) # examplesIf}
+}

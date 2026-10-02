@@ -26,21 +26,18 @@ be handed a wrong-but-similar shape; this is how the check surfaces.}
 }
 \value{
 An sf object with geometry attached.
+
+Boundary files are downloaded on first use; see \code{\link[=census_cache_dir]{census_cache_dir()}}.
 }
 \description{
 Adds geometry for mapping. Auto-detects state or district level from
 available columns.
 }
 \examples{
-\dontrun{
-library(dplyr)
-
-data(census_2011_pca)
-
+\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 # Attach district boundaries
 census_2011_pca |>
-  mutate(st_pct = 100 * st_population / population_total) |>
+  dplyr::mutate(st_pct = 100 * st_population / population_total) |>
   attach_geometry(2011)
-}
-
+\dontshow{\}) # examplesIf}
 }

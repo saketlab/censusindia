@@ -188,35 +188,6 @@
 #' }
 "india_states"
 
-#' Census 2011 mother tongue data (C-16)
-#'
-#' Mother tongue speakers by language at state and district levels from the
-#' 2011 Census C-16 tables, with rural/urban and male/female breakdowns.
-#'
-#' @format A tibble with 350,157 rows and 18 columns:
-#' \describe{
-#'   \item{state_code}{Numeric state code}
-#'   \item{state_name}{Name of the state}
-#'   \item{state_name_harmonized}{Harmonized state name for joining across datasets}
-#'   \item{district_code}{District code ("000" for state total)}
-#'   \item{area_name}{Name of the state or district}
-#'   \item{language_code}{Census language code}
-#'   \item{language_name}{Name of the language or dialect}
-#'   \item{language_level}{L1 for main languages, L2 for dialects}
-#'   \item{language_group}{Numeric language group code}
-#'   \item{total_persons}{Total speakers}
-#'   \item{total_males}{Male speakers}
-#'   \item{total_females}{Female speakers}
-#'   \item{rural_persons}{Rural speakers}
-#'   \item{rural_males}{Rural male speakers}
-#'   \item{rural_females}{Rural female speakers}
-#'   \item{urban_persons}{Urban speakers}
-#'   \item{urban_males}{Urban male speakers}
-#'   \item{urban_females}{Urban female speakers}
-#' }
-#' @source Census of India 2011, C-16 Mother Tongue Tables.
-"census_2011_mother_tongue"
-
 #' Census 2011 Primary Census Abstract (PCA)
 #'
 #' District-level population, SC/ST, literacy, and worker statistics from
@@ -224,8 +195,8 @@
 #' 1,210,854,977, the 2011 India total.
 #'
 #' Aggregated at district level from the village-level 2011 PCA that also
-#' backs [census_2011_demographics], [census_2011_workers] and
-#' [census_2011_marginal_detail]. For the 2001 round see [census_2001_pca].
+#' backs [census_2011_demographics()], [census_2011_workers()] and
+#' [census_2011_marginal_detail()]. For the 2001 round see [census_2001_pca].
 #'
 #' @format A tibble with 640 rows and 19 columns:
 #' \describe{
@@ -358,7 +329,7 @@
 #' boundaries (640 districts). Projections are at 5-year intervals:
 #' 2011, 2016, 2021, 2026, 2031. Values match the IIPS report's Table 8.
 #'
-#' The report's age tables ([population_projections_district_age]) sum
+#' The report's age tables ([population_projections_district_age()]) sum
 #' to different totals for Karnataka in 2016-2031 and for Uttar Pradesh and
 #' Nagaland in 2016.
 #'
@@ -382,7 +353,7 @@
 #'
 #' MOHFW population projections scaled to current Local Government
 #' Directory (LGD) district boundaries. Annual projections from 2012 to
-#' 2031, summed across age groups from [population_projections_district_lgd_age].
+#' 2031, summed across age groups from [population_projections_district_lgd_age()].
 #'
 #' @format A tibble with 15,660 rows and 6 columns:
 #' \describe{
@@ -397,12 +368,12 @@
 #'   \item{population}{Projected total population (males + females)}
 #' }
 #' @section Known defects:
-#' Derived from [population_projections_district_age] by area overlap, so
+#' Derived from [population_projections_district_age()] by area overlap, so
 #' district sums do not exactly reproduce [population_projections_state],
 #' and Karnataka inherits the age tables' disagreement with
 #' [population_projections_district].
 #' Theni (Tamil Nadu) is NA for 2017-2031, and Moga (Punjab) and Tapi
-#' (Gujarat) for 2022-2026, as in [population_projections_district_age]. Use
+#' (Gujarat) for 2022-2026, as in [population_projections_district_age()]. Use
 #' [population_projections_district] for totals in those years.
 #'
 #' @source International Institute for Population Sciences. Projection of
@@ -411,58 +382,6 @@
 #'   District scaling from Census 2011 to LGD boundaries via spatial
 #'   overlap analysis.
 "population_projections_district_lgd"
-
-#' Population projections -- district level, LGD boundaries, by age group (2012-2031)
-#'
-#' Age-stratified detail behind [population_projections_district_lgd]: single
-#' years of age for 0-14, five-year bands from 15-19 through 80+. Fixes the
-#' same double-counted "All ages" row bug documented on that table.
-#'
-#' @format A tibble with 454,140 rows and 7 columns:
-#' \describe{
-#'   \item{year}{Projection year (annual, 2012-2031)}
-#'   \item{state_name_harmonized}{Harmonized state name for joining. See
-#'     [population_projections_district_lgd] for the Dadra & Nagar Haveli /
-#'     Daman & Diu merged-UT caveat.}
-#'   \item{district}{District name (LGD naming convention)}
-#'   \item{age_group}{Single years "0".."14", then 5-year bands "15-19"
-#'     through "80+". Non-overlapping: summing all rows for a district-year
-#'     reproduces [population_projections_district_lgd].}
-#'   \item{males}{Projected male population}
-#'   \item{females}{Projected female population}
-#'   \item{population}{Projected total population (males + females)}
-#' }
-#' @source Same as [population_projections_district_lgd].
-"population_projections_district_lgd_age"
-
-#' Population projections -- district level, Census 2011 boundaries, by age group (2012-2031)
-#'
-#' Age-stratified detail behind [population_projections_district], on Census
-#' 2011 district boundaries (no LGD spatial apportionment involved). Same
-#' age-group scheme as [population_projections_district_lgd_age]: single
-#' years 0-14, then 5-year bands through 80+.
-#'
-#' Values are as printed in the IIPS report. District names match
-#' [population_projections_district].
-#'
-#' The following are NA in the pdf: Theni (Tamil Nadu) in 2017-2031, and
-#' the 80+ group of Moga (Punjab) and Tapi (Gujarat) in 2022-2026. Karnataka's
-#' age tables sum to a different projection from
-#' [population_projections_district].
-#'
-#' @format A tibble with 371,200 rows and 7 columns:
-#' \describe{
-#'   \item{year}{Projection year (annual, 2012-2031)}
-#'   \item{state_name_harmonized}{Harmonized state name for joining}
-#'   \item{district}{District name (Census 2011 naming convention)}
-#'   \item{age_group}{Single years "0".."14", then 5-year bands "15-19"
-#'     through "80+"}
-#'   \item{males}{Projected male population}
-#'   \item{females}{Projected female population}
-#'   \item{population}{Projected total population (males + females)}
-#' }
-#' @source Same as [population_projections_district].
-"population_projections_district_age"
 
 #' Population projections -- state level, by age group (2011-2036)
 #'
@@ -501,91 +420,6 @@
 #'   \url{https://nhm.gov.in/New_Updates_2018/Report_Population_Projection_2019.pdf}
 "population_projections_state_age"
 
-#' Census 2011 demographics (PCA)
-#'
-#' Population, SC/ST, and literacy counts from the 2011 Primary Census
-#' Abstract at all geographic levels (India, state, district, subdistrict,
-#' town/village, ward), split by total/rural/urban sector.
-#'
-#' @format A tibble with 751,594 rows and 28 columns:
-#' \describe{
-#'   \item{state_code}{Numeric state code}
-#'   \item{district_code}{Numeric district code}
-#'   \item{subdistrict_code}{Numeric subdistrict code}
-#'   \item{town_village_code}{Town or village code}
-#'   \item{ward_code}{Ward code}
-#'   \item{level}{Geographic level (india, state, district, subdistrict, town, village, ward)}
-#'   \item{name}{Name of the geographic unit}
-#'   \item{state_name_harmonized}{Harmonized state name for joining across datasets}
-#'   \item{sector}{Sector: "total", "rural", or "urban"}
-#'   \item{households}{Number of households}
-#'   \item{population_total,population_male,population_female}{Total, male, and female population}
-#'   \item{pop_0_6_total,pop_0_6_male,pop_0_6_female}{Population aged 0-6 years}
-#'   \item{sc_total,sc_male,sc_female}{Scheduled Caste population}
-#'   \item{st_total,st_male,st_female}{Scheduled Tribe population}
-#'   \item{literate_total,literate_male,literate_female}{Literate population}
-#'   \item{illiterate_total,illiterate_male,illiterate_female}{Illiterate population}
-#' }
-#' @source Census of India 2011, Primary Census Abstract.
-"census_2011_demographics"
-
-#' Census 2011 workers (PCA)
-#'
-#' Worker classification from the 2011 Primary Census Abstract at all
-#' geographic levels, split by total/rural/urban sector. Main and marginal
-#' workers are broken down by activity (cultivators, agricultural labourers,
-#' household industry, other workers).
-#'
-#' @format A tibble with 751,594 rows and 42 columns:
-#' \describe{
-#'   \item{state_code,district_code,subdistrict_code,town_village_code,ward_code}{Geographic codes}
-#'   \item{level}{Geographic level (india, state, district, subdistrict, town, village, ward)}
-#'   \item{name}{Name of the geographic unit}
-#'   \item{state_name_harmonized}{Harmonized state name for joining across datasets}
-#'   \item{sector}{Sector: "total", "rural", or "urban"}
-#'   \item{total_workers_total,total_workers_male,total_workers_female}{All workers}
-#'   \item{main_workers_total,main_workers_male,main_workers_female}{Main workers}
-#'   \item{main_cultivators_total,main_cultivators_male,main_cultivators_female}{Main cultivators}
-#'   \item{main_agri_labour_total,main_agri_labour_male,main_agri_labour_female}{Main agricultural labourers}
-#'   \item{main_hh_industry_total,main_hh_industry_male,main_hh_industry_female}{Main household industry workers}
-#'   \item{main_other_total,main_other_male,main_other_female}{Main other workers}
-#'   \item{marginal_workers_total,marginal_workers_male,marginal_workers_female}{Marginal workers}
-#'   \item{marginal_cultivators_total,marginal_cultivators_male,marginal_cultivators_female}{Marginal cultivators}
-#'   \item{marginal_agri_labour_total,marginal_agri_labour_male,marginal_agri_labour_female}{Marginal agricultural labourers}
-#'   \item{marginal_hh_industry_total,marginal_hh_industry_male,marginal_hh_industry_female}{Marginal household industry workers}
-#'   \item{marginal_other_total,marginal_other_male,marginal_other_female}{Marginal other workers}
-#' }
-#' @source Census of India 2011, Primary Census Abstract.
-"census_2011_workers"
-
-#' Census 2011 marginal worker detail (PCA)
-#'
-#' Marginal workers from the 2011 Primary Census Abstract split by duration
-#' of work (3-6 months and 0-3 months) and by activity, plus non-workers,
-#' at all geographic levels and total/rural/urban sector.
-#'
-#' @format A tibble with 751,594 rows and 42 columns:
-#' \describe{
-#'   \item{state_code,district_code,subdistrict_code,town_village_code,ward_code}{Geographic codes}
-#'   \item{level}{Geographic level (india, state, district, subdistrict, town, village, ward)}
-#'   \item{name}{Name of the geographic unit}
-#'   \item{state_name_harmonized}{Harmonized state name for joining across datasets}
-#'   \item{sector}{Sector: "total", "rural", or "urban"}
-#'   \item{marginal_workers_3_6_total,marginal_workers_3_6_male,marginal_workers_3_6_female}{Marginal workers employed 3-6 months}
-#'   \item{marg_cultivators_3_6_total,marg_cultivators_3_6_male,marg_cultivators_3_6_female}{Marginal cultivators, 3-6 months}
-#'   \item{marg_agri_labour_3_6_total,marg_agri_labour_3_6_male,marg_agri_labour_3_6_female}{Marginal agricultural labourers, 3-6 months}
-#'   \item{marg_hh_industry_3_6_total,marg_hh_industry_3_6_male,marg_hh_industry_3_6_female}{Marginal household industry workers, 3-6 months}
-#'   \item{marg_other_3_6_total,marg_other_3_6_male,marg_other_3_6_female}{Marginal other workers, 3-6 months}
-#'   \item{marginal_workers_0_3_total,marginal_workers_0_3_male,marginal_workers_0_3_female}{Marginal workers employed 0-3 months}
-#'   \item{marg_cultivators_0_3_total,marg_cultivators_0_3_male,marg_cultivators_0_3_female}{Marginal cultivators, 0-3 months}
-#'   \item{marg_agri_labour_0_3_total,marg_agri_labour_0_3_male,marg_agri_labour_0_3_female}{Marginal agricultural labourers, 0-3 months}
-#'   \item{marg_hh_industry_0_3_total,marg_hh_industry_0_3_male,marg_hh_industry_0_3_female}{Marginal household industry workers, 0-3 months}
-#'   \item{marg_other_0_3_total,marg_other_0_3_male,marg_other_0_3_female}{Marginal other workers, 0-3 months}
-#'   \item{non_workers_total,non_workers_male,non_workers_female}{Non-workers}
-#' }
-#' @source Census of India 2011, Primary Census Abstract.
-"census_2011_marginal_detail"
-
 #' Census 2011 district languages (C-16)
 #'
 #' Mother tongue speakers by language at district level from the 2011
@@ -607,30 +441,6 @@
 #' }
 #' @source Census of India 2011, C-16 Mother Tongue Tables.
 "census_2011_district_languages"
-
-#' Census 2011 subdistrict languages (C-16)
-#'
-#' Mother tongue speakers by language at subdistrict level from the 2011
-#' Census C-16 tables, with male/female and rural/urban breakdowns. The
-#' district rows that share each subdistrict's `district_code` are excluded,
-#' so these rows sum to the matching row of [census_2011_district_languages].
-#'
-#' @format A tibble with 144,134 rows and 11 columns:
-#' \describe{
-#'   \item{state_code}{Numeric state code}
-#'   \item{state_name_harmonized}{Harmonized state name for joining across datasets}
-#'   \item{district_code}{Numeric district code}
-#'   \item{area_name}{Name of the subdistrict}
-#'   \item{language_name}{Name of the language}
-#'   \item{language_group}{Numeric language group code}
-#'   \item{total_speakers}{Total speakers}
-#'   \item{male_speakers}{Male speakers}
-#'   \item{female_speakers}{Female speakers}
-#'   \item{rural_speakers}{Rural speakers}
-#'   \item{urban_speakers}{Urban speakers}
-#' }
-#' @source Census of India 2011, C-16 Mother Tongue Tables.
-"census_2011_subdistrict_languages"
 
 #' Census 2011 linguistic diversity
 #'

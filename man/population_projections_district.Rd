@@ -29,7 +29,7 @@ boundaries (640 districts). Projections are at 5-year intervals:
 2011, 2016, 2021, 2026, 2031. Values match the IIPS report's Table 8.
 }
 \details{
-The report's age tables (\link{population_projections_district_age}) sum
+The report's age tables (\code{\link[=population_projections_district_age]{population_projections_district_age()}}) sum
 to different totals for Karnataka in 2016-2031 and for Uttar Pradesh and
 Nagaland in 2016.
 
