@@ -1,0 +1,13 @@
+[Unit]
+Description=censusindia plumber REST API (port 8895)
+After=network.target
+
+[Service]
+Type=simple
+Environment=R_LIBS_USER=%h/R/x86_64-pc-linux-gnu-library/4.3
+ExecStart=/usr/bin/Rscript --vanilla -e "censusindia::serve(host='127.0.0.1', port=8895)"
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target
