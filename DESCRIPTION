@@ -18,6 +18,7 @@ Imports:
     cli,
     dplyr,
     rlang,
+    s2,
     sf,
     stringr,
     tibble
@@ -31,6 +32,7 @@ Suggests:
     ggtern,
     gifski,
     patchwork,
+    plumber,
     scales,
     tidyr,
     testthat (>= 3.0.0),

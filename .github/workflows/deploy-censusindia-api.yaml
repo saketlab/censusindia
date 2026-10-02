@@ -1,0 +1,92 @@
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+    paths:
+      - 'R/**'
+      - 'inst/plumber/plumber.R'
+      - 'DESCRIPTION'
+      - 'NAMESPACE'
+      - '.github/services/censusindia-api.service'
+      - '.github/services/censusindia-api.nginx'
+      - '.github/workflows/deploy-censusindia-api.yaml'
+
+name: deploy-censusindia-api
+
+jobs:
+  deploy:
+    runs-on: blacksmith-2vcpu-ubuntu-2404
+    steps:
+      - name: SSH redeploy
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_PORT || 22 }}
+          script_stop: true
+          script: |
+            set -euo pipefail
+            if [ ! -d "$HOME/censusindia" ]; then
+              git clone https://github.com/saketlab/censusindia.git "$HOME/censusindia"
+            fi
+            cd ~/censusindia
+            git fetch --prune
+            git reset --hard origin/master
+            mkdir -p "$HOME/R/x86_64-pc-linux-gnu-library/4.3"
+            # dependencies=NA covers Depends/Imports/LinkingTo (so sf and s2 are
+            # installed) but not Suggests. TRUE would pull gganimate/gifski,
+            # which need ffmpeg and fail to build, aborting the deploy under
+            # set -e. plumber is the only Suggests the API needs.
+            Rscript --vanilla -e "remotes::install_local('.', lib='$HOME/R/x86_64-pc-linux-gnu-library/4.3', dependencies=NA, upgrade='never', quiet=TRUE)"
+            Rscript --vanilla -e "if (!requireNamespace('plumber', quietly=TRUE)) remotes::install_cran('plumber')"
+            install -D -m 644 .github/services/censusindia-api.service \
+                    "$HOME/.config/systemd/user/censusindia-api.service"
+            systemctl --user daemon-reload
+            systemctl --user enable censusindia-api.service
+            systemctl --user restart censusindia-api.service
+            sudo install -D -m 644 .github/services/censusindia-api.nginx \
+                    /etc/nginx/snippets/censusindia-api.nginx
+            # The censusindia.saketlab.org vhost already exists (it serves the
+            # pkgdown site). Add our include to it rather than shipping a
+            # second server block. Idempotent: the grep guard makes re-running
+            # this a no-op.
+            SNIPPET="/etc/nginx/snippets/censusindia-api.nginx"
+            INCLUDE_LINE="include ${SNIPPET};"
+            VHOST="$(sudo nginx -T 2>&1 \
+                      | awk '/^# configuration file /{file=$4} /server_name[[:space:]]+censusindia\.saketlab\.org/{print file; exit}' \
+                      | sed 's/:$//')"
+            if [ -z "$VHOST" ]; then
+              echo "could not locate the censusindia.saketlab.org vhost" >&2
+              exit 1
+            fi
+            if grep -qF "$INCLUDE_LINE" "$VHOST" 2>/dev/null \
+               || sudo grep -qF "$INCLUDE_LINE" "$VHOST" 2>/dev/null; then
+              echo "include already present in $VHOST"
+            else
+              echo "adding API include to $VHOST"
+              sudo awk -v inc="$INCLUDE_LINE" '
+                { print }
+                !done && /server_name[[:space:]]+censusindia\.saketlab\.org/ {
+                  match($0, /^([[:space:]]*)/)
+                  indent = substr($0, 1, RLENGTH)
+                  print indent inc
+                  done = 1
+                }
+              ' "$VHOST" > /tmp/censusindia-vhost.new
+              sudo install -m 644 /tmp/censusindia-vhost.new "$VHOST"
+              rm -f /tmp/censusindia-vhost.new
+            fi
+            sudo nginx -t && sudo nginx -s reload
+            for i in $(seq 1 90); do
+              if curl -fsS http://127.0.0.1:8895/health >/dev/null 2>&1; then
+                echo "plumber healthy after $((i * 2))s"
+                break
+              fi
+              sleep 2
+            done
+            if ! curl -fsS http://127.0.0.1:8895/health >/dev/null 2>&1; then
+              echo "plumber did not become healthy in 180s" >&2
+              journalctl --user -u censusindia-api.service -n 50 --no-pager >&2 || true
+              exit 1
+            fi
