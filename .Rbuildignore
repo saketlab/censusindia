@@ -32,3 +32,4 @@
 ^man/figures/social-card\.png$
 ^CRAN-SUBMISSION$
 ^CLAUDE\.md$
+^pkgdown$
