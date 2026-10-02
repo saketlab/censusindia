@@ -5,7 +5,7 @@
 \alias{population_projections_district_lgd_age}
 \title{Population projections -- district level, LGD boundaries, by age group (2012-2031)}
 \format{
-A tibble with 455,300 rows and 7 columns:
+A tibble with 454,140 rows and 7 columns:
 \describe{
 \item{year}{Projection year (annual, 2012-2031)}
 \item{state_name_harmonized}{Harmonized state name for joining. See

@@ -5,7 +5,7 @@
 \alias{population_projections_district_age}
 \title{Population projections -- district level, Census 2011 boundaries, by age group (2012-2031)}
 \format{
-A tibble with 369,460 rows and 7 columns:
+A tibble with 371,200 rows and 7 columns:
 \describe{
 \item{year}{Projection year (annual, 2012-2031)}
 \item{state_name_harmonized}{Harmonized state name for joining}
@@ -30,8 +30,12 @@ age-group scheme as \link{population_projections_district_lgd_age}: single
 years 0-14, then 5-year bands through 80+.
 }
 \details{
-Khargone (West Nimar, Madhya Pradesh), Ukhrul (Manipur) and Paschim
-Medinipur (West Bengal) each have two source rows per age with different
-values, an OCR artifact. The two rows are summed rather than picking one.
+Values are as printed in the IIPS report. District names match
+\link{population_projections_district}.
+
+The following are NA in the pdf: Theni (Tamil Nadu) in 2017-2031, and
+the 80+ group of Moga (Punjab) and Tapi (Gujarat) in 2022-2026. Karnataka's
+age tables sum to a different projection from
+\link{population_projections_district}.
 }
 \keyword{datasets}

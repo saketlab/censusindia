@@ -1,4 +1,4 @@
-# censusindia
+# censusindia <img src="man/figures/logo.png" align="right" height="139" alt="censusindia logo" />
 
 censusindia is an R package to query Census of India data, 1901 to 2011, at state,
 district, and subdistrict level. It also provides MoHFW population projections through
@@ -10,6 +10,8 @@ SC/ST tables can be 'attached' to district-boundary GeoJSONs for quick visualisa
 ```r
 install.packages("pak")
 pak::pak("saketlab/censusindia")
+# alternative
+devtools::install_github("saketlab/censusindia")
 ```
 
 ## Quickstart

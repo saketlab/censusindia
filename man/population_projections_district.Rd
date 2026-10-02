@@ -18,6 +18,7 @@ A tibble with 3,200 rows and 6 columns:
 \source{
 International Institute for Population Sciences. Projection of
 District Level Annual Population by Quinquennial Agegroup and Sex.
+\url{https://www.iipsindia.ac.in/sites/default/files/1_3.pdf}
 }
 \usage{
 population_projections_district
@@ -25,9 +26,13 @@ population_projections_district
 \description{
 MOHFW population projections at district level using Census 2011
 boundaries (640 districts). Projections are at 5-year intervals:
-2011, 2016, 2021, 2026, 2031.
+2011, 2016, 2021, 2026, 2031. Values match the IIPS report's Table 8.
 }
 \details{
+The report's age tables (\link{population_projections_district_age}) sum
+to different totals for Karnataka in 2016-2031 and for Uttar Pradesh and
+Nagaland in 2016.
+
 Compatible with \code{\link[=attach_geometry]{attach_geometry()}} using 2011 district boundaries.
 }
 \keyword{datasets}

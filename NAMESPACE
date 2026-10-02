@@ -21,5 +21,7 @@ export(sex_ratio)
 export(share)
 export(theme_census)
 export(theme_census_map)
-importFrom(rlang,.data)
-importFrom(rlang,.env)
+importFrom(rlang,
+  .data,
+  .env
+)

@@ -28,7 +28,7 @@ marginal_hh_industry_total, marginal_other_total}{Marginal workers by category}
 }
 \source{
 Census of India 2001, Primary Census Abstract (series
-\code{PC01_PCA_TOT}), downloaded by \code{data-raw/fetch_2001_pca.py}.
+\code{PC01_PCA_TOT}).
 }
 \usage{
 census_2001_pca_full

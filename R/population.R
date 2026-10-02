@@ -37,6 +37,15 @@
 #' (2011, 2016, 2021, 2026, 2031). LGD district data has annual
 #' projections from 2012 to 2031.
 #'
+#' A `year` absent from the table is estimated from the two nearest table
+#' years by geometric (exponential) growth, applied separately to `males`,
+#' `females` and `population`:
+#'
+#' \deqn{P_t = P_1 (P_2 / P_1)^{(t - t_1) / (t_2 - t_1)}}
+#'
+#' Estimated districts need not sum exactly to
+#' the estimated state.
+#'
 #' Telangana and Ladakh are included as separate entries even though
 #' they did not exist as states at the time of the 2011 Census.
 #'
@@ -71,12 +80,21 @@ get_population <- function(year = NULL,
     data <- if (by_age) censusindia::population_projections_district_age else censusindia::population_projections_district
   }
 
-  if (!is.null(year)) {
-    data <- data |> dplyr::filter(.data$year %in% .env$year)
-  }
-
   if (!is.null(state)) {
     data <- filter_population_by_state(data, state)
+  }
+
+  if (!is.null(year)) {
+    if (!rlang::is_integerish(year, finite = TRUE)) {
+      cli::cli_abort("{.arg year} must be whole-number years.")
+    }
+    year <- as.integer(year)
+    missing_years <- setdiff(year, data$year)
+    data <- dplyr::filter(data, .data$year %in% .env$year) |>
+      dplyr::bind_rows(
+        if (length(missing_years)) estimate_population_years(data, missing_years)
+      ) |>
+      dplyr::arrange(.data$year)
   }
 
   if (geometry) {
@@ -100,4 +118,41 @@ filter_population_by_state <- function(data, state) {
   wanted <- resolve_states(state, present = unique(data$state_name_harmonized))
   data |>
     dplyr::filter(tolower(.data$state_name_harmonized) %in% tolower(.env$wanted))
+}
+
+#' Estimate projection years absent from a table
+#' @noRd
+estimate_population_years <- function(data, years) {
+  known <- sort(unique(data$year))
+  values <- c("males", "females", "population")
+  keys <- setdiff(names(data), c("year", values))
+
+  # all.inside extrapolates with the end interval's rate
+  # ponytail: one-interval rate is noisy far out; use a longer baseline if that matters
+  idx <- findInterval(years, known, all.inside = TRUE)
+  outside <- years[years < min(known) | years > max(known)]
+  cli::cli_inform(c(
+    "i" = "Not in the MOHFW tables, estimated by geometric growth: {.val {years}}.",
+    "!" = if (length(outside)) "Extrapolated beyond {min(known)}-{max(known)}: {.val {outside}}."
+  ))
+
+  rows <- lapply(seq_along(years), function(j) {
+    t1 <- known[idx[j]]
+    t2 <- known[idx[j] + 1]
+    frac <- (years[j] - t1) / (t2 - t1)
+    m <- dplyr::inner_join(
+      data[data$year == t1, ],
+      data[data$year == t2, c(keys, values)],
+      by = keys, suffix = c("", ".end")
+    )
+    for (v in values) {
+      p1 <- m[[v]]
+      p2 <- m[[paste0(v, ".end")]]
+      # growth from zero is undefined unless it stays zero
+      m[[v]] <- round(ifelse(p1 > 0, p1 * (p2 / p1)^frac, ifelse(p2 == 0, 0, NA)))
+    }
+    m$year <- years[j]
+    m[names(data)]
+  })
+  dplyr::bind_rows(rows)
 }
