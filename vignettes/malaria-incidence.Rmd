@@ -1,0 +1,368 @@
+---
+title: "RGI Population Projections: Normalising HMIS Malaria Deaths with {censusindia}"
+author: "Darakhshan Nehal"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteEncoding{UTF-8}
+  %\VignetteIndexEntry{Population Projections as Denominators: Normalising HMIS Malaria Deaths with censusindia}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse  = TRUE,
+  comment   = "#>",
+  fig.width  = 8,
+  fig.height = 5,
+  message   = FALSE,
+  warning   = FALSE
+)
+```
+
+Many public health datasets in India report indicators as raw counts.
+Comparing raw counts across geographies is misleading, a larger state
+will always report more events simply due to population size. The
+standard solution is to normalize the raw counts, for instance
+calculating malaria incidence (per 100,000) in place of just raw malaria
+case/test/deaths counts.
+
+`{censusindia}` provides **annual district- and state-level population
+projections from 2012 to 2031**, modeled from the 2011 Census by the
+Registrar General of India (RGI).
+
+This vignette demonstrates the workflow using malaria death data from
+the Health Management Information System (HMIS), accessed via
+`{hmisindia}`. The two packages are designed to work together:
+`hmisindia` provides the numerator, `censusindia` provides the
+denominator.
+
+------------------------------------------------------------------------
+
+## Setup
+
+```{r packages}
+library(censusindia)   # population projections 
+library(hmisindia)     # HMIS data
+library(arrow)         # read parquet files 
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(scales)
+library(patchwork)     # side-by-side plots
+
+#district_path <- "path/to/hmis_long_district.parquet"
+```
+
+------------------------------------------------------------------------
+
+## What {censusindia} Provides
+
+```{r show-projections}
+# State-level projections: annual, 2011-2031
+glimpse(population_projections_state)
+
+# District-level projections with LGD codes
+glimpse(population_projections_district_lgd)
+```
+
+------------------------------------------------------------------------
+
+## Data Preparation
+
+### State-level malaria deaths (HMIS)
+
+```{r state-fetch}
+falciparum_deaths <- get_disease_deaths("Malaria (Pf)",
+                                        sector   = "Total",
+                                        category = "Total")
+
+vivax_deaths      <- get_disease_deaths("Malaria (Pv)",
+                                        sector   = "Total",
+                                        category = "Total")
+
+malaria_deaths_raw <- bind_rows(
+  falciparum_deaths |> mutate(species = "Falciparum"),
+  vivax_deaths      |> mutate(species = "Vivax")
+) |>
+  filter(!cal_year %in% c(2024, 2025))  
+```
+
+```{r state-aggregate}
+malaria_annual <- malaria_deaths_raw |>
+  filter(
+    state != "All India",
+    !state %in% hmis_non_geo_states,                      # removes M/O Defence, Railways
+    !grepl("Dadra|Daman", state, ignore.case = TRUE)      # drop merged UT (boundary mismatch)
+  ) |>
+  group_by(state, cal_year, species) |>
+  summarise(deaths = sum(value, na.rm = TRUE), .groups = "drop")
+```
+
+### Attach the {censusindia} population denominator
+
+```{r pop-state}
+pop_total <- population_projections_state |>
+  select(state_name_harmonized, year, population)
+```
+
+### Join and compute rate
+
+```{r state-join}
+malaria_rate <- malaria_annual |>
+  left_join(
+    pop_total,
+    by = c("state" = "state_name_harmonized", "cal_year" = "year")
+  ) |>
+  mutate(rate_per_100k = (deaths / population) * 1e5) |>
+  filter(!is.na(rate_per_100k), !is.infinite(rate_per_100k), population > 0) |>
+  filter(cal_year >= 2017, cal_year <= 2023)
+```
+
+### District-level data
+
+```{r district-fetch, eval = FALSE}
+falciparum_dist <- open_dataset(district_path) |>
+  filter(canonical_name == "Number of Deaths due to Malaria - Plasmodium Falciparum",
+         sector   == "Total",
+         category == "Total") |>
+  collect() |>
+  add_calendar_vars() |>
+  filter(
+    !state %in% hmis_non_geo_states,
+    !grepl("Dadra|Daman", state, ignore.case = TRUE)
+  ) |>
+  group_by(state, district, cal_year) |>
+  summarise(deaths = sum(value, na.rm = TRUE), .groups = "drop")
+
+vivax_dist <- open_dataset(district_path) |>
+  filter(canonical_name == "Number of Deaths due to Malaria - Plasmodium Vivax",
+         sector   == "Total",
+         category == "Total") |>
+  collect() |>
+  add_calendar_vars() |>
+  filter(
+    !state %in% hmis_non_geo_states,
+    !grepl("Dadra|Daman", state, ignore.case = TRUE)
+  ) |>
+  group_by(state, district, cal_year) |>
+  summarise(deaths = sum(value, na.rm = TRUE), .groups = "drop")
+
+malaria_dist <- bind_rows(
+  falciparum_dist |> mutate(species = "Falciparum"),
+  vivax_dist      |> mutate(species = "Vivax")
+)
+```
+
+```{r district-join}
+pop_dist <- population_projections_district_lgd |>
+  select(state_name_harmonized, district, year, population)
+
+malaria_dist_rate <- malaria_dist |>
+  left_join(
+    pop_dist,
+    by = c("state"    = "state_name_harmonized",
+           "district" = "district",
+           "cal_year" = "year")
+  ) |>
+  mutate(rate_per_100k = (deaths / population) * 1e5) |>
+  filter(
+    !is.na(rate_per_100k),
+    !is.infinite(rate_per_100k),
+    population > 0,
+    cal_year >= 2017,
+    cal_year <= 2023
+  )
+```
+
+------------------------------------------------------------------------
+
+## Raw Count vs. Normalised Rate
+
+The same 10 states ranked by total raw deaths, shown side by side. Raw
+counts (left) and malaria incidence after normalization (right).
+
+```{r bar-plots, fig.width=14, fig.height=5}
+# for both bar plots, exclude Telangana (its 2018 outbreak spike disproportionately inflates the mean)
+
+top_states <- malaria_rate |>
+  filter(state != "Telangana") |>
+  group_by(state) |>
+  summarise(total_deaths = sum(deaths)) |>
+  slice_max(total_deaths, n = 10) |>
+  pull(state)
+
+p1 <- malaria_rate |>
+  filter(state %in% top_states) |>
+  group_by(state, species) |>
+  summarise(deaths = sum(deaths), .groups = "drop") |>
+  ggplot(aes(x = reorder(state, deaths), y = deaths, fill = species)) +
+  geom_col() +
+  coord_flip() +
+  scale_fill_manual(values = c("Falciparum" = "steelblue4", "Vivax" = "tan3")) +
+  scale_y_continuous(labels = comma) +
+  labs(
+    title    = "Raw Count",
+    x        = NULL,
+    y        = "Deaths (absolute count)",
+    fill     = "Species",
+    caption  = "Data: HMIS via {hmisindia}"
+  ) +
+  theme_hmis() +
+  theme(legend.position = "top",
+        axis.text = element_text(face = "bold"))
+
+p2 <- malaria_rate |>
+  filter(state %in% top_states) |>
+  group_by(state, species) |>
+  summarise(
+    deaths     = sum(deaths),
+    population = mean(population),
+    .groups    = "drop"
+  ) |>
+  mutate(rate_per_100k = (deaths / population) * 1e5) |>
+  ggplot(aes(x = reorder(state, rate_per_100k), y = rate_per_100k, fill = species)) +
+  geom_col() +
+  coord_flip() +
+  scale_fill_manual(values = c("Falciparum" = "steelblue", "Vivax" = "tan3")) +
+  labs(
+    title    = "Normalised Rate (per 100,000)",
+    x        = NULL,
+    y        = "Deaths per 100,000 population",
+    fill     = "Species",
+    caption  = "HMIS & RGI population projections via {censusindia}"
+  ) +
+  theme_hmis() +
+  theme(legend.position = "top",
+        axis.text = element_text(face = "bold"))
+
+p1 + p2 +
+  plot_annotation(
+    title    = "Total Malaria Deaths by State (2017–2023)",
+    theme    = theme(plot.title = element_text(size = 14, face = "bold"))
+  )
+```
+
+------------------------------------------------------------------------
+
+## Normalized Death Rate Trend
+
+```{r line-normalised, fig.height=5}
+high_burden <- malaria_rate |>
+  group_by(state) |>
+  summarise(mean_rate = mean(rate_per_100k)) |>
+  slice_max(mean_rate, n = 6) |>
+  pull(state)
+
+malaria_rate |>
+  filter(state %in% high_burden) |>
+  group_by(state, cal_year) |>
+  summarise(
+    rate_per_100k = sum(deaths) / mean(population) * 1e5,
+    .groups = "drop"
+  ) |>
+  ggplot(aes(x = cal_year, y = rate_per_100k, colour = state)) +
+  geom_line(linewidth = 0.9) +
+  scale_colour_brewer(palette = "Dark2") +
+  facet_wrap(~ state, ncol = 3, scales = "free_y") +
+  labs(
+    title    = "Malaria Death Rate Trend (per 100,000)",
+    subtitle = "Top 6 states by HMIS-reported normalised rate  |  Falciparum & Vivax combined",
+caption  = "Note: Rankings reflect HMIS facility reporting; states with low health facility utilisation may be underrepresented. \n Data: HMIS & RGI population projections via {censusindia}",
+    x        = NULL,
+    y        = "Deaths (per 100,000)",
+    colour   = NULL) +
+  theme_hmis() +
+  theme(
+    legend.position = "none",   # redundant with facet labels
+    axis.text = element_text(face = "bold"),
+    strip.text      = element_text(face = "bold")
+  )
+```
+
+------------------------------------------------------------------------
+
+## District Choropleth Maps
+
+District-level normalized rates reveal geographic concentration of
+malaria burden that state totals obscure.
+`censusindia::population_projections_district_lgd` provides the district
+denominators; `hmisindia::attach_geometry()` attaches LGD boundaries for
+mapping.
+
+> Note: 79% of district-year observations have zero malaria deaths,
+> malaria is highly focal, concentrated in tribal belt districts of
+> Odisha, Jharkhand, Chhattisgarh, and parts of the northeast. Values
+> above the 99th percentile are capped to prevent a handful of extreme
+> districts from collapsing the colour scale.
+
+```{r map-combined, fig.height=8}
+# run once before all maps
+state_borders <- censusindia::get_census_boundaries(year = 2011, geography = "state")
+
+plot_district_map <- function(data, title, subtitle = "") {
+  data |>
+    hmisindia::attach_geometry() |>
+    ggplot(aes(fill = rate_plot)) +
+    geom_sf(colour = "grey45", linewidth = 0.2) +
+    geom_sf(data = state_borders, fill = NA,
+            colour = "royalblue4", linewidth = 0.35) +
+    scale_fill_viridis_c(
+      option    = "magma",
+      direction = -1,
+      name      = "Deaths\n(per 100k)",
+      labels    = comma_format(accuracy = 1)
+    ) +
+    labs(
+      title    = title,
+      subtitle = subtitle,
+      caption  = "Values above 99th percentile capped. Data: HMIS & RGI population projections via {censusindia}"
+    ) +
+    theme_hmis() +
+    theme(
+      axis.text       = element_blank(),
+      axis.ticks      = element_blank(),
+      panel.grid      = element_blank(),
+      legend.position = "top"
+    ) +
+    guides(fill = guide_colorbar(barwidth = 14, barheight = 0.65))
+}
+
+# combined map
+malaria_dist_rate |>
+  group_by(state, district) |>
+  summarise(
+    rate_per_100k = sum(deaths) / mean(population) * 1e5,
+    .groups = "drop"
+  ) |>
+  mutate(rate_plot = pmin(rate_per_100k, quantile(rate_per_100k, 0.99, na.rm = TRUE))) |>
+  plot_district_map(
+    title    = "Malaria Death Rate by District (2017–2023) | Falciparum + Vivax combined"
+  )
+
+# per-species maps
+for(sp in c("Falciparum", "Vivax")) {
+  p <- malaria_dist_rate |>
+    filter(species == sp) |>
+    group_by(state, district) |>
+    summarise(
+      rate_per_100k = sum(deaths) / mean(population) * 1e5,
+      .groups = "drop"
+    ) |>
+    mutate(rate_plot = pmin(rate_per_100k, quantile(rate_per_100k, 0.99, na.rm = TRUE))) |>
+    plot_district_map(
+      title    = paste("Malaria Death Rate by District -", sp)
+    )
+  print(p)
+}
+```
+
+------------------------------------------------------------------------
+
+## Session Info
+
+```{r session-info}
+sessionInfo()
+```

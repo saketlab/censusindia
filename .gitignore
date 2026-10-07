@@ -30,3 +30,4 @@ data-raw/
 
 __pycache__/
 *.pyc
+inst/doc
