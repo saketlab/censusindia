@@ -124,7 +124,7 @@ malaria_rate <- malaria_annual |>
 
 ### District-level data
 
-```{r district-fetch, eval = FALSE}
+```{r district-fetch}
 falciparum_dist <- open_dataset(district_path) |>
   filter(canonical_name == "Number of Deaths due to Malaria - Plasmodium Falciparum",
          sector   == "Total",
