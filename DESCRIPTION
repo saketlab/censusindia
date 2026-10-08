@@ -31,7 +31,6 @@ Imports:
     tools,
     utils
 Suggests:
-    hmisindia,
     curl,
     ggplot2,
     knitr,

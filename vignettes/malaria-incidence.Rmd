@@ -18,7 +18,8 @@ knitr::opts_chunk$set(
   fig.width  = 8,
   fig.height = 5,
   message   = FALSE,
-  warning   = FALSE
+  warning   = FALSE,
+  eval      = !identical(Sys.getenv("CI"), "true")
 )
 ```
 
