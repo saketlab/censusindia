@@ -33,10 +33,13 @@ see \code{\link[=census_cache_dir]{census_cache_dir()}}.
 Values are as printed in the IIPS report. District names match
 \link{population_projections_district}.
 
-The following are NA in the PDF: Theni (Tamil Nadu) in 2017-2031, and
-the 80+ group of Moga (Punjab) and Tapi (Gujarat) in 2022-2026. Karnataka's
-age tables sum to a different projection from
-\link{population_projections_district}.
+Two blocks are derived because the PDF does not print them. Moga (Punjab)
+and Tapi (Gujarat) print no 80+ row for 2022-2026; it is the printed All
+ages minus the other printed age groups. Theni's (Tamil Nadu) 2017-2031
+pages repeat Madurai's numbers; Theni carries its printed 2016 value along
+Tamil Nadu's common district growth path, and its totals match
+\link{population_projections_district}. Karnataka's age tables sum to a
+different projection from \link{population_projections_district}.
 }
 \examples{
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}

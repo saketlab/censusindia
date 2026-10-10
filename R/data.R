@@ -136,7 +136,13 @@
 #'
 #' Subdistrict (tehsil/taluka) population from the 2011 Census.
 #'
-#' @format A tibble with 7,074 rows and 15 columns:
+#' A subdistrict crossing a district line is listed once per district, marked
+#' "(Part)". Population, males, females and households come from
+#' [census_2011_demographics()] and sum to [census_2011_pca]. Villages, towns,
+#' area and density come from the Dataverse source and are NA where it has no
+#' match.
+#'
+#' @format A tibble with 5,988 rows and 15 columns:
 #' \describe{
 #'   \item{year}{Census year for population data (2011)}
 #'   \item{geography}{Geographic level ("subdistrict")}
@@ -372,9 +378,9 @@
 #' district sums do not exactly reproduce [population_projections_state],
 #' and Karnataka inherits the age tables' disagreement with
 #' [population_projections_district].
-#' Theni (Tamil Nadu) is NA for 2017-2031, and Moga (Punjab) and Tapi
-#' (Gujarat) for 2022-2026, as in [population_projections_district_age()]. Use
-#' [population_projections_district] for totals in those years.
+#' Theni (Tamil Nadu) 2017-2031 and the 80+ group of Moga (Punjab) and Tapi
+#' (Gujarat) in 2022-2026 are derived, as in
+#' [population_projections_district_age()].
 #'
 #' @source International Institute for Population Sciences. Projection of
 #'   District Level Annual Population by Quinquennial Agegroup and Sex.

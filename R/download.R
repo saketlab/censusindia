@@ -286,10 +286,11 @@ census_2011_subdistrict_languages <- function() remote_table("census_2011_subdis
 #' Values are as printed in the IIPS report. District names match
 #' [population_projections_district].
 #'
-#' The following are NA in the PDF: Theni (Tamil Nadu) in 2017-2031, and
-#' the 80+ group of Moga (Punjab) and Tapi (Gujarat) in 2022-2026. Karnataka's
-#' age tables sum to a different projection from
-#' [population_projections_district].
+#' Two blocks are derived because the PDF does not print them. Moga (Punjab)
+#' and Tapi (Gujarat) print no 80+ row for 2022-2026; it is the printed All
+#' ages minus the other printed age groups. Theni's (Tamil Nadu) 2017-2031
+#' pages repeat Madurai's numbers; Karnataka's age tables sum to a
+#' different projection from [population_projections_district].
 #'
 #' @return A tibble with 371,200 rows and 7 columns:
 #' \describe{

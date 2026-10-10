@@ -39,9 +39,9 @@ Derived from \code{\link[=population_projections_district_age]{population_projec
 district sums do not exactly reproduce \link{population_projections_state},
 and Karnataka inherits the age tables' disagreement with
 \link{population_projections_district}.
-Theni (Tamil Nadu) is NA for 2017-2031, and Moga (Punjab) and Tapi
-(Gujarat) for 2022-2026, as in \code{\link[=population_projections_district_age]{population_projections_district_age()}}. Use
-\link{population_projections_district} for totals in those years.
+Theni (Tamil Nadu) 2017-2031 and the 80+ group of Moga (Punjab) and Tapi
+(Gujarat) in 2022-2026 are derived, as in
+\code{\link[=population_projections_district_age]{population_projections_district_age()}}.
 }
 
 \keyword{datasets}

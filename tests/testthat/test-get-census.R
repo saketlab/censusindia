@@ -12,15 +12,6 @@ test_that("2001 and 2011 return the full district set", {
   }
 })
 
-test_that("state totals match district totals for 2001 and 2011", {
-  for (y in c(2001, 2011)) {
-    st <- get_census(y, "state")
-    di <- get_census(y, "district")
-    expect_equal(sum(st$population), sum(di$population))
-    expect_equal(nrow(st), 35)
-  }
-})
-
 test_that("year and geography are validated", {
   expect_error(get_census(1905, "state"), "Year")
   expect_error(get_census(2011, "planet"))

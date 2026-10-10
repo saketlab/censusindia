@@ -1,3 +1,17 @@
+# censusindia (development version)
+
+## Data fixes
+
+* `census_subdistricts_2011` covers every Census 2011 subdistrict and sums to
+  `census_2011_pca`. It had listed current subdistricts, with Telangana, Delhi,
+  Puducherry and Ladakh NA.
+* `census_1971` and `census_1981` record an empty rural or urban sector as 0.
+* `population_projections_district_age()`, `population_projections_district_lgd_age()`
+  and `population_projections_district_lgd` have no NA. Theni 2017-2031, printed
+  with Madurai's numbers, follows Tamil Nadu's common growth path. Moga and
+  Tapi's unprinted 80+ for 2022-2026 is All ages minus the other groups. Both
+  age tables download again on first use.
+
 # censusindia 0.2.0
 
 * First CRAN release.
