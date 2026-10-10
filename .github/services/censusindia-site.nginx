@@ -1,0 +1,44 @@
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    server_name censusindia.saketlab.org;
+
+    ssl_certificate     /etc/letsencrypt/live/r-pkgdown/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/r-pkgdown/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+    ssl_prefer_server_ciphers on;
+
+    root /var/www/r-pkgdown/censusindia/docs;
+    index index.html;
+
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+
+    include /etc/nginx/snippets/censusindia-api.nginx;
+
+    location / {
+        try_files $uri $uri/ $uri.html =404;
+    }
+
+    location ~* \.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+        expires 30d;
+        add_header Cache-Control "public, immutable";
+    }
+
+    location ~* \.html$ {
+        expires 1h;
+        add_header Cache-Control "public";
+    }
+
+    location ~ /\. {
+        deny all;
+        access_log off;
+        log_not_found off;
+    }
+
+    access_log /var/log/nginx/censusindia.access.log;
+    error_log  /var/log/nginx/censusindia.error.log;
+}
