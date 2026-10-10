@@ -28,7 +28,6 @@ jobs:
           username: ${{ secrets.HOSTINGER_USER }}
           key: ${{ secrets.HOSTINGER_SSH_KEY }}
           port: ${{ secrets.HOSTINGER_PORT || 22 }}
-          script_stop: true
           script: |
             set -euo pipefail
             if [ ! -d "$HOME/censusindia" ]; then
