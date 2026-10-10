@@ -36,9 +36,7 @@ Values are as printed in the IIPS report. District names match
 Two blocks are derived because the PDF does not print them. Moga (Punjab)
 and Tapi (Gujarat) print no 80+ row for 2022-2026; it is the printed All
 ages minus the other printed age groups. Theni's (Tamil Nadu) 2017-2031
-pages repeat Madurai's numbers; Theni carries its printed 2016 value along
-Tamil Nadu's common district growth path, and its totals match
-\link{population_projections_district}. Karnataka's age tables sum to a
+pages repeat Madurai's numbers; Karnataka's age tables sum to a
 different projection from \link{population_projections_district}.
 }
 \examples{

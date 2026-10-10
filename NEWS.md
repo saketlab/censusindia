@@ -1,5 +1,12 @@
 # censusindia (development version)
 
+## New data
+
+* `census_1931_castes`: population of every caste in the 1931 Census caste
+  tables by religion, for 24 provinces, states and agencies.
+* `census_1931_exterior_castes`: castes the 1931 Census treated as exterior,
+  by province section of Appendix I.
+
 ## Data fixes
 
 * `census_subdistricts_2011` covers every Census 2011 subdistrict and sums to

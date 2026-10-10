@@ -539,3 +539,56 @@
 #' }
 #' @source Census of India 2011, A-11 Scheduled Tribe tables.
 "census_2011_tribes"
+
+#' Census 1931 castes by religion
+#'
+#' Population of every caste and community listed in the caste tables of the
+#' 1931 Census, cross-classified by religion, for 24 provinces, princely states
+#' and agencies of British India.
+#'
+#' A religion column is NA where the province's table has no column for that
+#' religion, and 0 where the column exists and no one was returned. Ajmer-Merwara
+#' has totals only, so its religion columns and `total` are NA. Residual
+#' entries such as "Caste Unspecified" and "Indian Christian" are rows of their
+#' own.
+#'
+#' @format A tibble with 2,226 rows and 17 columns:
+#' \describe{
+#'   \item{year}{Census year (1931)}
+#'   \item{province}{Province, princely state or agency, standardised}
+#'   \item{unit_type}{`"British Province"`, `"Princely State"` or `"Agency"`}
+#'   \item{caste}{Caste or community as printed}
+#'   \item{rank}{Position in the province's ranked caste list, 1 the largest}
+#'   \item{hindu,muslim,sikh,jain,buddhist,christian,tribal,parsi,jew}{Persons
+#'     of the caste returned under each religion; `tribal` is the 1931 "Tribal"
+#'     or "Primitive" religion return}
+#'   \item{total}{Sum of the religion columns}
+#'   \item{total_ranked_list}{Total printed in the province's ranked list; NA
+#'     for the Andaman & Nicobar Islands}
+#'   \item{notes}{Compiler's flag, for example where `total` and
+#'     `total_ranked_list` disagree}
+#' }
+#' @source Jolad, Shivakumar, Kalyani, Gaurav and Baharadia, Samarth (2026).
+#'   "Database of castes." Harvard Dataverse. \doi{10.7910/DVN/WT5VIY}.
+#'   Digitised from the provincial, princely state and agency reports of the
+#'   Census of India, 1931.
+"census_1931_castes"
+
+#' Census 1931 exterior castes
+#'
+#' Castes and tribes the 1931 Census treated as exterior, with their
+#' population, by province or state section of Appendix I of the Census of
+#' India 1931, Volume I. "Exterior castes" is the report's term.
+#'
+#' @format A tibble with 533 rows and 5 columns:
+#' \describe{
+#'   \item{year}{Census year (1931)}
+#'   \item{section}{Province or state section of the appendix}
+#'   \item{caste}{Caste or tribe as printed, with bracketed qualifiers}
+#'   \item{population}{Persons treated as exterior}
+#'   \item{note}{Compiler's remark}
+#' }
+#' @source Jolad, Shivakumar, Kalyani, Gaurav and Baharadia, Samarth (2026).
+#'   "Database of castes." Harvard Dataverse. \doi{10.7910/DVN/WT5VIY}.
+#'   Census of India, 1931, Volume I, Appendix I: Exterior Castes.
+"census_1931_exterior_castes"

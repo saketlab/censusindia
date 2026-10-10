@@ -189,7 +189,8 @@ census_2001_pca_full |>
 ```
 
 1971 and 1981 have their own abstracts in `census_1971` and `census_1981`;
-1961 has literacy only.
+1961 has literacy only. The 1931 caste tables, by province and religion, are in
+`census_1931_castes` and `census_1931_exterior_castes`.
 
 ## Attaching geometry
 

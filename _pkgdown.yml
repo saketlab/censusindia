@@ -138,6 +138,8 @@ reference:
   desc: "Census data"
   contents:
   - census_population_time_series
+  - census_1931_castes
+  - census_1931_exterior_castes
   - census_1961_literacy
   - census_1971
   - census_1981

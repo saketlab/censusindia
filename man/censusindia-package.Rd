@@ -8,7 +8,7 @@
 \description{
 \if{html}{\figure{logo.svg}{options: style='float: right' alt='logo' width='120'}}
 
-Tables from every decennial Census of India from 1901 to 2011: population time series, Primary Census Abstracts at state, district and sub-district level, mother tongue tables, and Scheduled Caste and Scheduled Tribe populations, together with Ministry of Health and Family Welfare population projections to 2036. Historical series are drawn from Jolad and Singh (2026) \doi{10.7910/DVN/ON8CP8}. Census variables can be returned with state or district boundaries of the matching census year attached for mapping. Boundary files and the largest village-level tables are downloaded on first use and cached locally.
+Tables from every decennial Census of India from 1901 to 2011: population time series, Primary Census Abstracts at state, district and sub-district level, mother tongue tables, Scheduled Caste and Scheduled Tribe populations, and the 1931 caste tables by religion, together with Ministry of Health and Family Welfare population projections to 2036. Historical series are drawn from Jolad and Singh (2026) \doi{10.7910/DVN/ON8CP8}. Census variables can be returned with state or district boundaries of the matching census year attached for mapping. Boundary files and the largest village-level tables are downloaded on first use and cached locally.
 }
 \seealso{
 Useful links:
