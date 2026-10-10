@@ -1,5 +1,4 @@
-# Runs as the deploy user: censusindia-api@<user>.service. R's default user
-# library follows the installed R version.
+# %i is the deploy user; R finds its default user library
 [Unit]
 Description=censusindia plumber REST API (port 8895) as %i
 Wants=network-online.target

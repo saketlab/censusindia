@@ -3,7 +3,7 @@ location = /api {
 }
 
 location /api/ {
-    # The single R process serves one request at a time.
+    # one R process serves one request at a time
     limit_req          zone=censusindia_api burst=20 nodelay;
     limit_conn         censusindia_api_conn 4;
     limit_req_status   429;
