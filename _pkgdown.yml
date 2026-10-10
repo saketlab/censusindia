@@ -220,6 +220,11 @@ reference:
   - list_states
   - search_census_variables
 
+- title: "REST API"
+  desc: "Serve the package over HTTP"
+  contents:
+  - serve
+
 authors:
   Saket Choudhary:
     href: https://github.com/saketkc

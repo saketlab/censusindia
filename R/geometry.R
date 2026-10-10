@@ -161,11 +161,11 @@ report_join_quality <- function(out, unmatched = c("warn", "error", "ignore")) {
 
   drawn <- which(!empty)
   if (length(drawn) > 1) {
-    wkt <- sf::st_as_text(sf::st_geometry(out)[drawn])
-    dup <- unique(wkt[duplicated(wkt)])
+    key <- vapply(sf::st_as_binary(sf::st_geometry(out)[drawn]), rlang::hash, character(1))
+    dup <- unique(key[duplicated(key)])
     if (length(dup)) {
       who <- vapply(dup, function(w) {
-        paste(named(drawn[wkt == w]), collapse = " + ")
+        paste(named(drawn[key == w]), collapse = " + ")
       }, character(1))
       problems <- c(problems, sprintf(
         "%d polygon(s) claimed by more than one row: %s.",

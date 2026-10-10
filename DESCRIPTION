@@ -1,6 +1,6 @@
 Package: censusindia
 Title: Census of India Data, 1901-2011, with Boundaries and Projections
-Version: 0.2.1.9000
+Version: 0.2.1
 Authors@R:
     person("Saket", "Choudhary", , "saketc@iitb.ac.in", role = c("aut", "cre", "cph"),
            comment = c(ORCID = "0000-0001-5202-7633"))
@@ -34,7 +34,9 @@ Imports:
 Suggests:
     curl,
     ggplot2,
+    jsonlite,
     patchwork,
+    plumber,
     s2,
     scales,
     testthat (>= 3.0.0)

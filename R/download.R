@@ -99,13 +99,13 @@ census_file <- function(file) {
     cli::cli_abort(c(
       "Could not download {.url {url}}.",
       "i" = "This file is fetched on first use. Check your internet connection and try again."
-    ))
+    ), class = "censusindia_download_error")
   }
   if (!identical(unname(tools::md5sum(tmp)), entry$md5)) {
     cli::cli_abort(c(
       "Downloaded {.file {file}} does not match its expected checksum.",
       "i" = "The file may be truncated. Try again; if it persists, please report it at {.url https://github.com/saketlab/censusindia/issues}."
-    ))
+    ), class = "censusindia_download_error")
   }
   file.rename(tmp, path)
   path

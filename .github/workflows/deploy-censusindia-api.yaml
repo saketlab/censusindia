@@ -1,0 +1,103 @@
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+    paths:
+      - 'R/**'
+      - 'inst/**'
+      - 'data/**'
+      - 'DESCRIPTION'
+      - 'NAMESPACE'
+      - '.github/services/**'
+      - '.github/workflows/deploy-censusindia-api.yaml'
+
+name: deploy-censusindia-api
+
+concurrency:
+  group: deploy-censusindia-api
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: blacksmith-2vcpu-ubuntu-2404
+    steps:
+      - name: SSH redeploy
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.HOSTINGER_HOST }}
+          username: ${{ secrets.HOSTINGER_USER }}
+          key: ${{ secrets.HOSTINGER_SSH_KEY }}
+          port: ${{ secrets.HOSTINGER_PORT || 22 }}
+          script_stop: true
+          script: |
+            set -euo pipefail
+            if [ ! -d "$HOME/censusindia" ]; then
+              git clone https://github.com/saketlab/censusindia.git "$HOME/censusindia"
+            fi
+            cd ~/censusindia
+            git fetch --prune
+            git reset --hard origin/master
+            # R_LIBS_USER joins .libPaths() only if it exists when R starts.
+            Rscript --vanilla -e "dir.create(Sys.getenv('R_LIBS_USER'), recursive = TRUE, showWarnings = FALSE)"
+            # dependencies=NA covers Depends/Imports/LinkingTo (so sf and s2 are
+            # installed) but not Suggests. TRUE would pull gganimate/gifski,
+            # which need ffmpeg and fail to build, aborting the deploy under
+            # set -e. plumber is the only Suggests the API needs.
+            # census_download() prefetches first-use files so no request waits on one.
+            Rscript --vanilla -e "
+              lib <- Sys.getenv('R_LIBS_USER')
+              if (!requireNamespace('remotes', quietly = TRUE)) install.packages('remotes', lib = lib, repos = 'https://cloud.r-project.org')
+              remotes::install_local('.', lib = lib, dependencies = NA, upgrade = 'never', quiet = TRUE)
+              if (!requireNamespace('plumber', quietly = TRUE)) remotes::install_cran('plumber', lib = lib)
+              censusindia::census_download()
+            "
+
+            # Replace the user service with a system service, which survives logout.
+            SERVICE="censusindia-api@$(id -un).service"
+            if [ -f "$HOME/.config/systemd/user/censusindia-api.service" ]; then
+              systemctl --user disable --now censusindia-api.service || true
+              rm -f "$HOME/.config/systemd/user/censusindia-api.service"
+            fi
+            sudo install -D -m 644 ".github/services/censusindia-api@.service" \
+                    "/etc/systemd/system/censusindia-api@.service"
+            sudo systemctl daemon-reload
+            sudo systemctl enable "$SERVICE"
+            sudo systemctl restart "$SERVICE"
+
+            sudo install -D -m 644 .github/services/censusindia-api-ratelimit.nginx \
+                    /etc/nginx/conf.d/censusindia-api-ratelimit.conf
+            SNIPPET="/etc/nginx/snippets/censusindia-api.nginx"
+            sudo install -D -m 644 .github/services/censusindia-api.nginx "$SNIPPET"
+            # The censusindia.saketlab.org vhost already exists (it serves the
+            # pkgdown site). Add our include to it rather than shipping a
+            # second server block. Idempotent: the grep guard makes re-running
+            # this a no-op.
+            INCLUDE_LINE="include ${SNIPPET};"
+            VHOST="$(sudo nginx -T 2>&1 \
+                      | awk '/^# configuration file /{file=$4; sub(/:$/, "", file)} /server_name[[:space:]]+censusindia\.saketlab\.org/{print file; exit}')"
+            if [ -z "$VHOST" ]; then
+              echo "could not locate the censusindia.saketlab.org vhost" >&2
+              exit 1
+            fi
+            if sudo grep -qF "$INCLUDE_LINE" "$VHOST"; then
+              echo "include already present in $VHOST"
+            else
+              echo "adding API include to $VHOST"
+              sudo awk -v inc="$INCLUDE_LINE" '
+                { print }
+                !done && /server_name[[:space:]]+censusindia\.saketlab\.org/ {
+                  match($0, /^([[:space:]]*)/)
+                  indent = substr($0, 1, RLENGTH)
+                  print indent inc
+                  done = 1
+                }
+              ' "$VHOST" > /tmp/censusindia-vhost.new
+              sudo install -m 644 /tmp/censusindia-vhost.new "$VHOST"
+              rm -f /tmp/censusindia-vhost.new
+            fi
+            sudo nginx -t && sudo nginx -s reload
+            if ! timeout 180 sh -c 'until curl -fsS http://127.0.0.1:8895/health >/dev/null 2>&1; do sleep 2; done'; then
+              echo "plumber did not become healthy in 180s" >&2
+              sudo journalctl -u "$SERVICE" -n 50 --no-pager >&2 || true
+              exit 1
+            fi

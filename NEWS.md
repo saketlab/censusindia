@@ -1,5 +1,13 @@
 # censusindia (development version)
 
+## REST API
+
+* `serve()` starts a plumber REST API over `get_census()`, `get_population()`,
+  `get_census_boundaries()`, `census_languages()`, `census_sc_st()`, the
+  variable listings and every shipped dataset. Responses are paged, geometry
+  comes back as GeoJSON, and each request is logged with the kind of client
+  that made it.
+
 ## New data
 
 * `census_1931_castes`: population of every caste in the 1931 Census caste

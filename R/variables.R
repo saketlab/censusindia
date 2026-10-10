@@ -24,7 +24,7 @@ list_census_variables <- function(year = NULL, geography = NULL, category = NULL
   if (!is.null(geography)) {
     vars <- vars[in_list(vars$geographies, geography) & !is.na(vars$geographies), ]
   }
-  if (!is.null(category)) vars <- vars |> dplyr::filter(.data$category == .env$category)
+  if (!is.null(category)) vars <- vars |> dplyr::filter(.data$category %in% .env$category)
   vars
 }
 
