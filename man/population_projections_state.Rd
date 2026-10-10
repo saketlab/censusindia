@@ -17,6 +17,7 @@ A tibble with 988 rows and 5 columns:
 \source{
 Ministry of Health and Family Welfare, Government of India.
 Population Projections for India and States 2011-2036.
+\url{https://nhm.gov.in/New_Updates_2018/Report_Population_Projection_2019.pdf}
 }
 \usage{
 population_projections_state
@@ -27,5 +28,10 @@ Covers 38 entries (36 states/UTs, India total, and Ladakh) with annual
 projections from 2011 to 2036. Values are absolute numbers (the source
 rounds in thousands independently, so \code{population} may differ from
 \code{males + females} by up to 1000).
+}
+\details{
+Values match the report's Table 8. India and Odisha follow the July 2020
+edition, which revised Odisha's male projection, so both rows differ from
+the November 2019 print linked below.
 }
 \keyword{datasets}

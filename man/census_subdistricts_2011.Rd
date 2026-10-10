@@ -5,7 +5,7 @@
 \alias{census_subdistricts_2011}
 \title{Subdistrict directory (2011)}
 \format{
-A tibble with 7,074 rows and 15 columns:
+A tibble with 5,988 rows and 15 columns:
 \describe{
 \item{year}{Census year for population data (2011)}
 \item{geography}{Geographic level ("subdistrict")}
@@ -34,5 +34,12 @@ census_subdistricts_2011
 }
 \description{
 Subdistrict (tehsil/taluka) population from the 2011 Census.
+}
+\details{
+A subdistrict crossing a district line is listed once per district, marked
+"(Part)". Population, males, females and households come from
+\code{\link[=census_2011_demographics]{census_2011_demographics()}} and sum to \link{census_2011_pca}. Villages, towns,
+area and density come from the Dataverse source and are NA where it has no
+match.
 }
 \keyword{datasets}

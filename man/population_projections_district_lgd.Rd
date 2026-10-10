@@ -5,7 +5,7 @@
 \alias{population_projections_district_lgd}
 \title{Population projections -- district level, LGD boundaries (2012-2031)}
 \format{
-A tibble with 15,700 rows and 6 columns:
+A tibble with 15,660 rows and 6 columns:
 \describe{
 \item{year}{Projection year (annual, 2012-2031)}
 \item{state_name_harmonized}{Harmonized state name for joining. Dadra &
@@ -21,6 +21,7 @@ split them back apart.}
 \source{
 International Institute for Population Sciences. Projection of
 District Level Annual Population by Quinquennial Agegroup and Sex.
+\url{https://www.iipsindia.ac.in/sites/default/files/1_3.pdf}
 District scaling from Census 2011 to LGD boundaries via spatial
 overlap analysis.
 }
@@ -30,19 +31,17 @@ population_projections_district_lgd
 \description{
 MOHFW population projections scaled to current Local Government
 Directory (LGD) district boundaries. Annual projections from 2012 to
-2031, summed across age groups from \link{population_projections_district_lgd_age}.
+2031, summed across age groups from \code{\link[=population_projections_district_lgd_age]{population_projections_district_lgd_age()}}.
 }
 \section{Known defects}{
 
-Summing districts to state level reconciles to within 0.2 percent of the
-India state projection for every state except Himachal Pradesh (~7.6
-percent short). Bastar and Kondagaon (Chhattisgarh) and Medinipur East
-(West Bengal) have no population in any year: the source PDF's
-age-by-district table never extracted a row for them (a different MOHFW
-table has their totals; see \link{population_projections_district}). Chamba
-(Himachal Pradesh) is missing 2017-2021 and 2027-2031 the same way; West
-(Delhi) is missing 2027-2031. Use \link{population_projections_district} for a
-table with no such gaps.
+Derived from \code{\link[=population_projections_district_age]{population_projections_district_age()}} by area overlap, so
+district sums do not exactly reproduce \link{population_projections_state},
+and Karnataka inherits the age tables' disagreement with
+\link{population_projections_district}.
+Theni (Tamil Nadu) 2017-2031 and the 80+ group of Moga (Punjab) and Tapi
+(Gujarat) in 2022-2026 are derived, as in
+\code{\link[=population_projections_district_age]{population_projections_district_age()}}.
 }
 
 \keyword{datasets}

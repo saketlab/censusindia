@@ -66,10 +66,7 @@ get_census_data_for_year <- function(year, geography, sector) {
     return(censusindia::census_subdistricts_2011)
   }
 
-  # census_population_time_series omits Sikkim, Mizoram and Daman & Diu in every
-  # year, so routing 2001 and 2011 through it returned 626 districts and
-  # 1,208,903,947 people for 2011 against the true 640 and 1,210,854,977. Both
-  # years have a complete Primary Census Abstract; use it.
+  # the time series omits Sikkim, Mizoram and Daman & Diu; the PCA is complete
   if (year %in% c(2001L, 2011L) && geography %in% c("state", "district")) {
     return(census_from_pca(year, geography))
   }
@@ -192,7 +189,7 @@ resolve_states <- function(state, present = character(0)) {
       "i" = "Use a canonical name or two-letter code from {.fn list_states}."
     ))
   }
-  # NA marks "matched the data verbatim"; keep the caller's original spelling.
+  # NA: matched the data verbatim, so keep the caller's spelling
   ifelse(is.na(out), state, out)
 }
 
@@ -241,7 +238,6 @@ select_variables <- function(data, variables) {
     area_km2 = c("area_km2", "area_sqkm")
   )
 
-  # Rates are derived, never aliased.
   derived <- list(
     literacy_rate = c("literate", "population"),
     sex_ratio = c("females", "males"),

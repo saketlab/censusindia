@@ -31,8 +31,8 @@ Only works with \code{boundary = "census2011"} for district level.}
 
 \item{by_age}{If \code{TRUE}, returns single years of age 0-14 and 5-year
 bands 15-19 through 80+ instead of totals. See
-\link{population_projections_state_age}, \link{population_projections_district_age}
-and \link{population_projections_district_lgd_age}. State coverage by age is
+\link{population_projections_state_age}, \code{\link[=population_projections_district_age]{population_projections_district_age()}}
+and \code{\link[=population_projections_district_lgd_age]{population_projections_district_lgd_age()}}. State coverage by age is
 23 major states plus an "India" row and one North-East aggregate row.}
 }
 \value{
@@ -57,6 +57,15 @@ to 1000 at the state level.
 District-level Census 2011 data has projections at 5-year intervals
 (2011, 2016, 2021, 2026, 2031). LGD district data has annual
 projections from 2012 to 2031.
+
+A \code{year} absent from the table is estimated from the two nearest table
+years by geometric (exponential) growth, applied separately to \code{males},
+\code{females} and \code{population}:
+
+\deqn{P_t = P_1 (P_2 / P_1)^{(t - t_1) / (t_2 - t_1)}}
+
+Estimated districts need not sum exactly to
+the estimated state.
 
 Telangana and Ladakh are included as separate entries even though
 they did not exist as states at the time of the 2011 Census.

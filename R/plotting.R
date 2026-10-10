@@ -56,11 +56,7 @@ NULL
 #'
 #' @return A ggplot2 object
 #'
-#' @examples
-#' \dontrun{
-#' # Load 2011 PCA data
-#' data(census_2011_pca)
-#'
+#' @examplesIf interactive()
 #' # Calculate ST percentage and attach geometry
 #' st_data <- census_2011_pca |>
 #'   dplyr::mutate(st_pct = 100 * st_population / population_total) |>
@@ -75,7 +71,6 @@ NULL
 #'   palette = "red_blue",
 #'   show_state_boundaries = TRUE
 #' )
-#' }
 #'
 #' @export
 plot_map <- function(data,
@@ -115,9 +110,7 @@ plot_map <- function(data,
     }
   }
 
-  # substitute() before anything touches fill_var. Testing is.character(fill_var)
-  # first forced the promise, so the documented unquoted form plot_map(d, value)
-  # died with "object 'value' not found" before reaching the data mask.
+  # substitute() before fill_var is evaluated, or plot_map(d, value) fails
   fill_var_expr <- substitute(fill_var)
   fill_var_name <- if (is.character(fill_var_expr)) {
     fill_var_expr
@@ -155,7 +148,7 @@ plot_map <- function(data,
 
   p <- ggplot2::ggplot()
 
-  # Same reason as above: without this layer the map stops short in the north.
+  # base layer keeps India's full northern extent
   if (!is.null(base_sf)) {
     p <- p + ggplot2::geom_sf(data = base_sf, fill = na_color, color = NA)
   }
@@ -236,20 +229,15 @@ plot_map <- function(data,
 #'
 #' @return A patchwork object
 #'
-#' @examples
-#' \dontrun{
+#' @examplesIf interactive()
 #' # Compare ST percentage across years
 #' library(dplyr)
 #'
-#' # Prepare 1971 data
-#' data(census_1971)
 #' st_1971 <- census_1971 |>
 #'   filter(geography == "district") |>
 #'   mutate(st_pct = 100 * st_population_total / population_total) |>
 #'   attach_geometry(1971)
 #'
-#' # Prepare 2011 data
-#' data(census_2011_pca)
 #' st_2011 <- census_2011_pca |>
 #'   mutate(st_pct = 100 * st_population / population_total) |>
 #'   attach_geometry(2011)
@@ -261,7 +249,6 @@ plot_map <- function(data,
 #'   title = "ST Population % by District",
 #'   palette = "red_blue"
 #' )
-#' }
 #'
 #' @export
 compare_maps <- function(data_list,
@@ -332,6 +319,9 @@ compare_maps <- function(data_list,
 #' @param reverse Logical. Reverse direction?
 #'
 #' @return A character vector of colors
+#' @examples
+#' get_palette("blues")
+#' get_palette("red_blue", reverse = TRUE)
 #' @export
 get_palette <- function(name, reverse = FALSE) {
   palettes <- list(
@@ -371,8 +361,6 @@ get_palette <- function(name, reverse = FALSE) {
 
   colors <- palettes[[name]]
   if (is.null(colors)) {
-    # Falling back to viridis meant a typo produced a plausible-looking map on the
-    # wrong ramp, with nothing to show the name had not been understood.
     cli::cli_abort(c(
       "Unknown palette {.val {name}}.",
       "i" = "Available: {.val {names(palettes)}}."
@@ -386,27 +374,14 @@ get_palette <- function(name, reverse = FALSE) {
   colors
 }
 
-#' State outline to draw beneath a map, resolved so it is never absent.
-#'
-#' Tries the requested vintage, then the nearest available, then the most recent.
-#' A NULL result would silently truncate India's northern boundary.
+#' State outline to draw beneath a map: the requested vintage or the nearest
+#' one with a boundary file, the most recent when no year is known.
 #' @noRd
 census_base_shapes <- function(year) {
   if (is.null(year) || is.na(year) || !is.numeric(year)) {
     year <- max(BOUNDARY_YEARS)
   }
-  candidates <- unique(c(
-    year,
-    BOUNDARY_YEARS[order(abs(BOUNDARY_YEARS - year))],
-    max(BOUNDARY_YEARS)
-  ))
-  for (y in candidates) {
-    got <- tryCatch(get_census_boundaries(y, "state"), error = function(e) NULL)
-    if (!is.null(got)) {
-      return(got)
-    }
-  }
-  NULL
+  get_census_boundaries(nearest_boundary_year(year), "state")
 }
 
 #' Detect the boundary a data frame belongs to.

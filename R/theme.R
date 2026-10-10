@@ -16,6 +16,9 @@
 #' @param ... Passed to [ggplot2::geom_sf()].
 #'
 #' @return A `ggplot2` layer.
+#' @examplesIf interactive() && requireNamespace("ggplot2", quietly = TRUE)
+#' ggplot2::ggplot() +
+#'   census_base_layer(2011)
 #' @export
 census_base_layer <- function(year, fill = "grey80", ...) {
   if (!requireNamespace("ggplot2", quietly = TRUE)) {
@@ -33,6 +36,10 @@ census_base_layer <- function(year, fill = "grey80", ...) {
 #'
 #' @param base_size Base font size in points.
 #' @return A `ggplot2` theme.
+#' @examplesIf requireNamespace("ggplot2", quietly = TRUE)
+#' ggplot2::ggplot(census_2011_pca, ggplot2::aes(literate_total, population_total)) +
+#'   ggplot2::geom_point() +
+#'   theme_census()
 #' @export
 theme_census <- function(base_size = 11) {
   if (!requireNamespace("ggplot2", quietly = TRUE)) {
@@ -90,6 +97,8 @@ theme_census_map <- function(base_size = 11) {
 #'
 #' @param females,males Counts, of equal length.
 #' @return Numeric vector.
+#' @examples
+#' sex_ratio(census_2011_pca$population_female, census_2011_pca$population_male) |> head()
 #' @export
 sex_ratio <- function(females, males) {
   1000 * females / males
@@ -99,6 +108,8 @@ sex_ratio <- function(females, males) {
 #'
 #' @param part,whole Counts, of equal length.
 #' @return Numeric vector.
+#' @examples
+#' share(census_2011_pca$literate_total, census_2011_pca$population_total) |> head()
 #' @export
 share <- function(part, whole) {
   100 * part / whole

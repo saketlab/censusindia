@@ -15,12 +15,14 @@ States Excluding Assam" pass through verbatim as aggregate rows}
 \item{age_group}{Five-year bands "0-4" through "80+"}
 \item{males}{Projected male population, in thousands}
 \item{females}{Projected female population, in thousands}
-\item{population}{Projected total population, in thousands}
+\item{population}{Projected total population (the printed Person
+figure), in thousands}
 }
 }
 \source{
 Ministry of Health and Family Welfare, Government of India.
 Population Projections for India and States 2011-2036, Table 18.
+\url{https://nhm.gov.in/New_Updates_2018/Report_Population_Projection_2019.pdf}
 }
 \usage{
 population_projections_state_age
@@ -32,6 +34,12 @@ Table 18, wide-by-year to tidy long. Summing to state-year reproduces
 2016: 216,089 vs 216,087 thousand).
 }
 \details{
+Values match the printed Table 18.
+\code{population} is the printed Person figure, rounded separately from
+\code{males} and \code{females}, so it can differ from their sum by 1. India and
+Odisha follow the July 2020 edition, as in \link{population_projections_state},
+and there \code{population} is \code{males + females}.
+
 Coverage is narrower than \link{population_projections_state}: the report only
 breaks out 23 major states individually plus an "India" total, lumping the
 smaller North East states (Sikkim, Arunachal Pradesh, Nagaland, Manipur,
