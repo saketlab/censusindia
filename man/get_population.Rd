@@ -29,16 +29,20 @@ Ignored for state geography.}
 \item{geometry}{If \code{TRUE}, attaches geographic boundaries (Census 2011).
 Only works with \code{boundary = "census2011"} for district level.}
 
-\item{by_age}{If \code{TRUE}, returns single years of age 0-14 and 5-year
-bands 15-19 through 80+ instead of totals. See
+\item{by_age}{If \code{TRUE}, returns one row per age group. States
+come in 5-year bands from "0-4" to "80+"; districts in single years of
+age 0-14, then 5-year bands 15-19 through 80+. See
 \link{population_projections_state_age}, \code{\link[=population_projections_district_age]{population_projections_district_age()}}
 and \code{\link[=population_projections_district_lgd_age]{population_projections_district_lgd_age()}}. State coverage by age is
-23 major states plus an "India" row and one North-East aggregate row.}
+23 major states plus an "India" row and one North-East aggregate row,
+"North East States Excluding Assam"; any other state is an error.}
 }
 \value{
 A tibble (or sf object if \code{geometry = TRUE}) with columns:
 \code{year}, \code{state_name_harmonized}, \code{males}, \code{females}, \code{population},
-\code{district} for district-level data, and \code{age_group} if \code{by_age = TRUE}.
+\code{estimate}, \code{district} for district-level data, and \code{age_group} if
+\code{by_age = TRUE}. \code{estimate} is \code{"published"} for a year printed in the
+MOHFW tables, \code{"interpolated"} or \code{"extrapolated"} otherwise.
 }
 \description{
 MOHFW population projections (2011-2036) at state or district level,
@@ -48,7 +52,8 @@ current LGD boundaries (785 districts, annual).
 }
 \details{
 State-level data covers 2011-2036 for 38 entries (36 states/UTs plus
-India total plus Ladakh). Values are in absolute numbers.
+India total plus Ladakh). Values are in persons, including the state
+rows by age, which \link{population_projections_state_age} stores in thousands.
 
 The source data rounds Persons, Male, and Female independently (in
 thousands), so \code{population} may differ from \code{males + females} by up
@@ -66,6 +71,10 @@ years by geometric (exponential) growth, applied separately to \code{males},
 
 Estimated districts need not sum exactly to
 the estimated state.
+
+Years after the last table year extrapolate with the last interval's rate,
+up to five years out: 2041 for states, 2036 for districts. Years before 2011
+or past that limit are an error.
 
 Telangana and Ladakh are included as separate entries even though
 they did not exist as states at the time of the 2011 Census.

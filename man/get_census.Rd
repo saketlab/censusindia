@@ -29,7 +29,8 @@ abbreviation (e.g., "Maharashtra" or "MH").}
 
 \item{geometry}{If TRUE, returns an sf object with geographic boundaries.}
 
-\item{sector}{For 1971/1981, filter to "total", "rural", or "urban".}
+\item{sector}{For 1971/1981, filter to "total", "rural", or "urban". Other
+years have no sector split, so "rural" or "urban" is an error there.}
 }
 \value{
 A tibble (or sf object if geometry = TRUE).

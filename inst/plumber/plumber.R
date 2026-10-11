@@ -72,9 +72,27 @@ log_request <- function(req, res) {
   ), auto_unbox = TRUE), "\n", sep = "")
 }
 
+# A query name missing from the route's @param lines is a 400.
+reject_unknown_params <- function(pr) {
+  function(req, res) {
+    # read per request: endpoints below the @plumber block are not parsed yet
+    ep <- Find(function(e) e$matchesPath(req$PATH_INFO), pr$endpoints[["__no-preempt__"]])
+    if (is.null(ep)) return(plumber::forward())
+    known <- c(names(ep$params), "limit", "offset")
+    bad <- setdiff(names(req$argsQuery), known)
+    if (!length(bad)) return(plumber::forward())
+    res$status <- 400L
+    list(error = sprintf(
+      "Unknown parameter%s: %s. Known parameters: %s.",
+      if (length(bad) > 1) "s" else "", paste(bad, collapse = ", "), paste(known, collapse = ", ")
+    ))
+  }
+}
+
 #* @plumber
 function(pr) {
   pr <- plumber::pr_set_serializer(pr, plumber::serializer_json(auto_unbox = TRUE, na = "null"))
+  pr <- plumber::pr_filter(pr, "params", reject_unknown_params(pr))
   plumber::pr_hooks(pr, list(
     preroute = function(req) req$.start <- Sys.time(),
     postserialize = function(req, res) {
@@ -115,15 +133,19 @@ paginate <- function(x, req, res) {
 
 # sf results go out as a GeoJSON FeatureCollection, everything else as rows.
 respond <- function(req, res, expr) {
+  # cli otherwise wraps mid-name
+  op <- options(cli.width = 10000L)
+  on.exit(options(op), add = TRUE)
   x <- tryCatch(paginate(expr, req, res), error = identity)
   if (inherits(x, "error")) {
     res$status <- status_for(x)
     return(list(error = cli::ansi_strip(conditionMessage(x))))
   }
+  if ("state_name_harmonized" %in% names(x)) x$state <- x$state_name_harmonized
   if (!inherits(x, "sf")) return(as.data.frame(x))
 
   tmp <- tempfile(fileext = ".geojson")
-  on.exit(unlink(tmp))
+  on.exit(unlink(tmp), add = TRUE)
   sf::st_write(x, tmp, layer = "censusindia", driver = "GeoJSON", quiet = TRUE)
   res$setHeader("Content-Type", "application/geo+json")
   res$body <- readChar(tmp, file.size(tmp), useBytes = TRUE)
@@ -179,9 +201,9 @@ function(pattern = "", req, res) {
 #* Query census data
 #* @param year Census year. One of 1901, 1911, 1921, 1931, 1941, 1951, 1961, 1971, 1981, 1991, 2001, 2011.
 #* @param geography Geography level: state, district, or subdistrict.
-#* @param state Comma-separated state names or two-letter codes.
+#* @param state Comma-separated state names or two-letter codes. Census tables have no India row; omit to get every state.
 #* @param variables Comma-separated variable names to return.
-#* @param sector For 1971/1981 only: total, rural, urban.
+#* @param sector total, rural or urban. Rural and urban exist for 1971 and 1981 only; other years are a 400.
 #* @param geometry Return a GeoJSON FeatureCollection with boundaries.
 #* @get /query
 function(year = 2011, geography = "state", state = "", variables = "",
@@ -197,11 +219,11 @@ function(year = 2011, geography = "state", state = "", variables = "",
 }
 
 #* Query population projections
-#* @param year Projection year or years (comma-separated). Years between projections are interpolated.
+#* @param year Projection year or years (comma-separated). Years between projections are interpolated, years up to five past the last table year extrapolated; the `estimate` column says which.
 #* @param geography Geography level: state or district.
 #* @param state Comma-separated state names or two-letter codes.
 #* @param boundary District boundary system: census2011 or lgd.
-#* @param by_age Return age-stratified rows.
+#* @param by_age Return age-stratified rows. States by age cover 23 major states, India and "North East States Excluding Assam"; others are a 400.
 #* @param geometry Return a GeoJSON FeatureCollection with boundaries.
 #* @get /population
 function(year = "", geography = "state", state = "", boundary = "census2011",
@@ -246,7 +268,7 @@ function(req, res) {
   respond(req, res, DATASETS)
 }
 
-#* One shipped dataset, e.g. census_1931_castes or census_2011_tribes
+#* One shipped dataset, e.g. census_1931_castes or census_2011_tribes. Counts are persons.
 #* @param name Dataset name from /datasets.
 #* @param state Comma-separated state names or two-letter codes, for tables with a state column.
 #* @get /dataset/<name>
@@ -257,6 +279,8 @@ function(name, state = "", req, res) {
   }
   respond(req, res, {
     d <- getExportedValue("censusindia", name)
+    # serve persons like every other table
+    if (name == "population_projections_state_age") d <- state_age_persons()
     state <- csv(state)
     if (is.null(state)) d else filter_by_state(d, state)
   })

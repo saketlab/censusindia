@@ -199,3 +199,42 @@ test_that("GeoJSON pages by feature, 100 at most", {
   expect_equal(nrow(b$json$features), 3)
   expect_equal(api_get("/boundaries", "year=2011&geography=district&limit=101")$status, 400)
 })
+
+test_that("unknown parameters are a 400 naming the known ones", {
+  r <- api_get("/states", "foo=1")
+  expect_equal(r$status, 400)
+  expect_match(r$json$error, "foo.*limit, offset")
+  expect_match(api_get("/query", "yaer=2011")$json$error, "year, geography, state")
+  expect_equal(api_get("/health", "foo=1")$status, 400)
+  expect_equal(api_get("/query", "year=2011&limit=1")$status, 200)
+})
+
+test_that("state=India on /query is a 400 telling the client to drop state", {
+  r <- api_get("/query", "year=2011&state=India")
+  expect_equal(r$status, 400)
+  expect_match(r$json$error, "No rows for \"India\"")
+  expect_match(r$json$error, "Remove `state`")
+  expect_match(api_get("/query", "state=Pradesh")$json$error, "Remove `state`")
+})
+
+test_that("rows with a state carry the canonical name as `state`", {
+  r <- api_get("/query", "year=1971&state=Karnataka")$json
+  expect_equal(unique(r$state), "Karnataka")
+  expect_true("state_name_harmonized" %in% names(r))
+  p <- api_get("/query", "year=2011&state=GA")$json
+  expect_true(all(c("state", "state_name", "state_name_harmonized") %in% names(p)))
+  expect_equal(unique(api_get("/population", "year=2026&state=KL")$json$state), "Kerala")
+})
+
+test_that("/population by_age answers in persons and rejects uncovered states", {
+  kl <- api_get("/population", "year=2026&geography=state&state=Kerala&by_age=true")$json
+  expect_gt(kl$males[kl$age_group == "0-4"], 1e6)
+  goa <- api_get("/population", "year=2026&geography=state&state=Goa&by_age=true")
+  expect_equal(goa$status, 400)
+  expect_false(grepl("\n  ", goa$json$error))
+})
+
+test_that("/dataset serves the state projections by age in persons", {
+  r <- api_get("/dataset/population_projections_state_age", "limit=1")$json
+  expect_equal(r$population, population_projections_state_age$population[1] * 1000)
+})

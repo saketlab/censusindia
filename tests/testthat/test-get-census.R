@@ -78,3 +78,13 @@ test_that("attaching geometry never changes the row count", {
     expect_equal(nrow(g), nrow(d))
   }
 })
+
+test_that("sector other than total is an error outside 1971 and 1981", {
+  expect_error(get_census(2011, "state", state = "Goa", sector = "rural"), "1971 and 1981")
+  expect_gt(nrow(get_census(1981, "state", state = "Kerala", sector = "rural")), 0)
+})
+
+test_that("state = India on a table with no national row says to drop state", {
+  expect_error(get_census(2011, "state", state = "India"), "No rows for \"India\".*Remove `state`")
+  expect_error(get_census(1971, "state", state = "Telangana"), "No rows for \"Telangana\"")
+})

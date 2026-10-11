@@ -12,7 +12,8 @@
 #' @param state Optional. Filter to specific state(s). Can be state name or
 #'   abbreviation (e.g., "Maharashtra" or "MH").
 #' @param geometry If TRUE, returns an sf object with geographic boundaries.
-#' @param sector For 1971/1981, filter to "total", "rural", or "urban".
+#' @param sector For 1971/1981, filter to "total", "rural", or "urban". Other
+#'   years have no sector split, so "rural" or "urban" is an error there.
 #'
 #' @return A tibble (or sf object if geometry = TRUE).
 #'
@@ -34,6 +35,12 @@ get_census <- function(year,
   valid_years <- c(1901, 1911, 1921, 1931, 1941, 1951, 1961, 1971, 1981, 1991, 2001, 2011)
   if (!year %in% valid_years) {
     cli::cli_abort("Year must be one of: {.val {valid_years}}")
+  }
+  if (sector != "total" && !year %in% c(1971, 1981)) {
+    cli::cli_abort(c(
+      "{.arg sector} {.val {sector}} is not available for {year}.",
+      "i" = "Rural and urban figures exist for 1971 and 1981 only."
+    ))
   }
 
   data <- get_census_data_for_year(year, geography, sector)
@@ -160,7 +167,8 @@ census_from_pca <- function(year, geography) {
 #' does appear verbatim in `present`, is passed through so historical spellings
 #' ("MYSORE") and aggregate rows ("India") still work. Everything else is an
 #' error: the old substring fallback quietly turned `state = "Pradesh"` into
-#' five states' worth of rows.
+#' five states' worth of rows. A resolved state with no rows in `present` is an
+#' error listing the states that have rows.
 #' @noRd
 resolve_states <- function(state, present = character(0)) {
   lookup <- censusindia::india_states
@@ -168,6 +176,9 @@ resolve_states <- function(state, present = character(0)) {
   present_key <- tolower(trimws(present))
 
   out <- vapply(key, function(k) {
+    if (k == "india") {
+      return("India")
+    }
     i <- which(tolower(lookup$state_abbr) == k)
     if (length(i)) {
       return(lookup$state_name_harmonized[i[1]])
@@ -186,7 +197,24 @@ resolve_states <- function(state, present = character(0)) {
   if (length(bad)) {
     cli::cli_abort(c(
       "Unknown state{?s}: {.val {bad}}.",
-      "i" = "Use a canonical name or two-letter code from {.fn list_states}."
+      "i" = "Use a canonical name or two-letter code from {.fn list_states}.",
+      "i" = "Remove {.arg state} to get every state."
+    ))
+  }
+  absent <- out[!is.na(out) & !tolower(out) %in% present_key]
+  if (length(present) && length(absent)) {
+    # prefer "Andhra Pradesh" over "ANDHRA PRADESH"
+    shown <- unique(present)
+    shown <- shown[order(shown == toupper(shown))]
+    shown <- sort(shown[!duplicated(tolower(shown))])
+    ne <- list_states(region = "Northeast")$state_name_harmonized
+    cli::cli_abort(c(
+      "No rows for {.val {absent}} in this table.",
+      "i" = if (any(absent %in% ne) && "north east states excluding assam" %in% present_key) {
+        "North-East states other than Assam are one row: {.val North East States Excluding Assam}."
+      },
+      "i" = "States in this table: {.val {shown}}.",
+      "i" = "Remove {.arg state} to get every state."
     ))
   }
   # NA: matched the data verbatim, so keep the caller's spelling
@@ -195,15 +223,12 @@ resolve_states <- function(state, present = character(0)) {
 
 #' @noRd
 filter_by_state <- function(data, state) {
-  state_col <- intersect(
-    names(data), c("state_name_harmonized", "state", "state_name")
-  )[1]
-  if (is.na(state_col)) {
+  cols <- intersect(names(data), c("state_name_harmonized", "state", "state_name"))
+  if (!length(cols)) {
     cli::cli_abort("Cannot filter by state: no state column found")
   }
-
-  wanted <- resolve_states(state, present = unique(as.character(data[[state_col]])))
-  cols <- intersect(names(data), c("state_name_harmonized", "state", "state_name"))
+  present <- unique(unlist(lapply(data[cols], as.character), use.names = FALSE))
+  wanted <- resolve_states(state, present = present[!is.na(present)])
   hit <- Reduce(`|`, lapply(cols, function(cl) {
     tolower(as.character(data[[cl]])) %in% tolower(wanted)
   }))
