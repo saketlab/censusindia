@@ -1,4 +1,4 @@
-# censusindia (development version)
+# censusindia 0.2.1
 
 ## REST API
 

@@ -1,7 +1,7 @@
 on:
   workflow_dispatch:
   push:
-    branches: [master]
+    branches: [main]
     paths:
       - 'R/**'
       - 'inst/**'
@@ -35,7 +35,7 @@ jobs:
             fi
             cd ~/censusindia
             git fetch --prune
-            git reset --hard origin/master
+            git reset --hard origin/main
             # R_LIBS_USER joins .libPaths() only if it exists when R starts.
             Rscript --vanilla -e "dir.create(Sys.getenv('R_LIBS_USER'), recursive = TRUE, showWarnings = FALSE)"
             # dependencies=TRUE pulls gganimate/gifski, which fail to build without ffmpeg
