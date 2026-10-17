@@ -30,9 +30,14 @@
 #'   MOHFW tables, `"interpolated"` or `"extrapolated"` otherwise.
 #'
 #' @details
-#' State-level data covers 2011-2036 for 38 entries (36 states/UTs plus
-#' India total plus Ladakh). Values are in persons, including the state
-#' rows by age, which [population_projections_state_age] stores in thousands.
+#' State-level data covers 2011-2036 and has 39 entries: 28 states, the 9
+#' UTs that MOHFW gives, the merged "Dadra & Nagar Haveli and Daman & Diu",
+#' and "India". MOHFW gives "Dadra & Nagar Haveli" and "Daman & Diu" as two
+#' UTs. This package adds the merged UT as the sum of the two. To get the sum
+#' of the states, remove "India" and one of the two Dadra/Daman forms. Refer
+#' to [population_projections_state]. Values are numbers of persons. This is
+#' also true for the state rows by age, but
+#' [population_projections_state_age] stores them in thousands.
 #'
 #' The source data rounds Persons, Male, and Female independently (in
 #' thousands), so `population` may differ from `males + females` by up

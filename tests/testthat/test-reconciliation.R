@@ -36,13 +36,23 @@ test_that("2011 subdistrict sums equal each district's PCA total", {
   }
 })
 
+test_that("merged Dadra & Nagar Haveli and Daman & Diu is the sum of the two UTs", {
+  ps <- population_projections_state
+  m <- ps[ps$state_name_harmonized == "Dadra & Nagar Haveli and Daman & Diu", ]
+  parts <- ps[ps$state_name_harmonized %in% c("Dadra & Nagar Haveli", "Daman & Diu"), ]
+  expect_equal(m$population, sum_by(parts, "year")[as.character(m$year)], ignore_attr = TRUE)
+  # the merged UT matches the LGD district table's state name
+  expect_true(unique(m$state_name_harmonized) %in% population_projections_district_lgd$state_name_harmonized)
+})
+
 test_that("projection district sums are within 2 percent of each state", {
   pd <- population_projections_district
   ps <- population_projections_state
   expect_false(anyNA(pd$population))
   expect_false(anyNA(ps$population))
   # district projections are 5-yearly
-  ps <- ps[ps$year %in% pd$year & ps$state_name_harmonized != "India", ]
+  ps <- ps[ps$year %in% pd$year &
+    !ps$state_name_harmonized %in% c("India", "Dadra & Nagar Haveli and Daman & Diu"), ]
   d <- sum_by(pd, c("state_name_harmonized", "year"))
   key <- paste(ps$state_name_harmonized, ps$year)
   expect_setequal(names(d), key)
