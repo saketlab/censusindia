@@ -34,3 +34,4 @@
 ^CLAUDE\.md$
 ^pkgdown$
 
+^man/figures/logo\.(pdf|svg)$
