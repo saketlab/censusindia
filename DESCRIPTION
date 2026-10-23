@@ -2,7 +2,9 @@ Package: censusindia
 Title: Census of India data for R
 Version: 0.1.1
 Authors@R:
-    person("Saket", "Choudhary", , "saketc@iitb.ac.in", role = c("aut", "cre"),
+    person("Atharva", "Shetwe", , "athshetwe@gmail.com", role = "aut",
+            comment = c(ORCID = "0009-0001-0409-3334")),
+    person("Saket", "Choudhary", , "saketkc@gmail.com", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0001-5202-7633"))
 Description: Digitised Census of India data from 1901 to 2011: population time
     series, primary census abstracts at state and district levels, mother
