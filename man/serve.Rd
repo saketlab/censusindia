@@ -21,14 +21,47 @@ Use \code{"0.0.0.0"} to accept external connections.}
 Called for its side effect; does not return under normal operation.
 }
 \description{
-Launches the bundled plumber API on the given host and port.
+Launches the bundled plumber API on the given host and port. Every
+endpoint takes \code{GET} query parameters that mirror the R function behind it,
+with comma-separated values for vectors (\verb{state=KL,TN}):
+}
+\details{
+\tabular{ll}{
+   Endpoint \tab Function \cr
+   \verb{/query} \tab \code{\link[=get_census]{get_census()}} \cr
+   \verb{/population} \tab \code{\link[=get_population]{get_population()}} \cr
+   \verb{/boundaries} \tab \code{\link[=get_census_boundaries]{get_census_boundaries()}} \cr
+   \verb{/languages} \tab \code{\link[=census_languages]{census_languages()}} \cr
+   \verb{/sc-st} \tab \code{\link[=census_sc_st]{census_sc_st()}} \cr
+   \verb{/datasets}, \verb{/dataset/<name>} \tab any shipped dataset, e.g. \link{census_1931_castes} \cr
+   \verb{/variables}, \verb{/search} \tab \code{\link[=list_census_variables]{list_census_variables()}}, \code{\link[=search_census_variables]{search_census_variables()}} \cr
+   \verb{/states}, \verb{/geographies} \tab \code{\link[=list_states]{list_states()}}, \code{\link[=list_census_geographies]{list_census_geographies()}} \cr
+   \verb{/health} \tab package version \cr
+}
+
+
+Results come back as JSON rows, or as a GeoJSON FeatureCollection when
+\code{geometry=true} and from \verb{/boundaries}. Input the R function rejects is a
+400 carrying its error message, and a failed data download is a 503.
+Interactive documentation is served at \verb{/__docs__/}.
+
+A response holds at most 10,000 rows, or 100 features for GeoJSON. Page
+through larger results with \code{limit} and \code{offset}; the \code{X-Total-Count} header
+gives the full count.
+
+Each request writes one JSON line to standard output with its path, query,
+status, duration, client IP and a \code{client} label. The label comes from an
+\code{X-Client} header when one is sent (an MCP server wrapping the API should
+send \verb{X-Client: mcp/<name>}), and otherwise from the User-Agent: \code{mcp},
+\code{ai_agent}, \code{curl}, \code{wget}, \code{python}, \code{r}, \code{node}, \code{browser}, \code{other} or
+\code{unknown}. Under systemd these lines land in the journal.
 }
 \examples{
-\dontrun{
+\dontshow{if (interactive() && requireNamespace("plumber", quietly = TRUE)) withAutoprint(\{ # examplesIf}
 # Start locally on the default port
 serve()
 
 # Bind to all interfaces on a custom port
 serve(host = "0.0.0.0", port = 9000)
-}
+\dontshow{\}) # examplesIf}
 }

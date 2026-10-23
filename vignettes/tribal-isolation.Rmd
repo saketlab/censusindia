@@ -556,9 +556,9 @@ Sampling by tribal population size alone would miss linguistically distinct grou
 ### Rare languages
 
 ```{r rare-languages}
-data(census_2011_mother_tongue)
+mother_tongue <- census_2011_mother_tongue()
 
-lang_stats <- census_2011_mother_tongue |>
+lang_stats <- mother_tongue |>
   filter(
     language_level == "L2", district_code == "000",
     !grepl("Others$", language_name)
@@ -797,7 +797,7 @@ We show multiple approaches below so the reader can see the contrast. For lingui
 
 ```{r composition-vectors}
 data(census_2011_district_languages)
-data(census_2011_mother_tongue)
+mother_tongue <- census_2011_mother_tongue()
 
 make_key <- function(df) {
   df |> mutate(
@@ -812,7 +812,7 @@ district_names <- census_2011_district_languages |>
   filter(!is.na(district_name)) |>
   distinct(state_code, district_code, state_name_harmonized, district_name)
 
-mt <- census_2011_mother_tongue |>
+mt <- mother_tongue |>
   filter(district_code != "000") |>
   left_join(
     district_names |> select(state_code, district_code, district_name),

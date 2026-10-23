@@ -3,9 +3,9 @@
 \docType{data}
 \name{population_projections_state}
 \alias{population_projections_state}
-\title{Population projections -- state level (2011-2036)}
+\title{Population projections - state level (2011-2036)}
 \format{
-A tibble with 988 rows and 5 columns:
+A tibble with 1014 rows (39 entries x 26 years) and 5 columns:
 \describe{
 \item{year}{Projection year (2011-2036)}
 \item{state_name_harmonized}{Harmonized state name for joining}
@@ -17,15 +17,40 @@ A tibble with 988 rows and 5 columns:
 \source{
 Ministry of Health and Family Welfare, Government of India.
 Population Projections for India and States 2011-2036.
+\url{https://nhm.gov.in/New_Updates_2018/Report_Population_Projection_2019.pdf}
 }
 \usage{
 population_projections_state
 }
 \description{
-MOHFW population projections at state level, based on the 2011 Census.
-Covers 38 entries (36 states/UTs, India total, and Ladakh) with annual
-projections from 2011 to 2036. Values are absolute numbers (the source
-rounds in thousands independently, so \code{population} may differ from
-\code{males + females} by up to 1000).
+MOHFW population projections for each state, from the 2011 Census. The
+table gives one projection for each year from 2011 to 2036.
+}
+\details{
+India has 36 states and UTs. The table has 39 entries:
+\itemize{
+\item 28 states.
+\item 9 UTs, with the names that the report uses: Andaman & Nicobar
+Islands, Chandigarh, Delhi, Jammu & Kashmir, Ladakh, Lakshadweep,
+Puducherry, "Dadra & Nagar Haveli" and "Daman & Diu". Jammu & Kashmir
+does not include Ladakh.
+\item "Dadra & Nagar Haveli and Daman & Diu". The two UTs became one UT
+in January 2020. This row is the sum of the two UTs. It has the same
+name as in the LGD district table, so data from 2020 and later can join.
+\item "India", the national total.
+}
+Thus the population of the two old UTs is in the table two times. To get
+the sum of the states, remove "India". Also remove the merged UT, or remove
+the two old UTs.
+
+Values are numbers of persons. The source rounds persons, males and
+females to thousands separately. Thus \code{population} can be different from
+\code{males + females} by a maximum of 1000. For the merged UT, the maximum is
+2000, because the row is the sum of two rounded rows.
+
+Values are the same as Table 8 of the report. The India and Odisha rows
+use the July 2020 edition. That edition changed the male projection for
+Odisha. Thus the two rows are different from the November 2019 report
+at the link below.
 }
 \keyword{datasets}

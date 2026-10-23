@@ -104,10 +104,7 @@ A ggplot2 object
 Create a choropleth map from census data.
 }
 \examples{
-\dontrun{
-# Load 2011 PCA data
-data(census_2011_pca)
-
+\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 # Calculate ST percentage and attach geometry
 st_data <- census_2011_pca |>
   dplyr::mutate(st_pct = 100 * st_population / population_total) |>
@@ -122,6 +119,5 @@ plot_map(st_data, st_pct,
   palette = "red_blue",
   show_state_boundaries = TRUE
 )
-}
-
+\dontshow{\}) # examplesIf}
 }

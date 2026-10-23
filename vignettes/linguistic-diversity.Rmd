@@ -30,9 +30,9 @@ library(patchwork)
 ```
 
 ```{r load-data}
-data(census_2011_mother_tongue)
+mother_tongue <- census_2011_mother_tongue()
 
-census_2011_mother_tongue |>
+mother_tongue |>
   filter(district_code == "000") |>
   group_by(language_level) |>
   summarise(n_languages = n_distinct(language_name))
@@ -90,8 +90,8 @@ calculate_diversity <- function(data, level) {
     )
 }
 
-diversity_l1 <- calculate_diversity(census_2011_mother_tongue, "L1")
-diversity_l2 <- calculate_diversity(census_2011_mother_tongue, "L2")
+diversity_l1 <- calculate_diversity(mother_tongue, "L1")
+diversity_l2 <- calculate_diversity(mother_tongue, "L2")
 
 cat("L1 (Scheduled Languages):\n")
 summary(diversity_l1$effective_languages)

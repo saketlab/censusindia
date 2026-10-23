@@ -1,0 +1,20 @@
+# %i is the deploy user; R finds its default user library
+[Unit]
+Description=censusindia plumber REST API (port 8895) as %i
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=%i
+ExecStart=/usr/bin/Rscript --vanilla -e "censusindia::serve(host='127.0.0.1', port=8895)"
+Restart=on-failure
+RestartSec=5
+MemoryMax=2G
+CPUQuota=100%
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+
+[Install]
+WantedBy=multi-user.target

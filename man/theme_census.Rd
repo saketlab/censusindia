@@ -18,3 +18,10 @@ A \code{ggplot2} theme.
 \description{
 \code{theme_census()} for plots with axes, \code{theme_census_map()} for choropleths.
 }
+\examples{
+\dontshow{if (requireNamespace("ggplot2", quietly = TRUE)) withAutoprint(\{ # examplesIf}
+ggplot2::ggplot(census_2011_pca, ggplot2::aes(literate_total, population_total)) +
+  ggplot2::geom_point() +
+  theme_census()
+\dontshow{\}) # examplesIf}
+}
