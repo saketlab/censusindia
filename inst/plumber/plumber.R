@@ -7,7 +7,9 @@
 
 # "a, b,,c" -> c("a", "b", "c"); empty -> NULL
 csv <- function(x) {
-  if (is.null(x)) return(NULL)
+  if (is.null(x)) {
+    return(NULL)
+  }
   x <- trimws(strsplit(x, ",", fixed = TRUE)[[1]])
   x <- x[nzchar(x)]
   if (length(x)) x else NULL
@@ -22,7 +24,9 @@ word <- function(x) tolower(trimws(x))
 # "2011" or "2021,2026" -> integers; empty -> NULL
 as_whole <- function(x, name = "year", lo = -Inf, hi = Inf) {
   x <- csv(as.character(x %||% ""))
-  if (is.null(x)) return(NULL)
+  if (is.null(x)) {
+    return(NULL)
+  }
   n <- suppressWarnings(as.numeric(x))
   if (!rlang::is_integerish(n, finite = TRUE) || any(n < lo | n > hi)) {
     range <- if (is.finite(hi)) sprintf(" from %s to %s", lo, hi) else ""
@@ -48,9 +52,13 @@ CLIENT_PATTERNS <- c(
 
 classify_client <- function(req) {
   explicit <- req$HTTP_X_CLIENT
-  if (!is.null(explicit) && nzchar(explicit)) return(substr(explicit, 1, 64))
+  if (!is.null(explicit) && nzchar(explicit)) {
+    return(substr(explicit, 1, 64))
+  }
   ua <- req$HTTP_USER_AGENT
-  if (is.null(ua) || !nzchar(ua)) return("unknown")
+  if (is.null(ua) || !nzchar(ua)) {
+    return("unknown")
+  }
   hit <- names(CLIENT_PATTERNS)[vapply(CLIENT_PATTERNS, grepl, TRUE, ua, ignore.case = TRUE)]
   if (length(hit)) hit[1] else "other"
 }
@@ -77,10 +85,14 @@ reject_unknown_params <- function(pr) {
   function(req, res) {
     # read per request: endpoints below the @plumber block are not parsed yet
     ep <- Find(function(e) e$matchesPath(req$PATH_INFO), pr$endpoints[["__no-preempt__"]])
-    if (is.null(ep)) return(plumber::forward())
+    if (is.null(ep)) {
+      return(plumber::forward())
+    }
     known <- c(names(ep$params), "limit", "offset")
     bad <- setdiff(names(req$argsQuery), known)
-    if (!length(bad)) return(plumber::forward())
+    if (!length(bad)) {
+      return(plumber::forward())
+    }
     res$status <- 400L
     list(error = sprintf(
       "Unknown parameter%s: %s. Known parameters: %s.",
@@ -104,10 +116,12 @@ function(pr) {
 # cli_abort() and match.arg() errors are bad input (400), a failed download
 # is 503, anything else is a bug (500).
 status_for <- function(e) {
-  if (inherits(e, "censusindia_download_error")) return(503L)
+  if (inherits(e, "censusindia_download_error")) {
+    return(503L)
+  }
   call <- conditionCall(e)
   if (inherits(e, "rlang_error") ||
-      (is.call(call) && identical(call[[1]], quote(match.arg)))) {
+    (is.call(call) && identical(call[[1]], quote(match.arg)))) {
     return(400L)
   }
   500L
@@ -142,7 +156,9 @@ respond <- function(req, res, expr) {
     return(list(error = cli::ansi_strip(conditionMessage(x))))
   }
   if ("state_name_harmonized" %in% names(x)) x$state <- x$state_name_harmonized
-  if (!inherits(x, "sf")) return(as.data.frame(x))
+  if (!inherits(x, "sf")) {
+    return(as.data.frame(x))
+  }
 
   tmp <- tempfile(fileext = ".geojson")
   on.exit(unlink(tmp), add = TRUE)
