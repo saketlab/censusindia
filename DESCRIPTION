@@ -1,9 +1,12 @@
 Package: censusindia
 Title: Census of India Data, 1901-2011, with Boundaries and Projections
 Version: 0.2.1
-Authors@R:
+Authors@R: c(
     person("Saket", "Choudhary", , "saketc@iitb.ac.in", role = c("aut", "cre", "cph"),
-           comment = c(ORCID = "0000-0001-5202-7633"))
+           comment = c(ORCID = "0000-0001-5202-7633")),
+    person("Atharva", "Shetwe", , "athshetwe@gmail.com", role = "aut",
+           comment = c(ORCID = "0009-0001-0409-3334"))
+    )
 Description: Tables from every decennial Census of India from 1901 to 2011:
     population time series, Primary Census Abstracts at state, district and
     sub-district level, mother tongue tables, Scheduled Caste and
