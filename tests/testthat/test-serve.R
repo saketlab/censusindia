@@ -178,7 +178,9 @@ test_that("responses are capped at one page and walk with limit/offset", {
   expect_equal(p$language_name, langs$language_name[11:15])
 
   expect_equal(NROW(api_get("/languages", paste0("offset=", nrow(langs)))$json), 0)
-  for (q in c("limit=0", "limit=10001", "limit=2.5", "offset=-1", "limit=abc")) {
+  # limit=0 aliases the maximum in all five APIs
+  expect_equal(api_get("/languages", "limit=0")$headers[["X-Limit"]], "10000")
+  for (q in c("limit=10001", "limit=2.5", "offset=-1", "limit=abc")) {
     expect_equal(api_get("/languages", q)$status, 400, info = q)
   }
 })
@@ -237,4 +239,24 @@ test_that("/population by_age answers in persons and rejects uncovered states", 
 test_that("/dataset serves the state projections by age in persons", {
   r <- api_get("/dataset/population_projections_state_age", "limit=1")$json
   expect_equal(r$population, population_projections_state_age$population[1] * 1000)
+})
+
+test_that("single-year routes reject ranges, and booleans are strict", {
+  r <- api_get("/query", "year=2001:2011")
+  expect_equal(r$status, 400)
+  expect_match(r$json$error, "one census year")
+  expect_equal(api_get("/boundaries", "year=2001,2011")$status, 400)
+  expect_equal(api_get("/population", "by_age=tru")$status, 400)
+  expect_equal(nrow(api_get("/population", "year=2021:2023&state=KL")$json), 3)
+})
+
+test_that("district rows carry a district column", {
+  r <- api_get("/query", "year=2011&geography=district&state=GA&variables=population")$json
+  expect_setequal(r$district, c("North Goa", "South Goa"))
+})
+
+test_that("LA resolves to Ladakh and district_name tables also carry district", {
+  expect_equal(unique(api_get("/population", "year=2021&state=LA")$json$state), "Ladakh")
+  r <- api_get("/sc-st", "category=SC&state=GA")$json
+  expect_equal(r$district, r$district_name)
 })

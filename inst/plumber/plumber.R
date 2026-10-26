@@ -17,22 +17,44 @@ csv <- function(x) {
 
 `%||%` <- rlang::`%||%`
 
-flag <- function(x) isTRUE(as.logical(x))
+flag <- function(x) {
+  x <- tolower(trimws(x %||% ""))
+  if (x %in% c("true", "t", "1", "yes")) {
+    return(TRUE)
+  }
+  if (x %in% c("", "false", "f", "0", "no")) {
+    return(FALSE)
+  }
+  rlang::abort(sprintf("Expected true or false, got \"%s\".", x))
+}
 
 word <- function(x) tolower(trimws(x))
 
-# "2011" or "2021,2026" -> integers; empty -> NULL
+# "2011", "2015,2016", "2015:2020" or "2020:2015" -> integers; empty -> NULL
 as_whole <- function(x, name = "year", lo = -Inf, hi = Inf) {
   x <- csv(as.character(x %||% ""))
   if (is.null(x)) {
     return(NULL)
   }
+  x <- unlist(lapply(x, function(v) {
+    b <- suppressWarnings(as.numeric(strsplit(v, ":", fixed = TRUE)[[1]]))
+    # ponytail: ranges capped at 1000 values so "1:1e9" cannot exhaust memory
+    ok <- length(b) == 2L && all(is.finite(b)) && abs(b[2] - b[1]) <= 1000
+    if (ok) as.character(seq(b[1], b[2])) else v
+  }))
   n <- suppressWarnings(as.numeric(x))
   if (!rlang::is_integerish(n, finite = TRUE) || any(n < lo | n > hi)) {
     range <- if (is.finite(hi)) sprintf(" from %s to %s", lo, hi) else ""
     rlang::abort(sprintf("`%s` must be whole numbers%s, got \"%s\".", name, range, paste(x, collapse = ",")))
   }
   as.integer(n)
+}
+
+# routes whose package function takes a single census year
+one_year <- function(x) {
+  y <- as_whole(x)
+  if (length(y) > 1L) rlang::abort(sprintf("`year` takes one census year, got %d.", length(y)))
+  y
 }
 
 DATASETS <- utils::data(package = "censusindia")$results[, c("Item", "Title")]
@@ -136,6 +158,8 @@ MAX_FEATURES <- 100L
 paginate <- function(x, req, res) {
   q <- req$argsQuery
   cap <- if (inherits(x, "sf")) MAX_FEATURES else MAX_ROWS
+  # clients send limit=0 for a full table; read it as the maximum
+  if (identical(trimws(q$limit %||% ""), "0")) q$limit <- NULL
   limit <- as_whole(q$limit, "limit", 1, cap)[1] %||% cap
   offset <- as_whole(q$offset, "offset", 0, .Machine$integer.max)[1] %||% 0L
   total <- nrow(x)
@@ -156,6 +180,7 @@ respond <- function(req, res, expr) {
     return(list(error = cli::ansi_strip(conditionMessage(x))))
   }
   if ("state_name_harmonized" %in% names(x)) x$state <- x$state_name_harmonized
+  if ("district_name" %in% names(x) && !"district" %in% names(x)) x$district <- x$district_name
   if (!inherits(x, "sf")) {
     return(as.data.frame(x))
   }
@@ -224,18 +249,23 @@ function(pattern = "", req, res) {
 #* @get /query
 function(year = 2011, geography = "state", state = "", variables = "",
          sector = "total", geometry = FALSE, req, res) {
-  respond(req, res, get_census(
-    year = as_whole(year),
-    geography = word(geography),
-    variables = csv(variables),
-    state = csv(state),
-    geometry = flag(geometry),
-    sector = word(sector)
-  ))
+  respond(req, res, {
+    x <- get_census(
+      year = one_year(year),
+      geography = word(geography),
+      variables = csv(variables),
+      state = csv(state),
+      geometry = flag(geometry),
+      sector = word(sector)
+    )
+    # district rows hold the name in name; the other APIs call it district
+    if (identical(word(geography), "district")) x$district <- x$name
+    x
+  })
 }
 
 #* Query population projections
-#* @param year Projection year or years (comma-separated). Years between projections are interpolated, years up to five past the last table year extrapolated; the `estimate` column says which.
+#* @param year Projection year or years (comma-separated, or a range such as 2021:2026). Years between projections are interpolated, years up to five past the last table year extrapolated; the `estimate` column says which.
 #* @param geography Geography level: state or district.
 #* @param state Comma-separated state names or two-letter codes.
 #* @param boundary District boundary system: census2011 or lgd.
@@ -259,7 +289,7 @@ function(year = "", geography = "state", state = "", boundary = "census2011",
 #* @param geography state or district.
 #* @get /boundaries
 function(year = 2011, geography = "state", req, res) {
-  respond(req, res, get_census_boundaries(as_whole(year), word(geography)))
+  respond(req, res, get_census_boundaries(one_year(year), word(geography)))
 }
 
 #* Census 2011 languages spoken, one row per language per area

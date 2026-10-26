@@ -25,6 +25,7 @@ Useful links:
 Authors:
 \itemize{
   \item Saket Choudhary \email{saketc@iitb.ac.in} (\href{https://orcid.org/0000-0001-5202-7633}{ORCID}) [copyright holder]
+  \item Atharva Shetwe \email{athshetwe@gmail.com} (\href{https://orcid.org/0009-0001-0409-3334}{ORCID})
 }
 
 }

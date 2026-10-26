@@ -179,6 +179,10 @@ resolve_states <- function(state, present = character(0)) {
     if (k == "india") {
       return("India")
     }
+    # Ladakh postdates the 2011 state list; projections have it
+    if (k %in% c("la", "ladakh")) {
+      return("Ladakh")
+    }
     i <- which(tolower(lookup$state_abbr) == k)
     if (length(i)) {
       return(lookup$state_name_harmonized[i[1]])
