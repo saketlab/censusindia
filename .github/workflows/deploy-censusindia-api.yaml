@@ -43,7 +43,7 @@ jobs:
             Rscript --vanilla -e "
               lib <- Sys.getenv('R_LIBS_USER')
               if (!requireNamespace('remotes', quietly = TRUE)) install.packages('remotes', lib = lib, repos = 'https://cloud.r-project.org')
-              remotes::install_local('.', lib = lib, dependencies = NA, upgrade = 'never', quiet = TRUE)
+              remotes::install_local('.', lib = lib, dependencies = NA, upgrade = 'never', force = TRUE, quiet = TRUE)
               if (!requireNamespace('plumber', quietly = TRUE)) remotes::install_cran('plumber', lib = lib)
               censusindia::census_download()
             "
