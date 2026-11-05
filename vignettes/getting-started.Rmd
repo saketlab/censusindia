@@ -42,12 +42,10 @@ span <- function(v) {
 }
 
 grain <- function(d) {
-  for (col in c("level", "geography")) {
-    if (col %in% names(d)) {
-      return(paste(sort(unique(d[[col]])), collapse = "/"))
-    }
+  if ("geography" %in% names(d)) {
+    return(paste(sort(unique(d$geography)), collapse = "/"))
   }
-  if (any(c("district", "district_name") %in% names(d))) "district" else NA_character_
+  if ("district" %in% names(d)) "district" else NA_character_
 }
 
 vapply(sort(utils::data(package = "censusindia")$results[, "Item"]), function(n) {
@@ -82,7 +80,7 @@ get_census(2011, "district") |>
 ## Census years are not interchangeable
 
 Each year has its own source table, and they carry different columns. 1961 is
-a literacy table, district level only. 1971 and 1981 split by sector. 2011
+a table of literacy rates, state and district only. 1971 and 1981 split by sector. 2011
 reaches subdistricts.
 
 ```{r geographies}
@@ -93,7 +91,7 @@ If you ask for a year and geography that do not exist together, you will get an 
 rather than an empty frame:
 
 ```{r not-available, error = TRUE}
-get_census(1961, "state")
+get_census(1961, "subdistrict")
 ```
 
 For 1971 and 1981, `sector` defaults to `"total"`. Rural and urban are there too:
@@ -106,9 +104,10 @@ c(
 
 ## Finding a variable
 
-Column names differ between years, so `variables =` takes canonical names and
-maps them onto whatever that year calls them. `list_census_variables()` prints
-all 23.
+All tables share one column schema, and `get_census(variables = ...)` also
+computes derived indicators (`literacy_rate`, `sex_ratio`, `sc_percent`,
+`st_percent`) where the underlying counts exist. `list_census_variables()`
+lists all 50 variable-geography combinations across 25 distinct variables.
 
 ```{r search}
 search_census_variables("literacy")
@@ -116,20 +115,20 @@ search_census_variables("literacy")
 get_census(2011, "state", variables = c("population", "literacy_rate")) |> head(3)
 ```
 
-Filter states by name or two-letter code: 
+Filter states by name or two-letter code:
 
 ```{r states}
 get_census(1971, "district", state = "MH") |>
-  select(name, population) |>
+  select(district, population) |>
   head(3)
 
 list_states(region = "South")$state_name
 ```
 
-
-
-For every year, `get_census()` returns the population time series.
-The detailed abstracts are separate tables:
+For 2001 and 2011, `get_census()` reads the Primary Census Abstract
+(`census_2001_pca` and `census_2011_pca`), which covers all 593 and 640
+districts respectively (unlike `census_population_time_series`, which omits
+Sikkim, Mizoram, and Daman & Diu):
 
 ```{r pca-vs-timeseries}
 c(
@@ -146,8 +145,8 @@ Literacy, SC/ST and worker counts live in the abstracts, for 2001 and 2011:
 census_2001_pca |>
   summarise(
     districts = n(),
-    literate_pct = 100 * sum(literate_total) / sum(population_total),
-    worker_pct = 100 * sum(workers_total) / sum(population_total)
+    literate_pct = 100 * sum(literate) / sum(population),
+    worker_pct = 100 * sum(workers) / sum(population)
   )
 ```
 
@@ -160,13 +159,17 @@ ind <- setdiff(
   names(census_2001_pca_full),
   c(
     "year", "geography", "state_code", "state_name",
-    "state_name_harmonized", "district_code", "name", "sector"
+    "state_name_harmonized", "district_code", "district", "sector"
   )
 )
 
 tibble::tibble(
-  indicator = sub("_(total|male|female)$", "", ind),
-  part = sub("^.*_", "", ind)
+  indicator = sub("_(male|female)$", "", sub("^(males|females)$", "population", ind)),
+  part = dplyr::case_when(
+    grepl("(^|_)males?$", ind) ~ "male",
+    grepl("(^|_)females?$", ind) ~ "female",
+    TRUE ~ "total"
+  )
 ) |>
   group_by(indicator) |>
   summarise(split_by = paste(sort(unique(part)), collapse = ", "), .groups = "drop") |>
@@ -180,10 +183,10 @@ census_2001_pca_full |>
   filter(sector != "total") |>
   group_by(sector) |>
   summarise(
-    cultivators = 100 * sum(main_cultivators_total) / sum(main_workers_total),
-    agri_labour = 100 * sum(main_agri_labour_total) / sum(main_workers_total),
-    hh_industry = 100 * sum(main_hh_industry_total) / sum(main_workers_total),
-    other = 100 * sum(main_other_total) / sum(main_workers_total),
+    cultivators = 100 * sum(main_cultivators) / sum(main_workers),
+    agri_labour = 100 * sum(main_agri_labour) / sum(main_workers),
+    hh_industry = 100 * sum(main_hh_industry) / sum(main_workers),
+    other = 100 * sum(main_other) / sum(main_workers),
     .groups = "drop"
   )
 ```
@@ -194,8 +197,8 @@ census_2001_pca_full |>
 
 ## Attaching geometry
 
-Districts split and get renamed between censuses. `attach_geometry()`allows
-you to visulaise the census specific boundaries:
+Districts split and change names between censuses. `attach_geometry()` joins
+data to the boundary vintage of its census year:
 
 ```{r boundaries, fig.height = 6.5, fig.width = 9}
 YEARS <- c(1941, 1951, 1961, 1971, 1981, 1991, 2001, 2011)
@@ -222,7 +225,7 @@ rate <- function(d, y) {
 }
 
 c(
-  `1971 abstract + 1971` = rate(filter(census_1971, geography == "district"), 1971),
+  `1971 abstract + 1971` = rate(filter(census_1971, geography == "district", sector == "total"), 1971),
   `time series 1971 + 1971` = rate(
     filter(census_population_time_series, geography == "district", year == 1971), 1971
   )
@@ -245,8 +248,9 @@ clear_geometry_cache()
 ## Population Projections
 
 `get_population()` reads the [MoHFW projections](https://nhm.gov.in/New_Updates_2018/Report_Population_Projection_2019.pdf),
-which run past the last census. The state table is annual, 2011 to 2036, with
-males and females for 36 states plus India and Ladakh.
+which run past the last census. The state table is annual from 2011 to 2036,
+with male, female, and total projections across 39 entries (36 states and UTs,
+Ladakh, the merged Dadra & Nagar Haveli and Daman & Diu row, and India).
 
 ```{r projections-shape}
 proj <- get_population(geography = "state")
@@ -271,8 +275,10 @@ proj |>
   theme_minimal()
 ```
 
-District projections exist on two geographies: `census2011` has the 640 Census districts at five-year steps.
-`lgd` has 785 present-day districts annually (note that there are not scaled and hence should not be used downstream without reclaibrating).
+District projections are available on two boundary systems: `census2011` covers
+the 640 Census 2011 districts at five-year steps (interpolated for intermediate
+years), while `lgd` covers 783 Local Government Directory districts annually
+from 2012 to 2031, area-apportioned from the Census 2011 age projections.
 
 ```{r projections-district}
 c(
@@ -289,8 +295,8 @@ together are 63 MB, so they are downloaded on first use and cached
 
 ```{r detail-use}
 census_2011_demographics() |>
-  filter(level == "district", sector == "total") |>
-  summarise(districts = n(), population = sum(population_total))
+  filter(geography == "district", sector == "total") |>
+  summarise(districts = n(), population = sum(population))
 ```
 
 Worker classification is available from `census_2011_workers()` and
@@ -300,12 +306,12 @@ Tribal and language information is also available:
 ```{r communities}
 census_2011_tribes |>
   slice_max(population, n = 3) |>
-  select(state_name_harmonized, district_name, tribe_name, population)
+  select(state_name_harmonized, district, tribe_name, population)
 
 census_2011_linguistic_diversity |>
   filter(coverage >= 0.9) |>
   slice_max(effective_languages, n = 3) |>
-  select(district_name, n_languages, effective_languages, coverage)
+  select(district, n_languages, effective_languages, coverage)
 ```
 
 `coverage` is the share of the district population C-16 gives a named mother

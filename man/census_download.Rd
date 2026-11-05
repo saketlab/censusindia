@@ -7,11 +7,11 @@
 census_download()
 }
 \value{
-The cache directory, invisibly.
+The cache directory path, invisibly.
 }
 \description{
-Fetches every boundary file and large table not yet in \code{\link[=census_cache_dir]{census_cache_dir()}},
-so later calls work offline.
+Downloads every boundary file and remote table not yet present in
+\code{\link[=census_cache_dir]{census_cache_dir()}}. Once complete, all package functions work offline.
 }
 \examples{
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}

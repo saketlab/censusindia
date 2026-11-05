@@ -33,7 +33,7 @@ library(patchwork)
 mother_tongue <- census_2011_mother_tongue()
 
 mother_tongue |>
-  filter(district_code == "000") |>
+  filter(geography == "state", sector == "total") |>
   group_by(language_level) |>
   summarise(n_languages = n_distinct(language_name))
 ```
@@ -65,9 +65,9 @@ in a district, but they weight rare languages differently:
 ```{r calculate-entropy}
 calculate_diversity <- function(data, level) {
   data |>
-    filter(language_level == level, district_code != "000", !grepl("Others", language_name)) |>
+    filter(sector == "total", geography == "district", language_level == level, !grepl("Others", language_name)) |>
     group_by(state_code, state_name, state_name_harmonized, district_code, language_name) |>
-    summarise(speakers = sum(total_persons), .groups = "drop_last") |>
+    summarise(speakers = sum(speakers), .groups = "drop_last") |>
     mutate(proportion = speakers / sum(speakers)) |>
     summarise(
       n_languages = n(),
@@ -80,12 +80,7 @@ calculate_diversity <- function(data, level) {
       .groups = "drop"
     ) |>
     inner_join(
-      census_2011_pca |>
-        transmute(
-          state_code = sprintf("%02d", state_code),
-          district_code = sprintf("%03d", district_code),
-          district = name
-        ),
+      census_2011_pca |> select(state_code, district_code, district),
       by = c("state_code", "district_code")
     )
 }

@@ -5,12 +5,13 @@
 \alias{census_subdistricts_2011}
 \title{Subdistrict directory (2011)}
 \format{
-A tibble with 5,988 rows and 15 columns:
+A tibble with 5,988 rows and 16 columns:
 \describe{
-\item{year}{Census year for population data (2011)}
+\item{year}{Census year of the population data (2011)}
 \item{geography}{Geographic level ("subdistrict")}
-\item{state}{Name of the state}
-\item{state_name_harmonized}{Harmonized state name for joining across datasets}
+\item{state_code}{Integer 2011 census state code}
+\item{state_name_harmonized}{Harmonized state name, used to join datasets}
+\item{state_name}{State name from the source}
 \item{district}{Name of the district}
 \item{subdistrict}{Name of the subdistrict (tehsil/taluka)}
 \item{population}{Total population}
@@ -21,7 +22,7 @@ A tibble with 5,988 rows and 15 columns:
 \item{uninhabited_villages}{Number of uninhabited villages}
 \item{towns}{Number of towns}
 \item{area_km2}{Area in square kilometers}
-\item{density}{Population density per square kilometer}
+\item{density}{Persons per square kilometer}
 }
 }
 \source{
@@ -36,10 +37,10 @@ census_subdistricts_2011
 Subdistrict (tehsil/taluka) population from the 2011 Census.
 }
 \details{
-A subdistrict crossing a district line is listed once per district, marked
-"(Part)". Population, males, females and households come from
-\code{\link[=census_2011_demographics]{census_2011_demographics()}} and sum to \link{census_2011_pca}. Villages, towns,
-area and density come from the Dataverse source and are NA where it has no
-match.
+If a subdistrict is in two or more districts, the table has one row for
+each district, with the mark "(Part)". Population, males, females and
+households come from \code{\link[=census_2011_demographics]{census_2011_demographics()}} and add to
+\link{census_2011_pca}. Villages, towns, area and density come from the
+Dataverse source. They are NA where the source has no match.
 }
 \keyword{datasets}

@@ -54,7 +54,7 @@ test_that("state rows by age are persons and add up to the state total", {
   total <- get_population(2026, "state", state = "Kerala")
   # Table 18 rounds each of 17 bands to the thousand
   expect_equal(sum(age$population), total$population, tolerance = 17 * 500 / total$population)
-  expect_equal(population_projections_state_age$population[1], 3768L)
+  expect_equal(population_projections_state_age$population[1], 3768000)
 })
 
 test_that("by_age names the states it covers", {

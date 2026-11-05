@@ -8,36 +8,35 @@ test_that("census_subdistricts_2011 covers every 2011 subdistrict", {
 
 test_that("census_subdistricts_2011 matches census_2011_demographics", {
   skip_if_no_remote()
-  d <- at_level(census_2011_demographics(), "sub-district")
+  d <- at_level(census_2011_demographics(), "subdistrict")
   s <- census_subdistricts_2011
   expect_setequal(
     paste(s$state_name_harmonized, s$population, s$males, s$females),
-    paste(d$state_name_harmonized, d$population_total, d$population_male, d$population_female)
+    paste(d$state_name_harmonized, d$population, d$males, d$females)
   )
 })
 
-test_that("census_1971 empty sectors are 0 and only Madras stays NA", {
+test_that("census_1971 empty sectors are 0 and no population is NA", {
   x <- census_1971
-  cols <- paste0(rep(pop_cols, each = 3), c("_total", "_rural", "_urban"))
-  na <- x[!stats::complete.cases(x[cols]), ]
-  expect_equal(na$name, "Madras")
-  bombay <- x[x$name == "Greater Bombay", ]
-  expect_equal(bombay$population_rural, 0)
-  ok <- x[x$name != "Madras", ]
+  expect_false(anyNA(x[pop_cols]))
+  bombay <- x[x$district %in% "Greater Bombay" & x$sector == "rural", ]
+  expect_equal(bombay$population, 0)
+  key <- function(s) x[x$sector == s, ]
   for (v in pop_cols) {
-    expect_equal(ok[[paste0(v, "_rural")]] + ok[[paste0(v, "_urban")]], ok[[paste0(v, "_total")]])
+    expect_equal(key("rural")[[v]] + key("urban")[[v]], key("total")[[v]])
   }
 })
 
 test_that("census_1981 empty district sectors are 0", {
   x <- census_1981
-  pick <- function(d, s) with(at_level(x, "district", s), total_persons[district == d])
+  pick <- function(d, s) with(at_level(x, "district", s), population[district == d])
   expect_equal(pick("Greater Bombay", "rural"), 0)
   expect_equal(pick("Madras", "rural"), 0)
   expect_equal(pick("Nicobars", "urban"), 0)
   expect_equal(pick("Phek", "urban"), 0)
   # 3 town and 4 urban-agglomeration rows have no figure
-  expect_equal(sum(is.na(x$total_persons)), 7)
+  expect_equal(sum(is.na(x$population)), 7)
+  expect_equal(pick("Guna", "urban"), 141599)
 })
 
 test_that("projection tables have no NA population", {
@@ -84,4 +83,18 @@ test_that("district age tables have no NA and Theni reproduces Table 8", {
   moga80 <- age[age$district == "Moga" & age$age_group == "80+", ]
   moga80 <- moga80[order(moga80$year), ]
   expect_true(all(diff(moga80$males) > 0))
+})
+
+test_that("census_1981 district rows are districts, one per sector", {
+  d <- census_1981[census_1981$geography == "district", ]
+  expect_false(anyNA(d$sector))
+  expect_equal(anyDuplicated(d[c("state_name", "district", "sector")]), 0L)
+  expect_equal(as.vector(table(d$sector)[c("total", "rural", "urban")]), c(398, 398, 398))
+  # towns the source filed as districts, and Chittoor's rural row filed as urban
+  expect_equal(sum(census_1981$geography == "town"), 967)
+  ch <- d[d$district == "Chittoor", ]
+  expect_equal(
+    ch$population[ch$sector == "rural"] + ch$population[ch$sector == "urban"],
+    ch$population[ch$sector == "total"]
+  )
 })

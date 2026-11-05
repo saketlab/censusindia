@@ -9,7 +9,7 @@ test_that("sex_ratio is females per 1000 males", {
 test_that("sex_ratio reproduces the published 2011 national figure", {
   p <- censusindia::census_2011_pca
   expect_equal(
-    round(sex_ratio(sum(p$population_female), sum(p$population_male))),
+    round(sex_ratio(sum(p$females), sum(p$males))),
     943
   )
 })

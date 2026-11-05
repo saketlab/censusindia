@@ -9,9 +9,9 @@ A tibble with 533 rows and 5 columns:
 \describe{
 \item{year}{Census year (1931)}
 \item{section}{Province or state section of the appendix}
-\item{caste}{Caste or tribe as printed, with bracketed qualifiers}
-\item{population}{Persons treated as exterior}
-\item{note}{Compiler's remark}
+\item{caste}{Caste or tribe from the source, with qualifiers in brackets}
+\item{population}{Persons in the exterior castes group}
+\item{note}{Note from the compiler}
 }
 }
 \source{
@@ -23,8 +23,9 @@ Census of India, 1931, Volume I, Appendix I: Exterior Castes.
 census_1931_exterior_castes
 }
 \description{
-Castes and tribes the 1931 Census treated as exterior, with their
-population, by province or state section of Appendix I of the Census of
-India 1931, Volume I. "Exterior castes" is the report's term.
+Castes and tribes that the 1931 Census put in the "exterior castes" group,
+with their population. Each row comes from a province or state section of
+Appendix I of the Census of India 1931, Volume I. "Exterior castes" is the
+term of the report.
 }
 \keyword{datasets}

@@ -2,21 +2,22 @@
 % Please edit documentation in R/levels.R
 \name{census_years}
 \alias{census_years}
-\title{Census years only}
+\title{Keep only decennial census years}
 \usage{
 census_years(data)
 }
 \arguments{
-\item{data}{A frame with a \code{year} column.}
+\item{data}{A data frame with a \code{year} column.}
 }
 \value{
-\code{data} keeping only the twelve census years, 1901 to 2011.
+\code{data} restricted to the twelve decennial census years (1901 to
+2011).
 }
 \description{
-\link{census_population_time_series} carries rows for 1900, 1910, 1940, 1948,
-1950, 1960, 1962 and 2021 alongside the twelve decennial censuses. A
-\code{lag()} over the unfiltered table silently produces one- and thirteen-year
-intervals labelled as decadal.
+\link{census_population_time_series} includes non-decennial years (1900, 1910,
+1940, 1948, 1950, 1960, 1962, and 2021) alongside the twelve decennial
+censuses. Computing \code{lag()} on the unfiltered table silently produces 1-year
+or 13-year intervals instead of 10-year intervals.
 }
 \examples{
 census_population_time_series |>

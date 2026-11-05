@@ -2,38 +2,37 @@
 % Please edit documentation in R/levels.R
 \name{census_sc_st}
 \alias{census_sc_st}
-\title{Scheduled Caste and Scheduled Tribe rows, by either name}
+\title{Scheduled Caste and Scheduled Tribe rows}
 \usage{
 census_sc_st(category = NULL, state = NULL)
 }
 \arguments{
 \item{category}{\code{"SC"}, \code{"ST"}, \code{"Scheduled Caste"}, \code{"Scheduled Tribe"}, or
-\code{NULL} (default) to keep both. Case-insensitive; a vector selects several.}
+\code{NULL} (default) to keep both categories. Case-insensitive; accepts a
+vector.}
 
-\item{state}{Optionally restrict to one or more states, by canonical name or
-two-letter code, as in \code{\link[=get_census]{get_census()}}.}
+\item{state}{Optional state filter: one or more canonical state names or
+two-letter codes, as in \code{\link[=get_census]{get_census()}}.}
 }
 \value{
 A tibble of \link{census_2011_sc_st} rows.
 }
 \description{
-\link{census_2011_sc_st} stores \code{category} as \code{"Scheduled Caste"} and
-\code{"Scheduled Tribe"}. \code{filter(category == "SC")} therefore matches nothing and
-raises no error. This accessor takes either spelling, in any case, and the
-table itself now carries a \code{category_code} column holding \code{SC}/\code{ST} so plain
-\code{dplyr::filter()} works both ways too.
+\link{census_2011_sc_st} stores full names in \code{category} (\code{"Scheduled Caste"},
+\code{"Scheduled Tribe"}) and short codes in \code{category_code} (\code{"SC"}, \code{"ST"}), so
+\code{dplyr::filter(category == "SC")} silently returns zero rows.
+\code{census_sc_st()} accepts either form, case-insensitively.
 }
 \details{
-The two categories are not symmetric. Scheduled Tribes are named, 581 of
-them. All 582 Scheduled Caste rows carry the single label
-\code{"All Scheduled Castes"}, one per district, so \code{"SC"} returns district
-aggregates rather than individual castes.
+Individual Scheduled Tribes are listed by name (581 tribes). Scheduled Castes
+are reported only as a single district aggregate (\code{"All Scheduled Castes"},
+582 districts).
 }
 \examples{
 nrow(census_sc_st("SC"))
 nrow(census_sc_st("Scheduled Caste"))
 }
 \seealso{
-\link{census_2011_tribes} for the ST rows with names harmonised and the
-\code{"Generic Tribes etc."} residual removed.
+\link{census_2011_tribes} for Scheduled Tribe rows with harmonized names
+and without the \code{"Generic Tribes etc."} residual.
 }

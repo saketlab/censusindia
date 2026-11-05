@@ -5,16 +5,22 @@
 \alias{census_2011_tribes}
 \title{Census 2011 Scheduled Tribes (A-11)}
 \format{
-A tibble with 12,861 rows and 8 columns:
+A tibble with 12,861 rows and 11 columns:
 \describe{
 \item{year}{Census year (2011)}
-\item{state_name_harmonized}{Harmonized state name for joining across datasets}
-\item{district_name}{Name of the district}
+\item{geography}{Geographic level ("district")}
+\item{state_code}{Integer state code}
+\item{state_name_harmonized}{Harmonized state name, used to join datasets}
+\item{district}{District name, as \link{census_2011_pca} writes it}
 \item{tribe_name}{Harmonized tribe name}
-\item{tribe_name_original}{Original tribe name as recorded in the source}
+\item{tribe_name_original}{Tribe name from the source}
+\item{parent_tribe}{The tribe that contains the tribe of this row ("Naga"
+for the (ST) rows of Nagaland). NA on other rows.}
 \item{population}{Tribe population}
-\item{percentage}{Share of district population}
-\item{district_total_population}{Total district population}
+\item{percent}{\code{population / district_total_population * 100}, rounded
+to two decimal places}
+\item{district_total_population}{District population: the \code{population}
+column of \link{census_2011_pca} for the same district}
 }
 }
 \source{
@@ -24,22 +30,24 @@ Census of India 2011, A-11 Scheduled Tribe tables.
 census_2011_tribes
 }
 \description{
-District-level population of individual Scheduled Tribes from the 2011
-Census A-11 tables. \code{tribe_name} is harmonised; \code{tribe_name_original} keeps
-the source string verbatim, including the full synonym list the census
-publishes ("Gond, Arakh, Arrakh, Agaria, ...") and any parenthetical
-district qualifier.
+District-level population of each Scheduled Tribe, from the 2011 Census
+A-11 tables. \code{tribe_name} is the harmonized name. \code{tribe_name_original} is
+the text from the source. This text includes the full list of synonyms
+from the census ("Gond, Arakh, Arrakh, Agaria, ...") and any district
+qualifier in parentheses.
 }
 \details{
-Harmonisation takes the first synonym and drops the qualifier, so
-\code{"Thoti (in Adilabad, Hyderabad, ...)"} becomes \code{"Thoti"}. That collapses 581
-source strings to 483 tribe names, and it is deliberate: the same tribe is
-written differently across states, sometimes differing only in whitespace.
+To harmonize a name, the package keeps the first synonym and removes the
+qualifier: \code{"Thoti (in Adilabad, Hyderabad, ...)"} becomes \code{"Thoti"},
+and \code{"Angami(ST)"} becomes \code{"Angami"}. The 581 source names become 481
+tribe names. Different states write the same tribe in
+different ways, and some names differ only in spaces.
 
-These are the ST rows of \link{census_2011_sc_st} with \code{"Generic Tribes etc."}
-removed, which is why the population here sums to 103,409,280 rather than the
-106,213,428 in that table. Neither figure equals the 104,545,716 in
-\code{census_2011_pca$st_population}; the A-11 tables and the Primary Census
-Abstract do not reconcile, so pick one source per analysis and say which.
+This table contains the ST rows of \link{census_2011_sc_st} excluding
+\code{"Generic Tribes etc."}. The constituent tribes of Nagaland carry
+\code{parent_tribe = "Naga"}, as in \link{census_2011_sc_st}. Before summing within a
+district, exclude either those rows or the \code{"Naga"} umbrella rows so each
+Naga person is counted only once. The \code{"Naga (ST)"} row (Naga with no
+specific tribe) is harmonized to \code{"Naga (unspecified)"}.
 }
 \keyword{datasets}

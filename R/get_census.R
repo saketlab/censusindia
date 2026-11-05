@@ -1,25 +1,38 @@
 #' Get India census data
 #'
-#' Census data for India at state, district, or subdistrict level.
+#' Queries Census of India data at state, district, or subdistrict level.
 #'
 #' @param year Census year. One of: 1901, 1911, 1921, 1931, 1941, 1951, 1961,
 #'   1971, 1981, 1991, 2001, 2011.
-#' @param geography Geographic level: "state", "district", or "subdistrict".
-#'   Not all geographies are available for all years.
-#' @param variables Character vector of variables to retrieve. Use
-#'   [list_census_variables()] to see available variables. If NULL (default),
-#'   returns all available variables for the specified year and geography.
-#' @param state Optional. Filter to specific state(s). Can be state name or
-#'   abbreviation (e.g., "Maharashtra" or "MH").
-#' @param geometry If TRUE, returns an sf object with geographic boundaries.
-#' @param sector For 1971/1981, filter to "total", "rural", or "urban". Other
-#'   years have no sector split, so "rural" or "urban" is an error there.
+#' @param geography Geographic level: `"state"`, `"district"`, or `"subdistrict"`.
+#'   Not all geographies are available for every census year; see
+#'   [list_census_geographies()].
+#' @param variables Character vector of variable names to return, or `NULL`
+#'   (default) for all variables available at that year and geography. See
+#'   [list_census_variables()].
+#' @param state Optional state filter: one or more canonical state names or
+#'   two-letter codes (e.g., `"Maharashtra"` or `"MH"`).
+#' @param geometry If `TRUE`, attaches census boundaries and returns an `sf`
+#'   object. Available for `"state"` and `"district"`.
+#' @param sector Sector filter: `"total"` (default), `"rural"`, or `"urban"`.
+#'   Rural and urban splits are available in `get_census()` for 1971 and 1981
+#'   only; passing `"rural"` or `"urban"` for other years raises an error.
 #'
-#' @return A tibble (or sf object if geometry = TRUE).
+#' @return A tibble (or an `sf` object when `geometry = TRUE`). Every year
+#'   begins with the same identifier columns: `year`, `geography`, `sector`,
+#'   `state_code`, `state_name_harmonized`, `state_name`, followed by
+#'   `district_code`, `district`, and `subdistrict` where applicable. State
+#'   frames carry no district columns. `sector` is `"total"` for years without a
+#'   rural/urban split. For 1961, only literacy rates (`literacy_rate`,
+#'   `literacy_rate_male`, `literacy_rate_female`) are available, not population
+#'   counts.
 #'
 #' @examples
 #' get_census(2011, "state")
 #' get_census(1971, "district", state = "Maharashtra")
+#' get_census(1971, "state", sector = "rural")
+#' get_census(1961, "state", variables = "literacy_rate")
+#' @examplesIf interactive()
 #' get_census(1981, "district", variables = c("population", "literacy_rate"), geometry = TRUE)
 #'
 #' @export
@@ -33,7 +46,7 @@ get_census <- function(year,
   sector <- match.arg(sector)
 
   valid_years <- c(1901, 1911, 1921, 1931, 1941, 1951, 1961, 1971, 1981, 1991, 2001, 2011)
-  if (!year %in% valid_years) {
+  if (length(year) != 1L || is.na(year) || !year %in% valid_years) {
     cli::cli_abort("Year must be one of: {.val {valid_years}}")
   }
   if (sector != "total" && !year %in% c(1971, 1981)) {
@@ -69,106 +82,61 @@ get_census <- function(year,
 
 #' @noRd
 get_census_data_for_year <- function(year, geography, sector) {
-  if (year == 2011 && geography == "subdistrict") {
-    return(censusindia::census_subdistricts_2011)
+  data <- if (year == 2011 && geography == "subdistrict") {
+    censusindia::census_subdistricts_2011
+  } else if (year %in% c(2001L, 2011L)) {
+    # the time series omits Sikkim, Mizoram and Daman & Diu; the PCA is complete
+    census_from_pca(year, geography)
+  } else {
+    switch(as.character(year),
+      "1961" = censusindia::census_1961_literacy,
+      "1971" = censusindia::census_1971,
+      "1981" = censusindia::census_1981,
+      censusindia::census_population_time_series |> dplyr::filter(.data$year == .env$year)
+    )
   }
-
-  # the time series omits Sikkim, Mizoram and Daman & Diu; the PCA is complete
-  if (year %in% c(2001L, 2011L) && geography %in% c("state", "district")) {
-    return(census_from_pca(year, geography))
-  }
-
-  if (year == 1981) {
-    data <- censusindia::census_1981 |>
-      dplyr::filter(.data$sector == .env$sector)
-
-    if (!geography %in% c("state", "district")) {
-      cli::cli_abort("1981 data is available at state and district level only.")
-    }
-    data <- data |> dplyr::filter(.data$level == .env$geography)
-
-    return(data |>
-      dplyr::rename(population = total_persons, males = total_males, females = total_females))
-  }
-
-  if (year == 1971) {
-    data <- censusindia::census_1971 |>
-      dplyr::filter(.data$geography == .env$geography)
-
-    suffix <- if (sector == "rural") "_rural" else if (sector == "urban") "_urban" else "_total"
-    return(data |>
-      dplyr::rename(
-        population = !!paste0("population", suffix),
-        males = !!paste0("males", suffix),
-        females = !!paste0("females", suffix),
-        sc_population = !!paste0("sc_population", suffix),
-        st_population = !!paste0("st_population", suffix)
-      ))
-  }
-
-  if (year == 1961) {
-    if (geography != "district") {
-      cli::cli_abort("1961 data only available at district level for literacy")
-    }
-    return(censusindia::census_1961_literacy)
-  }
-
-  censusindia::census_population_time_series |>
-    dplyr::filter(.data$year == .env$year, .data$geography == .env$geography)
+  data <- at_level(data, geography, sector)
+  # name labels units below subdistrict; a state frame has no district to name
+  data$name <- NULL
+  lower <- intersect(c("district_code", "district", "subdistrict_code", "subdistrict"), names(data))
+  data <- data[setdiff(names(data), lower[vapply(data[lower], \(v) all(is.na(v)), logical(1))])]
+  if (!"sector" %in% names(data)) data$sector <- "total"
+  canonicalize(data)
 }
 
-#' Build a get_census() frame from the Primary Census Abstract.
+#' Builds a get_census() frame from the Primary Census Abstract.
 #'
-#' Renames onto the population/males/females contract the rest of get_census()
-#' returns, keeps the abstract's extra indicators so `variables =` can reach
-#' literacy and worker counts, and carries `variation_*` across from the time
-#' series where that year has it.
+#' Keeps the indicators of the abstract, so `variables =` can get literacy and
+#' worker counts. Adds the districts to make the state frame. Copies
+#' `variation_*` from the time series when that year has it.
 #' @noRd
 census_from_pca <- function(year, geography) {
-  pca <- if (year == 2001L) censusindia::census_2001_pca else censusindia::census_2011_pca
-
-  out <- pca |>
-    dplyr::rename(
-      population = "population_total",
-      males = "population_male",
-      females = "population_female"
-    ) |>
-    dplyr::mutate(year = as.integer(year), geography = "district")
+  out <- if (year == 2001L) censusindia::census_2001_pca else censusindia::census_2011_pca
+  keys <- c("state_name_harmonized", "district")
 
   if (geography == "state") {
-    num <- names(out)[vapply(out, is.numeric, logical(1))]
-    num <- setdiff(num, c("year", "state_code", "district_code"))
+    num <- .count_cols(out)
     out <- out |>
-      dplyr::group_by(.data$state_code, .data$state_name, .data$state_name_harmonized) |>
-      dplyr::summarise(dplyr::across(dplyr::all_of(num), \(x) sum(x, na.rm = TRUE)),
-        .groups = "drop"
-      ) |>
-      dplyr::mutate(
-        year = as.integer(year), geography = "state",
-        name = .data$state_name_harmonized
-      )
+      dplyr::group_by(.data$year, .data$state_code, .data$state_name_harmonized, .data$state_name) |>
+      dplyr::summarise(dplyr::across(dplyr::all_of(num), \(x) sum(x, na.rm = TRUE)), .groups = "drop") |>
+      dplyr::mutate(geography = "state")
+    keys <- "state_name_harmonized"
   }
 
   ts <- censusindia::census_population_time_series |>
     dplyr::filter(.data$year == .env$year, .data$geography == .env$geography) |>
-    dplyr::select(dplyr::any_of(c(
-      "state_name_harmonized", "name", "variation_absolute", "variation_percent"
-    )))
-
-  if (all(c("variation_absolute", "state_name_harmonized", "name") %in% names(ts))) {
-    out <- dplyr::left_join(out, ts, by = c("state_name_harmonized", "name"))
-  }
-  out
+    dplyr::select(dplyr::all_of(c(keys, "variation_absolute", "variation_percent")))
+  dplyr::left_join(out, ts, by = keys)
 }
 
-#' Resolve state names or two-letter codes against the canonical list.
+#' Finds the canonical state for each state name or two-letter code.
 #'
-#' Accepts a vector. Anything that is neither a code nor a canonical name, but
-#' does appear verbatim in `present`, is passed through so historical spellings
-#' ("MYSORE") and aggregate rows ("India") still work. Everything else is an
-#' error: the old substring fallback quietly turned `state = "Pradesh"` into
-#' five states' worth of rows. A resolved state with no rows in `present` is an
-#' error listing the states that have rows.
+#' Accepts a vector. A value that is not a code or a canonical name, but occurs
+#' verbatim in `present`, passes through unchanged. Historical spellings
+#' ("MYSORE") and aggregate rows ("India") operate correctly. All other values
+#' give an error. A
+#' resolved state with no rows in `present` gives an error. The error lists the
+#' states that have rows.
 #' @noRd
 resolve_states <- function(state, present = character(0)) {
   lookup <- censusindia::india_states
@@ -227,7 +195,7 @@ resolve_states <- function(state, present = character(0)) {
 
 #' @noRd
 filter_by_state <- function(data, state) {
-  cols <- intersect(names(data), c("state_name_harmonized", "state", "state_name"))
+  cols <- intersect(names(data), c("state_name_harmonized", "state_name"))
   if (!length(cols)) {
     cli::cli_abort("Cannot filter by state: no state column found")
   }
@@ -241,87 +209,29 @@ filter_by_state <- function(data, state) {
 
 #' @noRd
 select_variables <- function(data, variables) {
-  id_cols <- intersect(
-    c(
-      "year", "geography", "state", "state_name", "state_name_harmonized",
-      "district", "subdistrict", "name", "state_code", "district_code",
-      "geo_id", "geo_name", "level"
-    ),
-    names(data)
-  )
-
-  var_mapping <- list(
-    population = c("population", "total_persons", "population_total"),
-    males = c("males", "total_males", "male_count", "population_male"),
-    females = c("females", "total_females", "female_count", "population_female"),
-    literate = c("literate_total", "literacy_total", "literate_persons"),
-    literate_male = c("literate_male", "literacy_male", "literate_males"),
-    literate_female = c("literate_female", "literacy_female", "literate_females"),
-    sc_population = c("sc_population", "sc_population_total", "sc_total"),
-    st_population = c("st_population", "st_population_total", "st_total"),
-    workers = c("workers_total", "total_workers_total"),
-    main_workers = c("main_workers", "main_workers_total"),
-    marginal_workers = c("marginal_workers", "marginal_workers_total"),
-    non_workers = c("non_workers", "non_workers_total"),
-    households = c("households", "hhld_count"),
-    area_km2 = c("area_km2", "area_sqkm")
-  )
-
+  ids <- intersect(.id_cols, names(data))
+  # variable = c(numerator, denominator, function)
   derived <- list(
-    literacy_rate = c("literate", "population"),
-    sex_ratio = c("females", "males"),
-    sc_percent = c("sc_population", "population"),
-    st_percent = c("st_population", "population")
+    literacy_rate = list("literate", "population", share),
+    sex_ratio = list("females", "males", sex_ratio),
+    sc_percent = list("sc_population", "population", share),
+    st_percent = list("st_population", "population", share)
   )
+  derivable <- names(derived)[vapply(derived, function(p) all(c(p[[1]], p[[2]]) %in% names(data)), logical(1))]
+  # a table storing a rate directly (1961 literacy) keeps its stored value
+  computed <- setdiff(variables, names(data))
 
-  resolve <- function(v) {
-    if (v %in% names(var_mapping)) {
-      m <- intersect(var_mapping[[v]], names(data))
-      if (length(m)) {
-        return(m[1])
-      }
-    }
-    if (v %in% names(data)) {
-      return(v)
-    }
-    NA_character_
-  }
-
-  needed <- unlist(lapply(variables, function(v) {
-    if (v %in% names(derived)) derived[[v]] else v
-  }))
-  resolved <- vapply(needed, resolve, character(1))
-
-  if (anyNA(resolved)) {
-    missing <- unique(needed[is.na(resolved)])
-    available <- setdiff(names(var_mapping)[
-      vapply(names(var_mapping), function(v) !is.na(resolve(v)), logical(1))
-    ], character(0))
+  missing <- setdiff(computed, derivable)
+  if (length(missing)) {
     cli::cli_abort(c(
       "Variable{?s} {.val {missing}} not available for this year and geography.",
-      "i" = "Available here: {.val {available}}."
+      "i" = "Available here: {.val {union(setdiff(names(data), ids), derivable)}}."
     ))
   }
 
-  out <- data |>
-    dplyr::select(dplyr::all_of(unique(c(id_cols, unname(resolved)))))
-
-  for (v in intersect(variables, names(derived))) {
-    parts <- vapply(derived[[v]], resolve, character(1))
-    out[[v]] <- if (v == "sex_ratio") {
-      1000 * out[[parts[1]]] / out[[parts[2]]]
-    } else {
-      100 * out[[parts[1]]] / out[[parts[2]]]
-    }
+  for (v in computed) {
+    p <- derived[[v]]
+    data[[v]] <- p[[3]](data[[p[[1]]]], data[[p[[2]]]])
   }
-
-  plain <- setdiff(variables, names(derived))
-  for (v in plain) {
-    src <- resolve(v)
-    if (!identical(src, v) && src %in% names(out) && !v %in% id_cols) {
-      names(out)[names(out) == src] <- v
-    }
-  }
-
-  out |> dplyr::select(dplyr::all_of(unique(c(id_cols, variables))))
+  data[unique(c(ids, variables))]
 }

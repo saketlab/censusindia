@@ -7,15 +7,14 @@
 clear_geometry_cache()
 }
 \value{
-Invisible NULL
+Invisible \code{NULL}.
 }
 \description{
-Releases the boundaries and downloaded tables held in memory for the
-session.
+Evicts cached boundary geometries and downloaded tables from session memory.
 }
 \examples{
 clear_geometry_cache()
 }
 \seealso{
-\code{\link[=clear_census_cache]{clear_census_cache()}} to delete downloaded files from disk.
+\code{\link[=clear_census_cache]{clear_census_cache()}} deletes the downloaded files from disk.
 }

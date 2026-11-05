@@ -3,7 +3,7 @@
 
 #* @apiTitle Census India API
 #* @apiDescription Query Census of India population and demographic data by year, geography, state, and variable. Requests with `geometry=true` return GeoJSON. Every endpoint returns at most 10,000 rows (100 GeoJSON features) per request; page with `limit` and `offset`, and read the total from the `X-Total-Count` header.
-#* @apiVersion 0.1.0
+#* @apiVersion 0.3.0
 
 # "a, b,,c" -> c("a", "b", "c"); empty -> NULL
 csv <- function(x) {
@@ -38,8 +38,7 @@ as_whole <- function(x, name = "year", lo = -Inf, hi = Inf) {
   }
   x <- unlist(lapply(x, function(v) {
     b <- suppressWarnings(as.numeric(strsplit(v, ":", fixed = TRUE)[[1]]))
-    # ponytail: ranges capped at 1000 values so "1:1e9" cannot exhaust memory
-    ok <- length(b) == 2L && all(is.finite(b)) && abs(b[2] - b[1]) <= 1000
+    ok <- length(b) == 2L && rlang::is_integerish(b, finite = TRUE) && abs(b[2] - b[1]) <= 1000
     if (ok) as.character(seq(b[1], b[2])) else v
   }))
   n <- suppressWarnings(as.numeric(x))
@@ -59,8 +58,7 @@ one_year <- function(x) {
 
 DATASETS <- utils::data(package = "censusindia")$results[, c("Item", "Title")]
 
-# `X-Client` wins (MCP wrappers should send `X-Client: mcp/<name>`), else the
-# first User-Agent pattern that matches.
+# X-Client header wins (MCP wrappers send mcp/<name>), else the first matching User-Agent
 CLIENT_PATTERNS <- c(
   mcp = "mcp",
   ai_agent = "claude|anthropic|openai|chatgpt|gptbot|perplexity|gemini",
@@ -135,8 +133,7 @@ function(pr) {
   ))
 }
 
-# cli_abort() and match.arg() errors are bad input (400), a failed download
-# is 503, anything else is a bug (500).
+# cli_abort()/match.arg() errors are 400, failed downloads 503, anything else 500
 status_for <- function(e) {
   if (inherits(e, "censusindia_download_error")) {
     return(503L)
@@ -149,9 +146,7 @@ status_for <- function(e) {
   500L
 }
 
-# One page per response bounds the body the single R process builds.
-# District polygons are large, so features get a smaller page than rows.
-# ponytail: offset paging reruns the query per page; cache if clients walk big tables.
+# page caps bound the body one R process builds; polygons are large, so fewer features
 MAX_ROWS <- 10000L
 MAX_FEATURES <- 100L
 
@@ -179,8 +174,6 @@ respond <- function(req, res, expr) {
     res$status <- status_for(x)
     return(list(error = cli::ansi_strip(conditionMessage(x))))
   }
-  if ("state_name_harmonized" %in% names(x)) x$state <- x$state_name_harmonized
-  if ("district_name" %in% names(x) && !"district" %in% names(x)) x$district <- x$district_name
   if (!inherits(x, "sf")) {
     return(as.data.frame(x))
   }
@@ -204,9 +197,10 @@ function() {
 }
 
 #* List available states
+#* @param region Optional comma-separated regions to filter on (North, South, East, West, Central, Northeast, Islands)
 #* @get /states
-function(req, res) {
-  respond(req, res, list_states())
+function(region = "", req, res) {
+  respond(req, res, list_states(region = csv(region)))
 }
 
 #* List available census year and geography combinations
@@ -249,19 +243,14 @@ function(pattern = "", req, res) {
 #* @get /query
 function(year = 2011, geography = "state", state = "", variables = "",
          sector = "total", geometry = FALSE, req, res) {
-  respond(req, res, {
-    x <- get_census(
-      year = one_year(year),
-      geography = word(geography),
-      variables = csv(variables),
-      state = csv(state),
-      geometry = flag(geometry),
-      sector = word(sector)
-    )
-    # district rows hold the name in name; the other APIs call it district
-    if (identical(word(geography), "district")) x$district <- x$name
-    x
-  })
+  respond(req, res, get_census(
+    year = one_year(year),
+    geography = word(geography),
+    variables = csv(variables),
+    state = csv(state),
+    geometry = flag(geometry),
+    sector = word(sector)
+  ))
 }
 
 #* Query population projections
@@ -294,10 +283,17 @@ function(year = 2011, geography = "state", req, res) {
 
 #* Census 2011 languages spoken, one row per language per area
 #* @param level district or subdistrict.
-#* @param language_group Comma-separated codes from the `language_group` column.
+#* @param language_group Comma-separated integer codes from the `language_group` column.
+#* @param sector total, rural or urban.
+#* @param state Comma-separated state names or two-letter codes.
 #* @get /languages
-function(level = "district", language_group = "", req, res) {
-  respond(req, res, census_languages(word(level), csv(language_group)))
+function(level = "district", language_group = "", sector = "total", state = "", req, res) {
+  respond(req, res, census_languages(
+    level = word(level),
+    language_group = as_whole(language_group, "language_group"),
+    sector = word(sector),
+    state = csv(state)
+  ))
 }
 
 #* Census 2011 Scheduled Caste and Scheduled Tribe populations
@@ -325,8 +321,6 @@ function(name, state = "", req, res) {
   }
   respond(req, res, {
     d <- getExportedValue("censusindia", name)
-    # serve persons like every other table
-    if (name == "population_projections_state_age") d <- state_age_persons()
     state <- csv(state)
     if (is.null(state)) d else filter_by_state(d, state)
   })

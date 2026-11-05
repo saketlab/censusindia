@@ -3,13 +3,15 @@
 \docType{data}
 \name{population_projections_district}
 \alias{population_projections_district}
-\title{Population projections -- district level, Census 2011 boundaries (2011-2031)}
+\title{Population projections: district level, Census 2011 boundaries (2011-2031)}
 \format{
-A tibble with 3,200 rows and 6 columns:
+A tibble with 3,200 rows and 8 columns:
 \describe{
 \item{year}{Projection year (5-year intervals)}
-\item{state_name_harmonized}{Harmonized state name for joining}
-\item{district}{District name (MOHFW naming convention)}
+\item{geography}{Geographic level ("district")}
+\item{state_code}{Integer 2011 census state code}
+\item{state_name_harmonized}{Harmonized state name, used to join datasets}
+\item{district}{District name (MOHFW names)}
 \item{males}{Projected male population}
 \item{females}{Projected female population}
 \item{population}{Projected total population (males + females)}
@@ -24,15 +26,20 @@ District Level Annual Population by Quinquennial Agegroup and Sex.
 population_projections_district
 }
 \description{
-MOHFW population projections at district level using Census 2011
-boundaries (640 districts). Projections are at 5-year intervals:
-2011, 2016, 2021, 2026, 2031. Values match the IIPS report's Table 8.
+MOHFW population projections for the 640 districts of the 2011 Census
+boundaries. The table gives projections for 2011, 2016, 2021, 2026 and
+2031.
 }
 \details{
-The report's age tables (\code{\link[=population_projections_district_age]{population_projections_district_age()}}) sum
-to different totals for Karnataka in 2016-2031 and for Uttar Pradesh and
-Nagaland in 2016.
+Values are the same as Table 8 of the IIPS report, with one exception:
+Uttar Pradesh 2016. In Table 8, the 2016 column for Uttar Pradesh gives the
+2017 value of each district. The Uttar Pradesh rows for 2016 use the 2016
+sums of the age tables. \code{data-raw/projection_consistency_fixes.csv} gives
+these rows.
 
-Compatible with \code{\link[=attach_geometry]{attach_geometry()}} using 2011 district boundaries.
+The age tables (\code{\link[=population_projections_district_age]{population_projections_district_age()}}) add to these
+totals within rounding, except for Nagaland 2016.
+
+Use \code{\link[=attach_geometry]{attach_geometry()}} with the 2011 district boundaries.
 }
 \keyword{datasets}

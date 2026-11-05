@@ -5,25 +5,38 @@
 \alias{census_2001_pca_full}
 \title{Census 2001 Primary Census Abstract, full indicator set}
 \format{
-A tibble with 1,779 rows and 47 columns. Beyond the identifiers
-(\code{year}, \code{geography}, \code{state_code}, \code{state_name}, \code{district_code}, \code{name},
-\code{sector}) each indicator appears with a \code{_total}, \code{_male} and \code{_female} suffix:
+A tibble with 1,779 rows and 47 columns. Male and female columns
+have a \code{_male} or \code{_female} suffix. A column with no suffix
+gives persons:
 \describe{
+\item{year}{Census year (2001)}
+\item{geography}{Geographic level ("district")}
+\item{sector}{Sector: "total", "rural" or "urban"}
+\item{state_code}{Integer state code}
+\item{state_name_harmonized}{Harmonized state name, used to join datasets}
+\item{state_name}{State name from the source}
+\item{district_code}{Integer district code. Each state has its own
+numbers.}
+\item{district}{Name of the district}
 \item{households}{Number of households}
-\item{population_total, population_male, population_female}{Total population}
-\item{pop_0_6_total, pop_0_6_male, pop_0_6_female}{Population aged 0-6 years}
-\item{sc_total, sc_male, sc_female}{Scheduled Caste population}
-\item{st_total, st_male, st_female}{Scheduled Tribe population}
-\item{literate_total, literate_male, literate_female}{Literate population}
-\item{illiterate_total, illiterate_male, illiterate_female}{Illiterate population}
-\item{workers_total, workers_male, workers_female}{All workers}
-\item{main_workers_total, main_workers_male, main_workers_female}{Main workers}
-\item{marginal_workers_total, marginal_workers_male, marginal_workers_female}{Marginal workers}
-\item{main_cultivators_total, main_agri_labour_total,
-main_hh_industry_total, main_other_total}{Main workers by category}
-\item{marginal_cultivators_total, marginal_agri_labour_total,
-marginal_hh_industry_total, marginal_other_total}{Marginal workers by category}
-\item{non_workers_total, non_workers_male, non_workers_female}{Non-workers}
+\item{population, males, females}{Population}
+\item{population_0_6, population_0_6_male,
+population_0_6_female}{Population of age 0-6 years}
+\item{sc_population, sc_population_male,
+sc_population_female}{Scheduled Caste population}
+\item{st_population, st_population_male,
+st_population_female}{Scheduled Tribe population}
+\item{literate, literate_male, literate_female}{Literate population}
+\item{illiterate, illiterate_male, illiterate_female}{Illiterate population}
+\item{workers, workers_male, workers_female}{All workers}
+\item{main_workers, main_workers_male, main_workers_female}{Main workers}
+\item{main_cultivators, main_agri_labour, main_hh_industry,
+main_other}{Main workers by category, persons}
+\item{marginal_workers, marginal_workers_male,
+marginal_workers_female}{Marginal workers}
+\item{marginal_cultivators, marginal_agri_labour, marginal_hh_industry,
+marginal_other}{Marginal workers by category, persons}
+\item{non_workers, non_workers_male, non_workers_female}{Non-workers}
 }
 }
 \source{
@@ -34,12 +47,15 @@ Census of India 2001, Primary Census Abstract (series
 census_2001_pca_full
 }
 \description{
-The complete published 2001 PCA at district level: every indicator split by
-sex, and each district given for total, rural and urban. 593 districts x 3
-sectors = 1,779 rows.
+The full 2001 PCA at district level. Each indicator has values for
+persons, males and females. Each district has one row each for total,
+rural and urban: 593 districts x 3 sectors = 1,779 rows.
 }
 \details{
-\link{census_2001_pca} is the narrower 19-column view of the same data, kept for
-the columns it shares with \link{census_2011_pca}.
+\link{census_2001_pca} is a 19-column subset of the same data. It has the
+columns that are also in \link{census_2011_pca}.
+
+The table gives each sector as a row. Filter \code{sector == "total"} before
+you add rows.
 }
 \keyword{datasets}

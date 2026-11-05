@@ -10,27 +10,34 @@ Census of India 2011, C-16 Mother Tongue Tables.
 census_2011_subdistrict_languages()
 }
 \value{
-A tibble with 144,134 rows and 11 columns:
+A tibble with 432,402 rows and 12 columns:
 \describe{
-\item{state_code}{Numeric state code}
-\item{state_name_harmonized}{Harmonized state name for joining across datasets}
-\item{district_code}{Numeric district code}
-\item{area_name}{Name of the subdistrict}
+\item{year}{Census year (2011)}
+\item{geography}{Geographic level ("subdistrict")}
+\item{sector}{Sector: "total", "rural" or "urban"}
+\item{state_code}{Integer state code}
+\item{state_name_harmonized}{Harmonized state name. Use it to join datasets}
+\item{district_code}{Integer code of the parent district}
+\item{subdistrict}{Name of the subdistrict}
 \item{language_name}{Name of the language}
-\item{language_group}{Numeric language group code}
-\item{total_speakers}{Total speakers}
-\item{male_speakers}{Male speakers}
-\item{female_speakers}{Female speakers}
-\item{rural_speakers}{Rural speakers}
-\item{urban_speakers}{Urban speakers}
+\item{language_group}{Integer language group code}
+\item{speakers}{Speakers}
+\item{speakers_male}{Male speakers. NA on rural and urban rows}
+\item{speakers_female}{Female speakers. NA on rural and urban rows}
 }
 }
 \description{
-Mother tongue speakers by language at subdistrict level from the 2011
-Census C-16 tables, with male/female and rural/urban breakdowns. The
-district rows that share each subdistrict's \code{district_code} are excluded,
-so these rows sum to the matching row of \link{census_2011_district_languages}.
-Downloaded on first use; see \code{\link[=census_cache_dir]{census_cache_dir()}}.
+Mother tongue speakers by language at subdistrict level from the 2011 Census
+C-16 tables, by sector and by sex. The table does not include the district
+rows that have the same \code{district_code} as the subdistricts. The rows
+of a district add to its row in \link{census_2011_district_languages}. The
+package downloads the table on first use. Refer to \code{\link[=census_cache_dir]{census_cache_dir()}}.
+}
+\details{
+The table stores sector as rows (144,134 rows for each sector). Filter to
+\code{sector == "total"} before you add rows, or use \code{\link[=census_languages]{census_languages()}}, which
+applies this filter. \code{speakers_male} and \code{speakers_female} are NA on rural
+and urban rows.
 }
 \examples{
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}

@@ -8,7 +8,7 @@ test_that("variable metadata filters on whole years, not substrings", {
 test_that("list_census_geographies advertises only what works", {
   g <- list_census_geographies()
   expect_true(all(c("year", "geography", "dataset") %in% names(g)))
-  expect_false(any(g$year == 1961 & g$geography == "state"))
+  expect_true(any(g$year == 1961 & g$geography == "state"))
 })
 
 test_that("list_states returns the canonical 36", {
@@ -73,12 +73,12 @@ test_that("every plot_map path draws India's full northern extent", {
   expect_equal(attr(d, "census_boundary_year"), 2011)
 
   cases <- list(
-    "with year column" = plot_map(d, "population_total"),
+    "with year column" = plot_map(d, "population"),
     "no year column" = plot_map(
-      d[, setdiff(names(d), "year")], "population_total",
+      d[, setdiff(names(d), "year")], "population",
       show_state_boundaries = TRUE
     ),
-    "explicit boundary_year" = plot_map(d, "population_total", boundary_year = 2011),
+    "explicit boundary_year" = plot_map(d, "population", boundary_year = 2011),
     "projection, no boundary file for its year" = plot_map(
       get_population(2031, geography = "district") |>
         attach_geometry(2011, geography = "district", unmatched = "ignore"),
@@ -111,7 +111,7 @@ test_that("every variable the catalogue advertises actually resolves", {
   v <- census_variables
   for (i in seq_len(nrow(v))) {
     years <- as.integer(strsplit(v$years[i], ",")[[1]])
-    geogs <- strsplit(v$geographies[i], ",")[[1]]
+    geogs <- v$geography[i]
     for (y in years) {
       for (g in geogs) {
         if (!nrow(dplyr::filter(list_census_geographies(), .data$year == y, .data$geography == g))) {

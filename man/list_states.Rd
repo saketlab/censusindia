@@ -7,7 +7,8 @@
 list_states(region = NULL)
 }
 \arguments{
-\item{region}{Filter by region: "North", "South", "East", "West", "Central", "Northeast", "Islands".}
+\item{region}{Region(s) to filter by: \code{"North"}, \code{"South"}, \code{"East"},
+\code{"West"}, \code{"Central"}, \code{"Northeast"}, or \code{"Islands"}.}
 }
 \value{
 A tibble of states with codes, names, abbreviations, and regions.

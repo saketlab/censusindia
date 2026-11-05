@@ -10,31 +10,37 @@ Census of India 2011, Primary Census Abstract.
 census_2011_marginal_detail()
 }
 \value{
-A tibble with 751,594 rows and 42 columns:
+A tibble with 751,594 rows and 43 columns. Male and female columns
+have a \code{_male} or \code{_female} suffix. A column without a suffix
+gives persons:
 \describe{
-\item{state_code,district_code,subdistrict_code,town_village_code,ward_code}{Geographic codes}
-\item{level}{Geographic level (india, state, district, subdistrict, town, village, ward)}
+\item{year}{Census year (2011)}
+\item{geography}{Geographic level: "india", "state", "district",
+"subdistrict", "town", "village" or "ward"}
+\item{sector}{Sector: "total", "rural" or "urban"}
+\item{state_code,district_code,subdistrict_code,town_village_code,ward_code}{Integer
+geographic codes. NA above the level of the unit}
+\item{state_name_harmonized}{Harmonized state name. Use it to join datasets}
 \item{name}{Name of the geographic unit}
-\item{state_name_harmonized}{Harmonized state name for joining across datasets}
-\item{sector}{Sector: "total", "rural", or "urban"}
-\item{marginal_workers_3_6_total,marginal_workers_3_6_male,marginal_workers_3_6_female}{Marginal workers employed 3-6 months}
-\item{marg_cultivators_3_6_total,marg_cultivators_3_6_male,marg_cultivators_3_6_female}{Marginal cultivators, 3-6 months}
-\item{marg_agri_labour_3_6_total,marg_agri_labour_3_6_male,marg_agri_labour_3_6_female}{Marginal agricultural labourers, 3-6 months}
-\item{marg_hh_industry_3_6_total,marg_hh_industry_3_6_male,marg_hh_industry_3_6_female}{Marginal household industry workers, 3-6 months}
-\item{marg_other_3_6_total,marg_other_3_6_male,marg_other_3_6_female}{Marginal other workers, 3-6 months}
-\item{marginal_workers_0_3_total,marginal_workers_0_3_male,marginal_workers_0_3_female}{Marginal workers employed 0-3 months}
-\item{marg_cultivators_0_3_total,marg_cultivators_0_3_male,marg_cultivators_0_3_female}{Marginal cultivators, 0-3 months}
-\item{marg_agri_labour_0_3_total,marg_agri_labour_0_3_male,marg_agri_labour_0_3_female}{Marginal agricultural labourers, 0-3 months}
-\item{marg_hh_industry_0_3_total,marg_hh_industry_0_3_male,marg_hh_industry_0_3_female}{Marginal household industry workers, 0-3 months}
-\item{marg_other_0_3_total,marg_other_0_3_male,marg_other_0_3_female}{Marginal other workers, 0-3 months}
-\item{non_workers_total,non_workers_male,non_workers_female}{Non-workers}
+\item{marginal_workers_3_6,marginal_workers_3_6_male,marginal_workers_3_6_female}{Marginal workers with 3-6 months of work}
+\item{marginal_cultivators_3_6,marginal_cultivators_3_6_male,marginal_cultivators_3_6_female}{Marginal cultivators, 3-6 months}
+\item{marginal_agri_labour_3_6,marginal_agri_labour_3_6_male,marginal_agri_labour_3_6_female}{Marginal agricultural labourers, 3-6 months}
+\item{marginal_hh_industry_3_6,marginal_hh_industry_3_6_male,marginal_hh_industry_3_6_female}{Marginal household industry workers, 3-6 months}
+\item{marginal_other_3_6,marginal_other_3_6_male,marginal_other_3_6_female}{Marginal other workers, 3-6 months}
+\item{marginal_workers_0_3,marginal_workers_0_3_male,marginal_workers_0_3_female}{Marginal workers with 0-3 months of work}
+\item{marginal_cultivators_0_3,marginal_cultivators_0_3_male,marginal_cultivators_0_3_female}{Marginal cultivators, 0-3 months}
+\item{marginal_agri_labour_0_3,marginal_agri_labour_0_3_male,marginal_agri_labour_0_3_female}{Marginal agricultural labourers, 0-3 months}
+\item{marginal_hh_industry_0_3,marginal_hh_industry_0_3_male,marginal_hh_industry_0_3_female}{Marginal household industry workers, 0-3 months}
+\item{marginal_other_0_3,marginal_other_0_3_male,marginal_other_0_3_female}{Marginal other workers, 0-3 months}
+\item{non_workers,non_workers_male,non_workers_female}{Non-workers}
 }
 }
 \description{
-Marginal workers from the 2011 Primary Census Abstract split by duration
-of work (3-6 months and 0-3 months) and by activity, plus non-workers,
-at all geographic levels and total/rural/urban sector. Downloaded on first
-use; see \code{\link[=census_cache_dir]{census_cache_dir()}}. Use \code{\link[=at_level]{at_level()}} before summing.
+Marginal workers from the 2011 Primary Census Abstract, divided by the
+duration of work (3-6 months and 0-3 months) and by activity. The table also
+gives non-workers. It has all geographic levels and the total, rural and
+urban sectors. The package downloads the table on first use. Refer to
+\code{\link[=census_cache_dir]{census_cache_dir()}}. Use \code{\link[=at_level]{at_level()}} before you add rows.
 }
 \examples{
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}

@@ -10,7 +10,6 @@ expect_states_match <- function(di, st) {
 test_that("2011 district sums equal each state's own figure", {
   skip_if_no_remote()
   st <- at_level(census_2011_demographics(), "state")
-  st$population <- st$population_total
   di <- get_census(2011, "district")
   expect_setequal(st$state_name_harmonized, di$state_name_harmonized)
   expect_equal(nrow(st), 35)
@@ -27,7 +26,7 @@ test_that("2001 district sums equal the time series state figures", {
 test_that("2011 subdistrict sums equal each district's PCA total", {
   s <- get_census(2011, "subdistrict")
   di <- get_census(2011, "district")
-  key <- paste(di$state_name_harmonized, di$name)
+  key <- paste(di$state_name_harmonized, di$district)
   for (v in c("population", "males", "females")) {
     expect_false(anyNA(s[[v]]))
     d <- sum_by(s, c("state_name_harmonized", "district"), v)

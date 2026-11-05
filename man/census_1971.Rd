@@ -5,29 +5,21 @@
 \alias{census_1971}
 \title{Census 1971 Primary Census Abstract}
 \format{
-A tibble with 370 rows and 21 columns:
+A tibble with 1,140 rows (380 areas x 3 sectors) and 13 columns:
 \describe{
 \item{year}{Census year (1971)}
 \item{geography}{Geographic level: "state" or "district"}
-\item{state}{Name of the state}
-\item{state_name_harmonized}{Harmonized state name for joining across datasets}
-\item{name}{Name of the state or district}
+\item{sector}{Sector: "total", "rural" or "urban"}
+\item{state_code}{Integer 2011 census code of the harmonized state}
+\item{state_name_harmonized}{Harmonized state name, used to join datasets}
+\item{state_name}{State name from the source}
+\item{district}{Name of the district. NA on state rows.}
 \item{area_km2}{Area in square kilometers}
-\item{population_total}{Total population}
-\item{population_rural}{Rural population}
-\item{population_urban}{Urban population}
-\item{males_total}{Total male population}
-\item{males_rural}{Rural male population}
-\item{males_urban}{Urban male population}
-\item{females_total}{Total female population}
-\item{females_rural}{Rural female population}
-\item{females_urban}{Urban female population}
-\item{sc_population_total}{Total Scheduled Caste population}
-\item{sc_population_rural}{Rural Scheduled Caste population}
-\item{sc_population_urban}{Urban Scheduled Caste population}
-\item{st_population_total}{Total Scheduled Tribe population}
-\item{st_population_rural}{Rural Scheduled Tribe population}
-\item{st_population_urban}{Urban Scheduled Tribe population}
+\item{population}{Population}
+\item{males}{Male population}
+\item{females}{Female population}
+\item{sc_population}{Scheduled Caste population}
+\item{st_population}{Scheduled Tribe population}
 }
 }
 \source{
@@ -39,16 +31,22 @@ Datasets." Harvard Dataverse. \doi{10.7910/DVN/ON8CP8}.
 census_1971
 }
 \description{
-State and district population from the 1971 Census with rural/urban
-breakdown and SC/ST populations.
+State and district population from the 1971 Census, with rural and urban
+values and the SC/ST population.
 }
-\section{Known defects}{
+\details{
+The table stores each sector as a row. Each of the 28 states and 352
+districts has one row each for \code{"total"}, \code{"rural"}, and \code{"urban"}. Filter
+to \code{sector == "total"} before summing across rows; otherwise the sum
+double-counts every person.
 
-Population, males and females partition exactly into rural and urban. The
-SC/ST columns do not: one \code{sc_population} row and five \code{st_population} rows
-fail \code{rural + urban == total}, the largest gaps being 493,272 (Hooghly, SC)
-and 472,910 (Jhabua, ST). District coverage is also short of the state total
-for Mysore and Tamil Nadu.
+Verified against the printed volume (Table II). Ten missing Mysore districts
+were added and OCR errors in SC/ST cells were corrected. Madras is entirely
+urban (rural = 0).
+
+\href{https://github.com/saketlab/censusindia/blob/main/inst/ocr-corrections.csv}{inst/ocr-corrections.csv}
+records every correction and its source page. Within each column and sector,
+districts sum to their state and rural + urban equals total. Nil entries
+(\code{".."}) are stored as \code{NA}.
 }
-
 \keyword{datasets}

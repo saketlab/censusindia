@@ -7,17 +7,17 @@
 \format{
 A tibble with 36 rows and 5 columns:
 \describe{
-\item{state_code}{Numeric state code (Census 2011 codes)}
+\item{state_code}{Integer state code (Census 2011 codes)}
 \item{state_name}{Official state name}
-\item{state_name_harmonized}{Harmonized state name for joining across datasets}
 \item{state_abbr}{Two-letter state abbreviation}
 \item{region}{Geographic region (North, South, East, West, Central, Northeast, Islands)}
+\item{state_name_harmonized}{Harmonized state name, used to join datasets}
 }
 }
 \usage{
 india_states
 }
 \description{
-States and union territories with codes, abbreviations, and regions.
+States and union territories, with codes, abbreviations and regions.
 }
 \keyword{datasets}

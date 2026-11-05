@@ -35,8 +35,8 @@ library(patchwork)
 composition <- census_2011_pca |>
   filter(geography == "district") |>
   mutate(
-    sc_pct = 100 * sc_population / population_total,
-    st_pct = 100 * st_population / population_total,
+    sc_pct = 100 * sc_population / population,
+    st_pct = 100 * st_population / population,
     general_pct = 100 - sc_pct - st_pct
   ) |>
   filter(!is.na(sc_pct), !is.na(st_pct), general_pct >= 0)
@@ -58,46 +58,6 @@ ggtern(composition, aes(x = sc_pct, y = st_pct, z = general_pct)) +
 ```
 
 ```{r regional, fig.height=10, fig.width=12}
-regions <- tibble::tribble(
-  ~state_name_harmonized, ~region,
-  "Jammu & Kashmir", "North",
-  "Himachal Pradesh", "North",
-  "Punjab", "North",
-  "Chandigarh", "North",
-  "Uttarakhand", "North",
-  "Haryana", "North",
-  "Nct Of Delhi", "North",
-  "Rajasthan", "North",
-  "Uttar Pradesh", "North",
-  "Bihar", "East",
-  "West Bengal", "East",
-  "Jharkhand", "East",
-  "Odisha", "East",
-  "Sikkim", "Northeast",
-  "Arunachal Pradesh", "Northeast",
-  "Nagaland", "Northeast",
-  "Manipur", "Northeast",
-  "Mizoram", "Northeast",
-  "Tripura", "Northeast",
-  "Meghalaya", "Northeast",
-  "Assam", "Northeast",
-  "Chhattisgarh", "Central",
-  "Madhya Pradesh", "Central",
-  "Gujarat", "West",
-  "Daman & Diu", "West",
-  "Dadra & Nagar Haveli", "West",
-  "Maharashtra", "West",
-  "Goa", "West",
-  "Andhra Pradesh", "South",
-  "Karnataka", "South",
-  "Kerala", "South",
-  "Tamil Nadu", "South",
-  "Puducherry", "South",
-  "Lakshadweep", "South",
-  "Andaman & Nicobar Islands", "Islands",
-  "Telangana", "South"
-)
-
 region_colors <- c(
   "North" = "#e63946",
   "East" = "#f4a261",
@@ -109,7 +69,10 @@ region_colors <- c(
 )
 
 composition_region <- composition |>
-  left_join(regions, by = "state_name_harmonized") |>
+  left_join(
+    india_states |> select(state_name_harmonized, region),
+    by = "state_name_harmonized"
+  ) |>
   filter(!is.na(region))
 
 ggtern(composition_region, aes(x = sc_pct, y = st_pct, z = general_pct)) +
@@ -177,21 +140,10 @@ composition |>
 ```
 
 ```{r diversity-composition, fig.height=6, fig.width=10}
-diversity <- census_2011_mother_tongue() |>
-  filter(language_level == "L1", district_code != "000", !grepl("Others", language_name)) |>
-  group_by(state_name, district_code, language_name) |>
-  summarise(speakers = sum(total_persons), .groups = "drop_last") |>
-  mutate(proportion = speakers / sum(speakers)) |>
-  summarise(
-    effective_languages = 2^(-sum(proportion * log2(proportion), na.rm = TRUE)),
-    .groups = "drop"
-  )
-
 diversity_composition <- composition |>
-  mutate(district_code_chr = sprintf("%03d", district_code)) |>
   inner_join(
-    diversity |> select(district_code, effective_languages),
-    by = c("district_code_chr" = "district_code")
+    census_2011_linguistic_diversity |> select(district_code, effective_languages),
+    by = "district_code"
   )
 
 p1 <- ggplot(diversity_composition, aes(sc_pct, effective_languages)) +

@@ -36,10 +36,20 @@ Isolation is multifaceted. A tribe found in only one district is geographically 
 
 ## Data
 
-We use `tribe_name_original` (580 tribes) rather than the cleaned `tribe_name` (483 tribes) because the cleaning collapses distinct sub-tribes --- e.g., nine different Gond groups become one "Gond", masking genuine population structure.
+We use `tribe_name_original` rather than the cleaned `tribe_name` because the cleaning collapses distinct sub-tribes --- e.g., nine different Gond groups become one "Gond", masking genuine population structure.
+
+Nagaland's Scheduled Tribe "Naga" is printed together with its constituent tribes (Angami, Ao, Sema, ...), which carry `parent_tribe = "Naga"`. Summing both levels counts every Naga twice, so we keep the constituents and drop each parent row that has them.
 
 ```{r data-overview}
 data(census_2011_tribes)
+
+census_2011_tribes <- census_2011_tribes |>
+  anti_join(
+    census_2011_tribes |>
+      filter(!is.na(parent_tribe)) |>
+      distinct(state_name_harmonized, district, tribe_name = parent_tribe),
+    by = c("state_name_harmonized", "district", "tribe_name")
+  )
 
 tibble::tibble(
   Metric = c("Records", "Tribes (original names)", "Districts", "States/UTs"),
@@ -48,7 +58,7 @@ tibble::tibble(
     length(unique(census_2011_tribes$tribe_name_original)),
     length(unique(paste(
       census_2011_tribes$state_name_harmonized,
-      census_2011_tribes$district_name
+      census_2011_tribes$district
     ))),
     length(unique(census_2011_tribes$state_name_harmonized))
   )
@@ -75,7 +85,7 @@ tribe_metrics <- census_2011_tribes |>
     hhi = sum(share^2),
     max_share = max(share),
     primary_state = state_name_harmonized[which.max(population)],
-    primary_district = district_name[which.max(population)],
+    primary_district = district[which.max(population)],
     .groups = "drop"
   ) |>
   mutate(effective_districts = 1 / hhi)
@@ -199,12 +209,12 @@ tribe_district_stats <- census_2011_tribes |>
   mutate(
     tribe_total = sum(population),
     share = population / tribe_total,
-    n_districts_tribe = n_distinct(paste(state_name_harmonized, district_name))
+    n_districts_tribe = n_distinct(paste(state_name_harmonized, district))
   ) |>
   ungroup()
 
 district_priority <- tribe_district_stats |>
-  group_by(state_name_harmonized, district_name) |>
+  group_by(state_name_harmonized, district) |>
   summarise(
     total_tribes = n_distinct(tribe_name_original),
     endemic_tribes = sum(n_districts_tribe == 1),
@@ -232,10 +242,10 @@ make_girafe <- function(p, width = 7, height = 8) {
 
 ```{r map-sampling, fig.height=9}
 map_data <- boundaries |>
-  mutate(key = tolower(gsub("[^a-z0-9]", "", district_name))) |>
+  mutate(key = tolower(gsub("[^a-z0-9]", "", district))) |>
   left_join(
     district_priority |>
-      mutate(key = tolower(gsub("[^a-z0-9]", "", district_name))) |>
+      mutate(key = tolower(gsub("[^a-z0-9]", "", district))) |>
       select(state_name_harmonized, key, sampling_score, endemic_tribes),
     by = c("state_name_harmonized", "key")
   )
@@ -265,7 +275,7 @@ ggplot() +
 sampling_tips <- district_priority |>
   mutate(
     tip = paste0(
-      district_name, " (", state_name_harmonized, ")",
+      district, " (", state_name_harmonized, ")",
       "\nSampling score: ", sampling_score,
       "\nEndemic: ", endemic_tribes, ", Primary: ", primary_tribes,
       ", Rare: ", rare_tribes, ", Tiny: ", tiny_tribes,
@@ -277,12 +287,12 @@ sampling_tips <- district_priority |>
 map_data_tip <- map_data |>
   left_join(
     sampling_tips |>
-      mutate(key = tolower(gsub("[^a-z0-9]", "", district_name))) |>
+      mutate(key = tolower(gsub("[^a-z0-9]", "", district))) |>
       select(state_name_harmonized, key, tip),
     by = c("state_name_harmonized", "key")
   ) |>
   mutate(tip = ifelse(is.na(tip),
-    paste0(district_name, " (", state_name_harmonized, ")\nNo tribal data"),
+    paste0(district, " (", state_name_harmonized, ")\nNo tribal data"),
     tip
   ))
 
@@ -319,7 +329,7 @@ district_priority |>
   filter(endemic_tribes > 0) |>
   arrange(desc(endemic_tribes)) |>
   select(
-    State = state_name_harmonized, District = district_name,
+    State = state_name_harmonized, District = district,
     Endemic = endemic_tribes, `Total tribes` = total_tribes,
     `Tribal %` = tribal_pct, Score = sampling_score
   ) |>
@@ -333,7 +343,7 @@ district_priority |>
   arrange(desc(sampling_score)) |>
   head(20) |>
   select(
-    State = state_name_harmonized, District = district_name,
+    State = state_name_harmonized, District = district,
     Endemic = endemic_tribes, Primary = primary_tribes,
     Rare = rare_tribes, Score = sampling_score
   ) |>
@@ -398,7 +408,7 @@ census_2011_tribes |>
   group_by(tribe_name_original) |>
   summarise(
     Population = sum(population),
-    Districts = paste(unique(district_name), collapse = ", "),
+    Districts = paste(unique(district), collapse = ", "),
     .groups = "drop"
   ) |>
   arrange(Population) |>
@@ -414,17 +424,17 @@ andaman_bounds <- boundaries |>
 
 andaman_data <- census_2011_tribes |>
   filter(state_name_harmonized == "Andaman & Nicobar Islands") |>
-  group_by(district_name) |>
+  group_by(district) |>
   summarise(n_tribes = n_distinct(tribe_name_original), .groups = "drop") |>
-  mutate(key = tolower(gsub("[^a-z0-9]", "", district_name)))
+  mutate(key = tolower(gsub("[^a-z0-9]", "", district)))
 
 andaman_map <- andaman_bounds |>
-  mutate(key = tolower(gsub("[^a-z0-9]", "", district_name))) |>
-  left_join(andaman_data |> select(-district_name), by = "key")
+  mutate(key = tolower(gsub("[^a-z0-9]", "", district))) |>
+  left_join(andaman_data |> select(-district), by = "key")
 
 ggplot(andaman_map) +
   geom_sf(aes(fill = n_tribes), color = "white", linewidth = 0.5) +
-  geom_sf_text(aes(label = district_name), size = 3) +
+  geom_sf_text(aes(label = district), size = 3) +
   scale_fill_viridis_c(option = "mako", direction = 1, begin = 0.2, end = 0.8, name = "Tribes") +
   labs(title = "Tribal diversity: Andaman & Nicobar Islands") +
   theme_void()
@@ -433,7 +443,7 @@ ggplot(andaman_map) +
 ```{r map-andaman-interactive}
 andaman_tribe_tips <- census_2011_tribes |>
   filter(state_name_harmonized == "Andaman & Nicobar Islands") |>
-  group_by(district_name) |>
+  group_by(district) |>
   summarise(
     tribe_list = paste(
       paste0(
@@ -446,12 +456,12 @@ andaman_tribe_tips <- census_2011_tribes |>
     .groups = "drop"
   ) |>
   mutate(
-    key = tolower(gsub("[^a-z0-9]", "", district_name)),
-    tip = paste0(district_name, "\nTribes (", n_tribes, "): ", tribe_list)
+    key = tolower(gsub("[^a-z0-9]", "", district)),
+    tip = paste0(district, "\nTribes (", n_tribes, "): ", tribe_list)
   )
 
 andaman_map_i <- andaman_map |>
-  mutate(key = tolower(gsub("[^a-z0-9]", "", district_name))) |>
+  mutate(key = tolower(gsub("[^a-z0-9]", "", district))) |>
   left_join(andaman_tribe_tips |> select(key, tip), by = "key")
 
 p_and <- ggplot(andaman_map_i) +
@@ -560,14 +570,14 @@ mother_tongue <- census_2011_mother_tongue()
 
 lang_stats <- mother_tongue |>
   filter(
-    language_level == "L2", district_code == "000",
+    sector == "total", geography == "state", language_level == "L2",
     !grepl("Others$", language_name)
   ) |>
   group_by(language_name, language_group) |>
   summarise(
-    total_speakers = sum(total_persons, na.rm = TRUE),
+    total_speakers = sum(speakers, na.rm = TRUE),
     n_states = n(),
-    primary_state = state_name_harmonized[which.max(total_persons)],
+    primary_state = state_name_harmonized[which.max(speakers)],
     .groups = "drop"
   )
 
@@ -594,7 +604,7 @@ Tribal and linguistic diversity are weakly correlated ($r = 0.17$) and carry com
 data(census_2011_linguistic_diversity)
 
 tribal_diversity <- census_2011_tribes |>
-  group_by(state_name_harmonized, district_name) |>
+  group_by(state_name_harmonized, district) |>
   mutate(proportion = population / sum(population)) |>
   summarise(
     n_tribes = n(),
@@ -603,11 +613,11 @@ tribal_diversity <- census_2011_tribes |>
   )
 
 bivariate_df <- tribal_diversity |>
-  mutate(key = tolower(gsub("[^a-z0-9]", "", district_name))) |>
+  mutate(key = tolower(gsub("[^a-z0-9]", "", district))) |>
   inner_join(
     census_2011_linguistic_diversity |>
-      filter(!is.na(district_name)) |>
-      mutate(key = tolower(gsub("[^a-z0-9]", "", district_name))) |>
+      filter(!is.na(district)) |>
+      mutate(key = tolower(gsub("[^a-z0-9]", "", district))) |>
       select(state_name_harmonized, key, effective_languages),
     by = c("state_name_harmonized", "key")
   )
@@ -615,7 +625,7 @@ bivariate_df <- tribal_diversity |>
 
 ```{r bivariate-map, fig.width=12, fig.height=14}
 bivariate_sf <- boundaries |>
-  mutate(key = tolower(gsub("[^a-z0-9]", "", district_name))) |>
+  mutate(key = tolower(gsub("[^a-z0-9]", "", district))) |>
   left_join(
     bivariate_df |> select(state_name_harmonized, key, tribal_effective, effective_languages),
     by = c("state_name_harmonized", "key")
@@ -727,7 +737,7 @@ p_legend <- ggplot(legend_df, aes(x = tribal_class, y = ling_class, fill = bi_cl
 bivar_tip_sf <- bivariate_sf |>
   mutate(
     tip = paste0(
-      district_name, " (", state_name_harmonized, ")",
+      district, " (", state_name_harmonized, ")",
       "\nEff. languages: ", round(effective_languages, 1),
       "\nEff. tribes: ", round(tribal_effective, 1),
       "\nBivariate class: ", bi_class,
@@ -767,7 +777,7 @@ bivariate_df |>
   arrange(desc(tribal_effective + effective_languages)) |>
   head(20) |>
   select(
-    State = state_name_harmonized, District = district_name,
+    State = state_name_harmonized, District = district,
     `Eff. tribes` = tribal_effective, `Eff. languages` = effective_languages
   ) |>
   mutate(
@@ -796,35 +806,25 @@ The choice of distance metric has a large effect on the results:
 We show multiple approaches below so the reader can see the contrast. For linguistic data (relatively dense), we use Hellinger and TF-IDF. For tribal data (ultra-sparse), we use Jaccard and Bray-Curtis alongside TF-IDF. State boundaries are overlaid on all maps to make it easy to spot where cluster boundaries deviate from administrative ones.
 
 ```{r composition-vectors}
-data(census_2011_district_languages)
 mother_tongue <- census_2011_mother_tongue()
 
 make_key <- function(df) {
   df |> mutate(
     district_id = paste0(
       gsub("[^a-z0-9]", "", tolower(state_name_harmonized)), "_",
-      gsub("[^a-z0-9]", "", tolower(district_name))
+      gsub("[^a-z0-9]", "", tolower(district))
     )
   )
 }
 
-district_names <- census_2011_district_languages |>
-  filter(!is.na(district_name)) |>
-  distinct(state_code, district_code, state_name_harmonized, district_name)
-
 mt <- mother_tongue |>
-  filter(district_code != "000") |>
-  left_join(
-    district_names |> select(state_code, district_code, district_name),
-    by = c("state_code", "district_code")
-  ) |>
-  filter(!is.na(district_name))
+  filter(sector == "total", geography == "district", !is.na(district))
 
 lang_l1 <- mt |>
   filter(language_level == "L1", !grepl("Others", language_name)) |>
   make_key() |>
   group_by(district_id, language_name) |>
-  summarise(speakers = sum(total_persons), .groups = "drop") |>
+  summarise(speakers = sum(speakers), .groups = "drop") |>
   group_by(district_id) |>
   mutate(prop = speakers / sum(speakers)) |>
   ungroup() |>
@@ -838,7 +838,7 @@ lang_l2 <- mt |>
   filter(language_level == "L2", !grepl("Others", language_name)) |>
   make_key() |>
   group_by(district_id, language_name) |>
-  summarise(speakers = sum(total_persons), .groups = "drop") |>
+  summarise(speakers = sum(speakers), .groups = "drop") |>
   group_by(district_id) |>
   mutate(prop = speakers / sum(speakers)) |>
   ungroup() |>
@@ -974,7 +974,7 @@ cl_tribal_t <- tibble(
 cluster_names <- boundaries |>
   make_key() |>
   sf::st_drop_geometry() |>
-  select(district_id, state_name_harmonized, district_name)
+  select(district_id, state_name_harmonized, district)
 ```
 
 ```{r cluster-map-helper}
@@ -987,11 +987,11 @@ qual_pal <- c(
 pal_named <- setNames(qual_pal[seq_len(n_clusters)], seq_len(n_clusters))
 
 top_langs <- census_2011_district_languages |>
-  filter(!is.na(district_name), !grepl("Others$", language_name)) |>
+  filter(sector == "total", !is.na(district), !grepl("Others$", language_name)) |>
   make_key() |>
   group_by(district_id) |>
-  mutate(pct = round(100 * total_speakers / sum(total_speakers), 1)) |>
-  slice_max(total_speakers, n = 3) |>
+  mutate(pct = round(100 * speakers / sum(speakers), 1)) |>
+  slice_max(speakers, n = 3) |>
   summarise(
     lang_tip = paste(paste0(language_name, " (", pct, "%)"), collapse = ", "),
     .groups = "drop"
@@ -1322,7 +1322,7 @@ pca_scatter_df <- function(pca, ids, label) {
 state_lookup <- boundaries |>
   make_key() |>
   sf::st_drop_geometry() |>
-  select(district_id, state_name_harmonized, district_name)
+  select(district_id, state_name_harmonized, district)
 
 region_map <- tibble::tribble(
   ~state_name_harmonized, ~region,
@@ -1333,7 +1333,7 @@ region_map <- tibble::tribble(
   "Chandigarh", "North",
   "Haryana", "North",
   "Uttarakhand", "North",
-  "Nct Of Delhi", "North",
+  "Delhi", "North",
   "Rajasthan", "Central",
   "Uttar Pradesh", "Central",
   "Madhya Pradesh", "Central",
@@ -1382,7 +1382,7 @@ df <- scatter_l1 |>
   mutate(
     region = factor(region, levels = names(region_colors)),
     tip = paste0(
-      district_name, " (", state_name_harmonized, ", ", region, ")",
+      district, " (", state_name_harmonized, ", ", region, ")",
       "\nPC1: ", round(PC1, 3), ", PC2: ", round(PC2, 3),
       "\n", ifelse(is.na(lang_tip), "", paste0("Languages: ", lang_tip))
     )
@@ -1410,7 +1410,7 @@ df <- scatter_l2 |>
   mutate(
     region = factor(region, levels = names(region_colors)),
     tip = paste0(
-      district_name, " (", state_name_harmonized, ", ", region, ")",
+      district, " (", state_name_harmonized, ", ", region, ")",
       "\nPC1: ", round(PC1, 3), ", PC2: ", round(PC2, 3),
       "\n", ifelse(is.na(lang_tip), "", paste0("Languages: ", lang_tip))
     )
@@ -1438,7 +1438,7 @@ df <- scatter_tribal |>
   mutate(
     region = factor(region, levels = names(region_colors)),
     tip = paste0(
-      district_name, " (", state_name_harmonized, ", ", region, ")",
+      district, " (", state_name_harmonized, ", ", region, ")",
       "\nPC1: ", round(PC1, 3), ", PC2: ", round(PC2, 3),
       "\n", ifelse(is.na(tribe_tip), "", paste0("Tribes: ", tribe_tip))
     )
@@ -1470,7 +1470,7 @@ cluster_csv <- cluster_names |>
   left_join(cl_tribal_b |> rename(tribal_braycurtis = cluster), by = "district_id") |>
   left_join(cl_tribal_t |> rename(tribal_tfidf = cluster), by = "district_id") |>
   left_join(cl_tribal_pca |> rename(tribal_pca = cluster), by = "district_id") |>
-  arrange(state_name_harmonized, district_name)
+  arrange(state_name_harmonized, district)
 
 write.csv(cluster_csv, file.path(tempdir(), "district_clusters.csv"), row.names = FALSE)
 ```

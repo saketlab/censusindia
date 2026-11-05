@@ -5,19 +5,20 @@
 \alias{census_2011_district_languages}
 \title{Census 2011 district languages (C-16)}
 \format{
-A tibble with 38,993 rows and 11 columns:
+A tibble with 116,979 rows and 12 columns:
 \describe{
-\item{state_code}{Numeric state code}
-\item{state_name_harmonized}{Harmonized state name for joining across datasets}
-\item{district_code}{Numeric district code}
+\item{year}{Census year (2011)}
+\item{geography}{Geographic level ("district")}
+\item{sector}{Sector: "total", "rural" or "urban"}
+\item{state_code}{Integer state code}
+\item{state_name_harmonized}{Harmonized state name, used to join datasets}
+\item{district_code}{Integer district code}
+\item{district}{Name of the district}
 \item{language_name}{Name of the language}
-\item{language_group}{Numeric language group code}
-\item{total_speakers}{Total speakers}
-\item{male_speakers}{Male speakers}
-\item{female_speakers}{Female speakers}
-\item{rural_speakers}{Rural speakers}
-\item{urban_speakers}{Urban speakers}
-\item{district_name}{Name of the district}
+\item{language_group}{Integer language group code}
+\item{speakers}{Speakers}
+\item{speakers_male}{Male speakers. NA on rural and urban rows.}
+\item{speakers_female}{Female speakers. NA on rural and urban rows.}
 }
 }
 \source{
@@ -27,7 +28,15 @@ Census of India 2011, C-16 Mother Tongue Tables.
 census_2011_district_languages
 }
 \description{
-Mother tongue speakers by language at district level from the 2011
-Census C-16 tables, with male/female and rural/urban breakdowns.
+Mother tongue speakers by language at district level, from the 2011 Census
+C-16 tables. The table has values by sex and by sector.
+}
+\details{
+The table stores each sector as a row. Each district and language has one
+row each for \code{"total"}, \code{"rural"}, and \code{"urban"} (38,993 rows per sector).
+Filter \code{sector == "total"} before summing across rows, or use
+\code{\link[=census_languages]{census_languages()}}, which applies this filter automatically. The census
+reports speakers by sex only for the total sector; \code{speakers_male} and
+\code{speakers_female} are \code{NA} on rural and urban rows.
 }
 \keyword{datasets}

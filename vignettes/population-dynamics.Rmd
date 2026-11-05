@@ -79,6 +79,7 @@ ggplot(rankings, aes(x = factor(year), y = rank, group = state_name_harmonized))
 
 ```{r trajectories, fig.height=12, fig.width=12}
 state_trajectories <- census_population_time_series |>
+  census_years() |>
   filter(geography == "state") |>
   group_by(state_name_harmonized) |>
   mutate(
@@ -127,6 +128,7 @@ ggplot(state_trajectories, aes(year, pop_scaled)) +
 
 ```{r growth-rates, fig.height=10}
 growth_data <- census_population_time_series |>
+  census_years() |>
   filter(geography == "state", !is.na(variation_percent)) |>
   select(year, state_name_harmonized, variation_percent)
 

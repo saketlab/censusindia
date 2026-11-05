@@ -2,21 +2,6 @@ skip_if_not_installed("plumber")
 
 router <- api_router()
 
-# calls the router in-process, no socket; JSON rows come back as a data frame
-# headers go in as Rook names, e.g. HTTP_USER_AGENT = "curl/8.0"
-api_get <- function(path, query = "", ...) {
-  empty <- list(read = function(...) raw(), rewind = function() NULL)
-  out <- capture.output(r <- router$call(list2env(list(
-    REQUEST_METHOD = "GET", PATH_INFO = path, QUERY_STRING = query,
-    HTTP_HOST = "localhost", rook.input = empty, ...
-  ))))
-  r$log <- out
-  r$json <- if (grepl("json", r$headers[["Content-Type"]])) {
-    jsonlite::fromJSON(r$body)
-  }
-  r
-}
-
 test_that("serve() finds the bundled router", {
   expect_s3_class(router, "Plumber")
   expect_identical(census_api, serve)
@@ -98,6 +83,14 @@ test_that("/population returns one row per state and year", {
 test_that("/sc-st filters like census_sc_st()", {
   r <- api_get("/sc-st", "category=SC&state=GA")
   expect_equal(nrow(r$json), nrow(census_sc_st("SC", "GA")))
+})
+
+test_that("district rows carry a district column in every year", {
+  for (y in c(1961, 1981, 2011)) {
+    r <- api_get("/query", sprintf("year=%d&geography=district&state=MH", y))
+    expect_true("district" %in% names(r$json), label = y)
+    expect_false(anyNA(r$json$district), label = y)
+  }
 })
 
 test_that("missing values serialise as null so every row has every field", {
@@ -219,13 +212,13 @@ test_that("state=India on /query is a 400 telling the client to drop state", {
   expect_match(api_get("/query", "state=Pradesh")$json$error, "Remove `state`")
 })
 
-test_that("rows with a state carry the canonical name as `state`", {
+test_that("rows carry the canonical state name and the published spelling", {
   r <- api_get("/query", "year=1971&state=Karnataka")$json
-  expect_equal(unique(r$state), "Karnataka")
-  expect_true("state_name_harmonized" %in% names(r))
+  expect_equal(unique(r$state_name_harmonized), "Karnataka")
+  expect_equal(unique(r$state_name), "MYSORE")
   p <- api_get("/query", "year=2011&state=GA")$json
-  expect_true(all(c("state", "state_name", "state_name_harmonized") %in% names(p)))
-  expect_equal(unique(api_get("/population", "year=2026&state=KL")$json$state), "Kerala")
+  expect_true(all(c("state_name", "state_name_harmonized") %in% names(p)))
+  expect_equal(unique(api_get("/population", "year=2026&state=KL")$json$state_name_harmonized), "Kerala")
 })
 
 test_that("/population by_age answers in persons and rejects uncovered states", {
@@ -238,7 +231,7 @@ test_that("/population by_age answers in persons and rejects uncovered states", 
 
 test_that("/dataset serves the state projections by age in persons", {
   r <- api_get("/dataset/population_projections_state_age", "limit=1")$json
-  expect_equal(r$population, population_projections_state_age$population[1] * 1000)
+  expect_equal(r$population, 3768000)
 })
 
 test_that("single-year routes reject ranges, and booleans are strict", {
@@ -255,8 +248,17 @@ test_that("district rows carry a district column", {
   expect_setequal(r$district, c("North Goa", "South Goa"))
 })
 
-test_that("LA resolves to Ladakh and district_name tables also carry district", {
-  expect_equal(unique(api_get("/population", "year=2021&state=LA")$json$state), "Ladakh")
+test_that("LA resolves to Ladakh, and every route uses the package column names", {
+  expect_equal(unique(api_get("/population", "year=2021&state=LA")$json$state_name_harmonized), "Ladakh")
   r <- api_get("/sc-st", "category=SC&state=GA")$json
-  expect_equal(r$district, r$district_name)
+  expect_setequal(r$district, c("North Goa", "South Goa"))
+  for (route in c("/query", "/population", "/sc-st", "/languages")) {
+    res <- api_get(route, "state=GA")
+    expect_equal(res$status, 200, label = route)
+    expect_identical(unique(res$json$state_name_harmonized), "Goa", label = route)
+    expect_false(any(c(RETIRED_COLS, "name") %in% names(res$json)), label = route)
+  }
+  south <- api_get("/states", "region=South")
+  expect_equal(south$status, 200)
+  expect_identical(unique(south$json$region), "South")
 })

@@ -7,17 +7,21 @@
 get_census_boundaries(year, geography = c("state", "district"))
 }
 \arguments{
-\item{year}{Census year. Available: 1941, 1951, 1961, 1971, 1981, 1991, 2001, 2011.}
+\item{year}{Census year. Available: 1941, 1951, 1961, 1971, 1981, 1991, 2001,
+2011.}
 
-\item{geography}{Geographic level: "state" or "district".}
+\item{geography}{Geographic level: \code{"state"} or \code{"district"}.}
 }
 \value{
-An sf object containing the geographic boundaries with harmonized state names.
+An \code{sf} object with columns \code{year}, \code{geography}, \code{state_code},
+\code{state_name_harmonized}, \code{state_name}, \code{district} (district level only),
+\code{id}, and \code{geometry}.
 
-Boundary files are downloaded on first use; see \code{\link[=census_cache_dir]{census_cache_dir()}}.
+Boundary files are downloaded on first use and cached locally; see
+\code{\link[=census_cache_dir]{census_cache_dir()}}.
 }
 \description{
-State or district boundaries for a given census year.
+Retrieve state or district boundary polygons for a census year.
 }
 \examples{
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}

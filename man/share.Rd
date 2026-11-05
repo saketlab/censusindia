@@ -16,5 +16,5 @@ Numeric vector.
 Share of a total, as a percentage
 }
 \examples{
-share(census_2011_pca$literate_total, census_2011_pca$population_total) |> head()
+share(census_2011_pca$literate, census_2011_pca$population) |> head()
 }

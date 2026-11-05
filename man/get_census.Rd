@@ -17,30 +17,43 @@ get_census(
 \item{year}{Census year. One of: 1901, 1911, 1921, 1931, 1941, 1951, 1961,
 1971, 1981, 1991, 2001, 2011.}
 
-\item{geography}{Geographic level: "state", "district", or "subdistrict".
-Not all geographies are available for all years.}
+\item{geography}{Geographic level: \code{"state"}, \code{"district"}, or \code{"subdistrict"}.
+Not all geographies are available for every census year; see
+\code{\link[=list_census_geographies]{list_census_geographies()}}.}
 
-\item{variables}{Character vector of variables to retrieve. Use
-\code{\link[=list_census_variables]{list_census_variables()}} to see available variables. If NULL (default),
-returns all available variables for the specified year and geography.}
+\item{variables}{Character vector of variable names to return, or \code{NULL}
+(default) for all variables available at that year and geography. See
+\code{\link[=list_census_variables]{list_census_variables()}}.}
 
-\item{state}{Optional. Filter to specific state(s). Can be state name or
-abbreviation (e.g., "Maharashtra" or "MH").}
+\item{state}{Optional state filter: one or more canonical state names or
+two-letter codes (e.g., \code{"Maharashtra"} or \code{"MH"}).}
 
-\item{geometry}{If TRUE, returns an sf object with geographic boundaries.}
+\item{geometry}{If \code{TRUE}, attaches census boundaries and returns an \code{sf}
+object. Available for \code{"state"} and \code{"district"}.}
 
-\item{sector}{For 1971/1981, filter to "total", "rural", or "urban". Other
-years have no sector split, so "rural" or "urban" is an error there.}
+\item{sector}{Sector filter: \code{"total"} (default), \code{"rural"}, or \code{"urban"}.
+Rural and urban splits are available in \code{get_census()} for 1971 and 1981
+only; passing \code{"rural"} or \code{"urban"} for other years raises an error.}
 }
 \value{
-A tibble (or sf object if geometry = TRUE).
+A tibble (or an \code{sf} object when \code{geometry = TRUE}). Every year
+begins with the same identifier columns: \code{year}, \code{geography}, \code{sector},
+\code{state_code}, \code{state_name_harmonized}, \code{state_name}, followed by
+\code{district_code}, \code{district}, and \code{subdistrict} where applicable. State
+frames carry no district columns. \code{sector} is \code{"total"} for years without a
+rural/urban split. For 1961, only literacy rates (\code{literacy_rate},
+\code{literacy_rate_male}, \code{literacy_rate_female}) are available, not population
+counts.
 }
 \description{
-Census data for India at state, district, or subdistrict level.
+Queries Census of India data at state, district, or subdistrict level.
 }
 \examples{
 get_census(2011, "state")
 get_census(1971, "district", state = "Maharashtra")
+get_census(1971, "state", sector = "rural")
+get_census(1961, "state", variables = "literacy_rate")
+\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 get_census(1981, "district", variables = c("population", "literacy_rate"), geometry = TRUE)
-
+\dontshow{\}) # examplesIf}
 }

@@ -37,7 +37,7 @@ get_population(2031, "state")
 get_population(2031, "district")
 
 # mother tongue speakers by district (2011)
-census_languages() |> dplyr::filter(district_name == "Pune")
+census_languages() |> dplyr::filter(district == "Pune")
 ```
 
 ## Examples
@@ -49,7 +49,6 @@ library(censusindia)
 library(dplyr)
 
 ling <- census_2011_linguistic_diversity |>
-  rename(district = district_name) |>
   attach_geometry(2011, geography = "district")
 
 plot_map(ling, "effective_languages",
@@ -92,9 +91,9 @@ Languages spoken in a district, ranked by speakers:
 library(dplyr)
 
 census_languages() |>
-  filter(district_name == "Pune") |>
-  arrange(desc(total_speakers)) |>
-  select(language_name, total_speakers)
+  filter(district == "Pune") |>
+  arrange(desc(speakers)) |>
+  select(language_name, speakers)
 ```
 
 ## Vignettes

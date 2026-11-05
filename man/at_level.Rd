@@ -2,38 +2,41 @@
 % Please edit documentation in R/levels.R
 \name{at_level}
 \alias{at_level}
-\title{Census rows at one geographic level}
+\title{Filter a stacked census table to one geographic level and sector}
 \usage{
-at_level(data, level = "district", sector = "total")
+at_level(data, level = "district", sector = c("total", "rural", "urban"))
 }
 \arguments{
-\item{data}{A table with a \code{level} column, such as one of the village-level
-2011 tables or \link{census_1981}.}
+\item{data}{A data frame with a \code{geography} column (e.g., \link{census_1981} or
+one of the village-level 2011 tables).}
 
-\item{level}{Geographic level, e.g. \code{"district"} or \code{"state"}.}
+\item{level}{Geographic level, such as \code{"district"} or \code{"state"}. Accepts
+\code{"sub-district"} as a synonym for \code{"subdistrict"}.}
 
-\item{sector}{\code{"total"}, \code{"rural"} or \code{"urban"}.}
+\item{sector}{\code{"total"} (default), \code{"rural"}, or \code{"urban"}.}
 }
 \value{
-\code{data} filtered to that level and sector.
+\code{data} filtered to \code{level} and \code{sector}.
 }
 \description{
 The village-level 2011 tables (\code{\link[=census_2011_demographics]{census_2011_demographics()}},
-\code{\link[=census_2011_workers]{census_2011_workers()}}, \code{\link[=census_2011_marginal_detail]{census_2011_marginal_detail()}}) stack seven levels
-from India down to ward, and three sectors. Summing without filtering counts
-every population several times over. \link{census_1981} stacks levels and sectors
-the same way.
+\code{\link[=census_2011_workers]{census_2011_workers()}}, \code{\link[=census_2011_marginal_detail]{census_2011_marginal_detail()}}) and \link{census_1981}
+stack multiple geographic levels (from India down to village or ward) and
+three sectors (\code{"total"}, \code{"rural"}, \code{"urban"}) in the same table. Summing
+rows without filtering both \code{geography} and \code{sector} counts people multiple
+times. \code{at_level()} filters \code{geography} and, when a \code{sector} column is
+present, \code{sector}.
 }
 \details{
-India, state, district, subdistrict and village are exact: each level sums to
-its parent for every numeric column, and rural + urban sums to total.
+The levels \code{"india"}, \code{"state"}, \code{"district"}, \code{"subdistrict"}, and
+\code{"village"} are additively exact: each level sums to its parent, and
+\code{rural + urban == total}.
 
-\code{"town"} and \code{"ward"} are not. The census files a municipality and that same
-municipality plus its outgrowth as separate town rows, so the two overlap.
-Summing towns to their subdistrict overcounts 325 subdistricts by 73,877,047
-people in total; Bengaluru's \verb{BBMP (M Corp.)} and \verb{BBMP (M Corp. + OG)} each
-carry 8,443,675. Ward rows differ from their town by 3,738,272 across 295
-towns. Treat both as a lookup, not an additive slice.
+The levels \code{"town"} and \code{"ward"} are \strong{not} additive: the Census lists a
+municipality and the same municipality with its outgrowths as separate town
+rows (for example, \verb{BBMP (M Corp.)} and \verb{BBMP (M Corp. + OG)} in Bengaluru),
+and ward rows do not always sum to the parent town row. Use town and ward
+rows for lookups, not aggregation.
 }
 \examples{
 census_1981 |>

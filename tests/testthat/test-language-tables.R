@@ -1,17 +1,13 @@
 pca_key <- function() {
-  censusindia::census_2011_pca |>
-    dplyr::transmute(
-      state_code = sprintf("%02d", .data$state_code),
-      district_code = sprintf("%03d", .data$district_code),
-      district_name = .data$name,
-      population = .data$population_total
-    )
+  dplyr::select(censusindia::census_2011_pca, "state_code", "district_code", "district", "population")
 }
 
+total <- function(d) d[d$sector == "total", ]
+
 test_that("district language speakers do not exceed district population", {
-  spk <- censusindia::census_2011_district_languages |>
+  spk <- total(censusindia::census_2011_district_languages) |>
     dplyr::group_by(.data$state_code, .data$district_code) |>
-    dplyr::summarise(s = sum(.data$total_speakers), .groups = "drop") |>
+    dplyr::summarise(s = sum(.data$speakers), .groups = "drop") |>
     dplyr::inner_join(pca_key(), by = c("state_code", "district_code"))
 
   expect_equal(nrow(spk), 640)
@@ -22,11 +18,11 @@ test_that("district language speakers do not exceed district population", {
 
 test_that("subdistricts reconstruct their district exactly", {
   skip_if_no_remote()
-  sub <- census_2011_subdistrict_languages() |>
+  sub <- total(census_2011_subdistrict_languages()) |>
     dplyr::group_by(.data$state_code, .data$district_code, .data$language_name) |>
-    dplyr::summarise(s = sum(.data$total_speakers), .groups = "drop")
-  dis <- censusindia::census_2011_district_languages |>
-    dplyr::select("state_code", "district_code", "language_name", d = "total_speakers")
+    dplyr::summarise(s = sum(.data$speakers), .groups = "drop")
+  dis <- total(censusindia::census_2011_district_languages) |>
+    dplyr::select("state_code", "district_code", "language_name", d = "speakers")
 
   j <- dplyr::inner_join(sub, dis,
     by = c("state_code", "district_code", "language_name")
@@ -35,36 +31,42 @@ test_that("subdistricts reconstruct their district exactly", {
   expect_equal(j$s, j$d)
 })
 
-test_that("the halving invariant the rebuild relies on holds in the source", {
+test_that("mother tongue levels: each district equals its subdistricts and the PCA", {
   skip_if_no_remote()
-  # subdistricts partition their district, so the district is half the group sum
-  by_lang <- census_2011_mother_tongue() |>
-    dplyr::filter(.data$district_code != "000", .data$language_level == "L1") |>
-    dplyr::group_by(.data$state_code, .data$district_code, .data$language_code) |>
-    dplyr::summarise(s = sum(.data$total_persons), .groups = "drop")
+  l1 <- total(census_2011_mother_tongue())
+  l1 <- l1[l1$language_level == "L1", ]
+  by_level <- function(g) {
+    l1[l1$geography == g, ] |>
+      dplyr::group_by(.data$state_code, .data$district_code) |>
+      dplyr::summarise(s = sum(.data$speakers), n = dplyr::n_distinct(.data$subdistrict), .groups = "drop")
+  }
+  d <- dplyr::inner_join(by_level("district"), pca_key(), by = c("state_code", "district_code"))
+  s <- by_level("subdistrict")
 
-  expect_true(all(by_lang$s %% 2 == 0))
+  expect_equal(nrow(d), 640)
+  expect_equal(d$s, d$population)
+  expect_equal(s$s, d$s[match(paste(s$state_code, s$district_code), paste(d$state_code, d$district_code))])
+  expect_false(anyNA(l1$district[l1$geography != "state"]))
 
-  halved <- by_lang |>
-    dplyr::group_by(.data$state_code, .data$district_code) |>
-    dplyr::summarise(half = sum(.data$s) / 2, .groups = "drop") |>
-    dplyr::inner_join(pca_key(), by = c("state_code", "district_code"))
-
-  expect_equal(nrow(halved), 640)
-  expect_equal(halved$half, halved$population)
-  expect_equal(sum(halved$half), 1210854977)
+  m <- census_2011_mother_tongue()
+  sub <- unique(m[m$geography == "subdistrict", c("state_code", "district_code", "subdistrict")])
+  expect_equal(nrow(sub), 5988)
+  # source defect: Kalapipal's L1 row holds the Hindi speakers of five Shajapur tehsils
+  expect_equal(sum(s$n), 5983)
+  shaj <- m[m$sector == "total" & m$geography == "subdistrict" & m$district_code == 436, ]
+  stub <- c("Agar", "Shajapur", "Gulana", "Moman Badodiya", "Shujalpur")
+  expect_true(all(table(shaj$subdistrict)[stub] == 1))
+  kal <- shaj$speakers[shaj$subdistrict == "Kalapipal" & shaj$language_level == "L1"]
+  expect_equal(kal, sum(shaj$speakers[shaj$subdistrict %in% c(stub, "Kalapipal") & shaj$language_level == "L2"]))
 })
 
 test_that("district names are authoritative and complete", {
   ld <- censusindia::census_2011_linguistic_diversity
   expect_equal(nrow(ld), 640)
-  expect_false(anyNA(ld$district_name))
+  expect_false(anyNA(ld$district))
 
-  expect_equal(
-    ld$district_name[ld$state_code == "09" & ld$district_code == "171"],
-    "Chitrakoot"
-  )
-  expect_setequal(ld$district_name, censusindia::census_2011_pca$name)
+  expect_equal(ld$district[ld$state_code == 9 & ld$district_code == 171], "Chitrakoot")
+  expect_setequal(ld$district, censusindia::census_2011_pca$district)
 })
 
 test_that("diversity metrics are well formed", {
@@ -81,12 +83,12 @@ test_that("coverage reports the share the metrics are computed from", {
   expect_true(all(ld$coverage > 0 & ld$coverage <= 1))
 
   spk <- ld |>
-    dplyr::select("state_code", "district_code", "total_speakers", "coverage") |>
+    dplyr::select("state_code", "district_code", "speakers", "coverage") |>
     dplyr::inner_join(pca_key(), by = c("state_code", "district_code"))
-  expect_equal(spk$coverage, spk$total_speakers / spk$population)
+  expect_equal(spk$coverage, spk$speakers / spk$population)
 
   # C-16 lumps northeast languages into residuals; Zunheboto would rank first
-  zun <- ld[ld$district_name == "Zunheboto", ]
+  zun <- ld[ld$district == "Zunheboto", ]
   expect_lt(zun$coverage, 0.05)
 })
 
@@ -96,8 +98,9 @@ test_that("census_languages returns the level it is asked for", {
   s <- census_languages("subdistrict")
 
   expect_equal(nrow(dplyr::distinct(d, .data$state_code, .data$district_code)), 640)
-  expect_true("district_name" %in% names(d))
-  expect_true("area_name" %in% names(s))
+  expect_true("district" %in% names(d))
+  expect_true(all(c("district_code", "subdistrict") %in% names(s)))
+  expect_equal(unique(c(d$sector, s$sector)), "total")
   expect_gt(nrow(s), nrow(d))
 
   expect_error(census_languages("village"))

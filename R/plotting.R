@@ -1,22 +1,22 @@
 #' Plotting functions for census data
 #'
 #' @description
-#' Choropleth maps and comparison plots from census data.
+#' Choropleth maps and comparison plots of census data.
 #'
 #' @name plotting
 NULL
 
 #' Create a choropleth map from census data.
 #'
-#' @param data An sf object or data frame with geometry attached via
-#'   \code{\link{attach_geometry}}
-#' @param fill_var The variable to map to fill color (unquoted or string)
-#' @param title Optional title for the map
-#' @param subtitle Optional subtitle for the map
-#' @param legend_title Title for the legend
-#' @param palette Color palette. Options include:
+#' @param data An `sf` object, or a data frame with geometry from
+#'   \code{\link{attach_geometry}}.
+#' @param fill_var Variable for the fill color (unquoted column name or string).
+#' @param title Optional title for the map.
+#' @param subtitle Optional subtitle for the map.
+#' @param legend_title Title for the legend.
+#' @param palette Color palette. Available options:
 #'   \itemize{
-#'     \item \code{"viridis"} - Perceptually uniform, colorblind-friendly (default)
+#'     \item \code{"viridis"} - Perceptually uniform and colorblind-safe (default)
 #'     \item \code{"red_blue"} - Diverging red to blue (red = high)
 #'     \item \code{"blue_red"} - Diverging blue to red (blue = high)
 #'     \item \code{"greens"} - Sequential green palette
@@ -25,41 +25,43 @@ NULL
 #'     \item \code{"blues"} - Sequential blue palette
 #'     \item \code{"purple_green"} - Diverging purple to green
 #'   }
-#' @param reverse Logical. Reverse the color palette direction? Default FALSE.
-#' @param direction Numeric. Alternative to reverse: use -1 to reverse, 1 for default.
-#'   If both reverse and direction are specified, direction takes precedence.
-#' @param boundary_year Census year whose state boundaries to draw beneath the
-#'   data, keeping India's full claimed extent on the map even where the census
-#'   enumerates no districts. Defaults to the `year` column if present.
-#' @param base_layer Logical. Draw India's full state outline beneath the
-#'   data? Default TRUE
-#' @param na_color Color for missing values. Default is "grey80"
-#' @param show_state_boundaries Logical. Overlay state boundaries?
-#' @param state_boundary_color Color for state boundaries. Default is "black"
-#' @param state_boundary_width Width of state boundary lines. Default is 0.3
-#' @param trans Transformation for the color scale (e.g., "log10", "sqrt").
-#'   Default is "identity" (no transformation)
-#' @param midpoint Value to centre a diverging palette on, e.g. `0` for growth
-#'   or `1000` for a sex ratio. Without it the palette centres on the middle of
-#'   `limits`, which is rarely the meaningful value.
-#' @param oob How to treat values outside `limits`. The ggplot2 default censors
-#'   them to `na_color`, making them indistinguishable from genuinely missing
-#'   data; pass `scales::squish` to clamp them to the nearest end instead.
-#' @param limits Optional limits for the color scale as c(min, max)
-#' @param breaks Optional breaks for the legend
-#' @param labels Optional labels for the legend breaks
-#' @param font_family Font family for all map text. Default `NULL` uses the
-#'   system default; e.g. `"Arial"`.
+#' @param reverse Logical. If `TRUE`, reverses the palette direction. Default
+#'   `FALSE`.
+#' @param direction Numeric. Alternative to `reverse`: `-1` reverses the palette
+#'   and `1` keeps the default. Takes precedence over `reverse` if both are set.
+#' @param boundary_year Census year of the state outline drawn beneath the data.
+#'   This background layer preserves India's full claimed northern extent where
+#'   district polygons are absent. If `NULL`, inferred from `data`.
+#' @param base_layer Logical. If `TRUE` (default), draws the full state outline
+#'   of India beneath the data.
+#' @param na_color Color for missing values. Default `"grey80"`.
+#' @param show_state_boundaries Logical. If `TRUE`, overlays state boundary lines
+#'   on top of the data.
+#' @param state_boundary_color Color for state boundary lines. Default `"black"`.
+#' @param state_boundary_width Width of state boundary lines. Default `0.3`.
+#' @param trans Transformation for the color scale (e.g., `"log10"`, `"sqrt"`).
+#'   Default `"identity"`.
+#' @param midpoint Center value for a diverging palette (e.g., `0` for growth or
+#'   `1000` for sex ratio). If `NULL`, defaults to the midpoint of `limits`.
+#' @param oob Out-of-bounds handler for values outside `limits`. By default
+#'   ggplot2 maps out-of-bounds values to `na_color`, making them
+#'   indistinguishable from missing data; pass `scales::squish` to clamp them to
+#'   the nearest limit instead.
+#' @param limits Optional numeric vector `c(min, max)` for the color scale.
+#' @param breaks Optional breaks for the legend.
+#' @param labels Optional labels for the legend breaks.
+#' @param font_family Font family for all map text (e.g., `"Arial"`). Default
+#'   `NULL` uses the system font.
 #' @param legend_position One of `"right"` (default), `"left"`, `"bottom"`,
-#'   `"top"`, or `"none"`. `"bottom"`/`"top"` also turns the colorbar
-#'   horizontal.
+#'   `"top"`, or `"none"`. `"bottom"` and `"top"` orient the colorbar
+#'   horizontally.
 #'
-#' @return A ggplot2 object
+#' @return A `ggplot2` object.
 #'
 #' @examplesIf interactive()
 #' # Calculate ST percentage and attach geometry
 #' st_data <- census_2011_pca |>
-#'   dplyr::mutate(st_pct = 100 * st_population / population_total) |>
+#'   dplyr::mutate(st_pct = 100 * st_population / population) |>
 #'   attach_geometry(2011)
 #'
 #' # Create a basic map
@@ -96,35 +98,22 @@ plot_map <- function(data,
                      font_family = NULL,
                      legend_position = "right") {
   if (!requireNamespace("ggplot2", quietly = TRUE)) {
-    stop("Package 'ggplot2' is required. Please install it.")
+    cli::cli_abort("Package {.pkg ggplot2} is required.")
   }
   if (!requireNamespace("sf", quietly = TRUE)) {
-    stop("Package 'sf' is required. Please install it.")
+    cli::cli_abort("Package {.pkg sf} is required.")
   }
 
   if (!inherits(data, "sf")) {
     if ("geometry" %in% names(data)) {
       data <- sf::st_as_sf(data)
     } else {
-      stop("Data must be an sf object or have a 'geometry' column")
+      cli::cli_abort("{.arg data} must be an {.cls sf} object or have a {.field geometry} column.")
     }
   }
 
   # substitute() before fill_var is evaluated, or plot_map(d, value) fails
-  fill_var_expr <- substitute(fill_var)
-  fill_var_name <- if (is.character(fill_var_expr)) {
-    fill_var_expr
-  } else if (is.name(fill_var_expr)) {
-    nm <- deparse(fill_var_expr)
-    if (nm %in% names(data)) {
-      nm
-    } else {
-      v <- tryCatch(fill_var, error = function(e) NULL)
-      if (is.character(v) && length(v) == 1) v else nm
-    }
-  } else {
-    as.character(eval(fill_var_expr, parent.frame()))
-  }
+  fill_var_name <- resolve_fill_var(substitute(fill_var), names(data), function() fill_var, parent.frame())
 
   if (!fill_var_name %in% names(data)) {
     cli::cli_abort("{.arg fill_var} {.val {fill_var_name}} is not a column of {.arg data}.")
@@ -218,28 +207,33 @@ plot_map <- function(data,
 
 #' Compare maps across years
 #'
-#' @param data_list A named list of sf data frames, with names as years
-#' @param fill_var The variable to map (string)
-#' @param title Overall title for the combined plot
-#' @param ncol Number of columns for arrangement
-#' @param palette Color palette (see \code{\link{plot_map}} for options)
-#' @param common_scale Logical. Use the same color scale across all maps?
-#' @param show_state_boundaries Logical. Overlay state boundaries?
-#' @param ... Additional arguments passed to \code{\link{plot_map}}
+#' @param data_list A named list of `sf` data frames, keyed by year or panel
+#'   label.
+#' @param fill_var Variable to map (unquoted column name or string).
+#' @param title Title for the combined plot.
+#' @param ncol Number of columns in the layout.
+#' @param palette Color palette; see \code{\link{plot_map}} for options.
+#' @param common_scale Logical. If `TRUE` (default), all panels share the same
+#'   color scale limits.
+#' @param limits Optional numeric vector `c(min, max)` for the shared color
+#'   scale. Overrides the range computed when `common_scale = TRUE`.
+#' @param show_state_boundaries Logical. If `TRUE` (default), overlays state
+#'   boundaries on each panel.
+#' @param ... Additional arguments passed to \code{\link{plot_map}}.
 #'
-#' @return A patchwork object
+#' @return A `patchwork` object.
 #'
 #' @examplesIf interactive()
 #' # Compare ST percentage across years
 #' library(dplyr)
 #'
 #' st_1971 <- census_1971 |>
-#'   filter(geography == "district") |>
-#'   mutate(st_pct = 100 * st_population_total / population_total) |>
+#'   filter(geography == "district", sector == "total") |>
+#'   mutate(st_pct = 100 * st_population / population) |>
 #'   attach_geometry(1971)
 #'
 #' st_2011 <- census_2011_pca |>
-#'   mutate(st_pct = 100 * st_population / population_total) |>
+#'   mutate(st_pct = 100 * st_population / population) |>
 #'   attach_geometry(2011)
 #'
 #' # Compare
@@ -257,17 +251,19 @@ compare_maps <- function(data_list,
                          ncol = NULL,
                          palette = "viridis",
                          common_scale = TRUE,
+                         limits = NULL,
                          show_state_boundaries = TRUE,
                          ...) {
   if (!requireNamespace("patchwork", quietly = TRUE)) {
-    stop("Package 'patchwork' is required. Please install it.")
+    cli::cli_abort("Package {.pkg patchwork} is required.")
   }
 
-  if (common_scale) {
-    all_values <- unlist(lapply(data_list, function(d) d[[fill_var]]))
+  first_cols <- if (length(data_list)) names(data_list[[1]]) else character()
+  fill_var_name <- resolve_fill_var(substitute(fill_var), first_cols, function() fill_var, parent.frame())
+
+  if (is.null(limits) && common_scale) {
+    all_values <- unlist(lapply(data_list, function(d) d[[fill_var_name]]))
     limits <- range(all_values, na.rm = TRUE)
-  } else {
-    limits <- NULL
   }
 
   plots <- vector("list", length(data_list))
@@ -277,7 +273,7 @@ compare_maps <- function(data_list,
     year_label <- names(data_list)[i]
     plots[[i]] <- plot_map(
       data_list[[i]],
-      fill_var = fill_var,
+      fill_var = fill_var_name,
       title = year_label,
       palette = palette,
       limits = limits,
@@ -312,11 +308,11 @@ compare_maps <- function(data_list,
 
 #' Get color palette
 #'
-#' Get color palettes for maps. Available palettes: "viridis", "red_blue",
-#' "blue_red", "greens", "oranges", "reds", "blues", "purple_green".
+#' Gives a color palette for maps. The palettes are "viridis", "red_blue",
+#' "blue_red", "greens", "oranges", "reds", "blues" and "purple_green".
 #'
 #' @param name Name of the palette
-#' @param reverse Logical. Reverse direction?
+#' @param reverse Logical. If TRUE, the direction is reversed.
 #'
 #' @return A character vector of colors
 #' @examples
@@ -374,8 +370,9 @@ get_palette <- function(name, reverse = FALSE) {
   colors
 }
 
-#' State outline to draw beneath a map: the requested vintage or the nearest
-#' one with a boundary file, the most recent when no year is known.
+#' Gives the state outline to draw below a map. The outline comes from the
+#' requested vintage, or from the nearest vintage with a boundary file. If the
+#' year is not known, the function uses the most recent vintage.
 #' @noRd
 census_base_shapes <- function(year) {
   if (is.null(year) || is.na(year) || !is.numeric(year)) {
@@ -384,11 +381,11 @@ census_base_shapes <- function(year) {
   get_census_boundaries(nearest_boundary_year(year), "state")
 }
 
-#' Detect the boundary a data frame belongs to.
+#' Finds the boundary year of a data frame.
 #'
-#' Prefers the stamp attach_geometry() leaves, then a `year` column.
+#' First uses the attribute that attach_geometry() sets, then a `year` column.
 #' @param data A data frame or sf object.
-#' @return Integer year, or NULL when neither is present.
+#' @return Integer year, or NULL if the data has neither.
 #' @noRd
 detect_year <- function(data) {
   stamped <- attr(data, "census_boundary_year")
@@ -403,4 +400,21 @@ detect_year <- function(data) {
     }
   }
   NULL
+}
+
+# a bare column name, a variable holding a name, a string, or an expression
+#' @noRd
+resolve_fill_var <- function(expr, cols, value, env) {
+  if (is.character(expr)) {
+    return(expr)
+  }
+  if (!is.name(expr)) {
+    return(as.character(eval(expr, env)))
+  }
+  nm <- deparse(expr)
+  if (nm %in% cols) {
+    return(nm)
+  }
+  v <- tryCatch(value(), error = function(e) NULL)
+  if (is.character(v) && length(v) == 1) v else nm
 }

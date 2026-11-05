@@ -1,8 +1,8 @@
 #' Start the censusindia REST API
 #'
-#' Launches the bundled plumber API on the given host and port. Every
-#' endpoint takes `GET` query parameters that mirror the R function behind it,
-#' with comma-separated values for vectors (`state=KL,TN`):
+#' Starts the bundled plumber API on the host and port. Each endpoint takes
+#' `GET` query parameters that agree with the R function behind it. For
+#' vectors, use comma-separated values (`state=KL,TN`):
 #'
 #' | Endpoint | Function |
 #' |---|---|
@@ -11,33 +11,35 @@
 #' | `/boundaries` | [get_census_boundaries()] |
 #' | `/languages` | [census_languages()] |
 #' | `/sc-st` | [census_sc_st()] |
-#' | `/datasets`, `/dataset/<name>` | any shipped dataset, e.g. [census_1931_castes] |
+#' | `/datasets`, `/dataset/<name>` | a dataset of the package, for example [census_1931_castes] |
 #' | `/variables`, `/search` | [list_census_variables()], [search_census_variables()] |
 #' | `/states`, `/geographies` | [list_states()], [list_census_geographies()] |
 #' | `/health` | package version |
 #'
-#' Results come back as JSON rows, or as a GeoJSON FeatureCollection when
-#' `geometry=true` and from `/boundaries`. Input the R function rejects is a
-#' 400 carrying its error message, and a failed data download is a 503.
-#' Interactive documentation is served at `/__docs__/`.
+#' The API returns JSON rows. It returns a GeoJSON FeatureCollection from
+#' `/boundaries` and when `geometry=true`. If the R function rejects the input,
+#' the API returns a 400 with the error message. A failed data download gives a
+#' 503. The interactive documentation is at `/__docs__/`.
 #'
-#' A response holds at most 10,000 rows, or 100 features for GeoJSON. Page
-#' through larger results with `limit` and `offset`; the `X-Total-Count` header
-#' gives the full count.
+#' A response has a maximum of 10,000 rows, or 100 features for GeoJSON. For
+#' larger results, use `limit` and `offset` to get the pages. The
+#' `X-Total-Count` header gives the full count.
 #'
-#' Each request writes one JSON line to standard output with its path, query,
-#' status, duration, client IP and a `client` label. The label comes from an
-#' `X-Client` header when one is sent (an MCP server wrapping the API should
-#' send `X-Client: mcp/<name>`), and otherwise from the User-Agent: `mcp`,
-#' `ai_agent`, `curl`, `wget`, `python`, `r`, `node`, `browser`, `other` or
-#' `unknown`. Under systemd these lines land in the journal.
+#' Each request writes one JSON line to standard output. The line has the path,
+#' query, status, duration, client IP and a `client` label.
 #'
-#' @param host Host address to bind. Default `"127.0.0.1"` (localhost only).
-#'   Use `"0.0.0.0"` to accept external connections.
+#' If the request has an `X-Client` header, the label comes from that header.
+#' An MCP server that wraps the API must send `X-Client: mcp/<name>`. For
+#' other requests, the label comes from the User-Agent: `mcp`, `ai_agent`,
+#' `curl`, `wget`, `python`, `r`, `node`, `browser`, `other` or `unknown`.
+#' Under systemd, these lines go to the journal.
+#'
+#' @param host Host address. Default `"127.0.0.1"` (only localhost). Use
+#'   `"0.0.0.0"` to accept external connections.
 #' @param port Port number. Default `8895`.
-#' @param ... Additional arguments passed to `plumber`'s `$run()` method.
+#' @param ... More arguments for the `$run()` method of `plumber`.
 #'
-#' @return Called for its side effect; does not return under normal operation.
+#' @return No value. In normal operation, the function does not stop.
 #' @export
 #' @examplesIf interactive() && requireNamespace("plumber", quietly = TRUE)
 #' # Start locally on the default port
@@ -51,8 +53,7 @@ serve <- function(host = "127.0.0.1", port = 8895L, ...) {
   router$run(host = host, port = port, quiet = FALSE, ...)
 }
 
-# The router's environment sits in the namespace, so the API file can call
-# internal helpers.
+# router env in the namespace lets the API file call internal helpers
 api_router <- function() {
   rlang::check_installed("plumber", reason = "to start the REST API")
   plumber_r <- system.file("plumber", "plumber.R", package = "censusindia")

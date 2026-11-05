@@ -4,36 +4,44 @@
 \alias{census_languages}
 \title{Language speakers at a chosen geographic level}
 \usage{
-census_languages(level = c("district", "subdistrict"), language_group = NULL)
+census_languages(
+  level = c("district", "subdistrict"),
+  language_group = NULL,
+  sector = c("total", "rural", "urban"),
+  state = NULL
+)
 }
 \arguments{
-\item{level}{\code{"district"} (38,993 rows, 640 districts) or \code{"subdistrict"}
-(144,134 rows, 5,988 areas).}
+\item{level}{\code{"district"} (38,993 rows per sector across 640 districts) or
+\code{"subdistrict"} (144,134 rows per sector across 5,988 subdistricts).}
 
-\item{language_group}{Optionally restrict to one language group, as listed in
-the \code{language_group} column. Default \code{NULL} keeps all.}
+\item{language_group}{Optional integer vector of \code{language_group} codes to
+keep, or \code{NULL} (default) for all groups.}
+
+\item{sector}{\code{"total"} (default), \code{"rural"}, or \code{"urban"}. Because sector is
+stored as rows, summing without filtering \code{sector} double-counts every
+speaker.}
+
+\item{state}{Optional state filter: one or more canonical state names or
+two-letter codes, as in \code{\link[=get_census]{get_census()}}.}
 }
 \value{
-A tibble at the requested level, one row per language per area.
+A tibble for the requested level and sector, with one row per
+language per area. Columns match \link{census_2011_district_languages} or
+\code{\link[=census_2011_subdistrict_languages]{census_2011_subdistrict_languages()}}.
 }
 \description{
-The C-16 mother tongue tables stack state, district and subdistrict rows,
-and a subdistrict carries its parent's \code{district_code}. Filtering on
-\code{district_code != "000"} therefore keeps subdistricts too, and summing the
-result double counts: 640 districts become 6,231 rows, and district totals
-inflate by a median factor of two.
-}
-\details{
-\code{area_name} does not separate the two levels either, because in 392 of the
-640 districts the headquarters tehsil carries the district's own name.
-Subdistricts do partition their district, so the district value for any
-\verb{(district_code, language_code)} is half the group sum. The tables this
-returns are that split, applied once at build time.
+The C-16 mother tongue table (\code{\link[=census_2011_mother_tongue]{census_2011_mother_tongue()}}) stacks state,
+district, and subdistrict rows in a single table where subdistricts share
+their parent district's \code{district_code}. Summing by \code{district_code} without
+filtering \code{geography} double-counts every speaker. \code{census_languages()}
+returns a single geographic level and sector at a time, excluding the
+\code{"Others"} residual rows.
 }
 \examples{
 census_languages("district") |> head()
 }
 \seealso{
-\link{census_2011_linguistic_diversity} for one row per district with
-entropy already computed.
+\link{census_2011_linguistic_diversity} for district-level diversity
+metrics (Shannon entropy, effective number of languages).
 }

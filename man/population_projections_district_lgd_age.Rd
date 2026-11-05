@@ -2,7 +2,7 @@
 % Please edit documentation in R/download.R
 \name{population_projections_district_lgd_age}
 \alias{population_projections_district_lgd_age}
-\title{Population projections, district level, LGD boundaries, by age group (2012-2031)}
+\title{Population projections: district level, LGD boundaries, by age group (2012-2031)}
 \source{
 Same as \link{population_projections_district_lgd}.
 }
@@ -10,26 +10,27 @@ Same as \link{population_projections_district_lgd}.
 population_projections_district_lgd_age()
 }
 \value{
-A tibble with 454,140 rows and 7 columns:
+A tibble with 454,140 rows and 9 columns:
 \describe{
 \item{year}{Projection year (annual, 2012-2031)}
-\item{state_name_harmonized}{Harmonized state name for joining. See
-\link{population_projections_district_lgd} for the Dadra & Nagar Haveli /
-Daman & Diu merged-UT caveat.}
-\item{district}{District name (LGD naming convention)}
+\item{geography}{Geographic level ("district")}
+\item{state_code}{Integer 2011 census state code}
+\item{state_name_harmonized}{Harmonized state name. Use it to join
+datasets. Refer to \link{population_projections_district_lgd} for the
+caveat about the merged UT Dadra & Nagar Haveli and Daman & Diu.}
+\item{district}{District name as in the LGD}
 \item{age_group}{Single years "0".."14", then 5-year bands "15-19"
-through "80+". Non-overlapping: summing all rows for a district-year
-reproduces \link{population_projections_district_lgd}.}
+to "80+". The groups do not overlap. The sum of all rows for a
+district and year equals \link{population_projections_district_lgd}.}
 \item{males}{Projected male population}
 \item{females}{Projected female population}
 \item{population}{Projected total population (males + females)}
 }
 }
 \description{
-Age-stratified detail behind \link{population_projections_district_lgd}: single
-years of age for 0-14, five-year bands from 15-19 through 80+. Fixes the
-same double-counted "All ages" row bug documented on that table. Downloaded
-on first use; see \code{\link[=census_cache_dir]{census_cache_dir()}}.
+The age-group detail of \link{population_projections_district_lgd}: single years
+of age for 0-14, then five-year bands from 15-19 to 80+. The package
+downloads the table on first use. Refer to \code{\link[=census_cache_dir]{census_cache_dir()}}.
 }
 \examples{
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}

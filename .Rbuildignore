@@ -9,7 +9,6 @@
 ^\.github$
 ^_pkgdown\.yml$
 ^docs$
-# Exclude raw data files (Excel, PDF) from the package
 ^data/.*\.xlsx$
 ^data/.*\.pdf$
 ^data/.*\.zip$
@@ -30,8 +29,6 @@
 ^\.Rhistory$
 ^man/figures/logo_.*$
 ^man/figures/social-card\.png$
-^CRAN-SUBMISSION$
-^CLAUDE\.md$
-^pkgdown$
-
 ^man/figures/logo\.(pdf|svg)$
+^CRAN-SUBMISSION$
+^pkgdown$

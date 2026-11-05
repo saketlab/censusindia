@@ -11,29 +11,36 @@ compare_maps(
   ncol = NULL,
   palette = "viridis",
   common_scale = TRUE,
+  limits = NULL,
   show_state_boundaries = TRUE,
   ...
 )
 }
 \arguments{
-\item{data_list}{A named list of sf data frames, with names as years}
+\item{data_list}{A named list of \code{sf} data frames, keyed by year or panel
+label.}
 
-\item{fill_var}{The variable to map (string)}
+\item{fill_var}{Variable to map (unquoted column name or string).}
 
-\item{title}{Overall title for the combined plot}
+\item{title}{Title for the combined plot.}
 
-\item{ncol}{Number of columns for arrangement}
+\item{ncol}{Number of columns in the layout.}
 
-\item{palette}{Color palette (see \code{\link{plot_map}} for options)}
+\item{palette}{Color palette; see \code{\link{plot_map}} for options.}
 
-\item{common_scale}{Logical. Use the same color scale across all maps?}
+\item{common_scale}{Logical. If \code{TRUE} (default), all panels share the same
+color scale limits.}
 
-\item{show_state_boundaries}{Logical. Overlay state boundaries?}
+\item{limits}{Optional numeric vector \code{c(min, max)} for the shared color
+scale. Overrides the range computed when \code{common_scale = TRUE}.}
 
-\item{...}{Additional arguments passed to \code{\link{plot_map}}}
+\item{show_state_boundaries}{Logical. If \code{TRUE} (default), overlays state
+boundaries on each panel.}
+
+\item{...}{Additional arguments passed to \code{\link{plot_map}}.}
 }
 \value{
-A patchwork object
+A \code{patchwork} object.
 }
 \description{
 Compare maps across years
@@ -44,12 +51,12 @@ Compare maps across years
 library(dplyr)
 
 st_1971 <- census_1971 |>
-  filter(geography == "district") |>
-  mutate(st_pct = 100 * st_population_total / population_total) |>
+  filter(geography == "district", sector == "total") |>
+  mutate(st_pct = 100 * st_population / population) |>
   attach_geometry(1971)
 
 st_2011 <- census_2011_pca |>
-  mutate(st_pct = 100 * st_population / population_total) |>
+  mutate(st_pct = 100 * st_population / population) |>
   attach_geometry(2011)
 
 # Compare

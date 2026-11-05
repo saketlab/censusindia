@@ -7,7 +7,7 @@
 list_census_geographies()
 }
 \value{
-A tibble showing available year-geography combinations.
+A tibble of available year and geography combinations.
 }
 \description{
 Geographic levels available for each census year.

@@ -3,20 +3,23 @@
 \docType{data}
 \name{population_projections_state_age}
 \alias{population_projections_state_age}
-\title{Population projections -- state level, by age group (2011-2036)}
+\title{Population projections: state level, by age group (2011-2036)}
 \format{
-A tibble with 2,448 rows and 5 columns:
+A tibble with 2,448 rows and 8 columns:
 \describe{
-\item{year}{Projection year (2011-2036, at 5-year intervals: 2011, 2016,
-2021, 2026, 2031, 2036)}
-\item{state_name_harmonized}{Harmonized state name for joining where the
-report breaks the state out individually; "India" and "North East
-States Excluding Assam" pass through verbatim as aggregate rows}
-\item{age_group}{Five-year bands "0-4" through "80+"}
-\item{males}{Projected male population, in thousands}
-\item{females}{Projected female population, in thousands}
+\item{year}{Projection year: 2011, 2016, 2021, 2026, 2031 and 2036}
+\item{geography}{"india" on the India rows, "state" on all other rows,
+which include the North East row}
+\item{state_code}{Integer 2011 census state code. NA on the India and
+North East rows.}
+\item{state_name_harmonized}{Harmonized state name, used to join
+datasets. "India" and "North East States Excluding Assam" are the
+names that the report gives to these two total rows.}
+\item{age_group}{Five-year age groups, "0-4" to "80+"}
+\item{males}{Projected male population, persons}
+\item{females}{Projected female population, persons}
 \item{population}{Projected total population (the printed Person
-figure), in thousands}
+value), persons}
 }
 }
 \source{
@@ -28,22 +31,22 @@ Population Projections for India and States 2011-2036, Table 18.
 population_projections_state_age
 }
 \description{
-Age-stratified population reshaped directly from the MOHFW report's own
-Table 18, wide-by-year to tidy long. Summing to state-year reproduces
-\link{population_projections_state} to within report rounding (Uttar Pradesh
-2016: 216,089 vs 216,087 thousand).
+Population by age group, from Table 18 of the MOHFW report. For each state
+and year, the sum of the age groups is equal to
+\link{population_projections_state} within the rounding of the report. Values
+are numbers of persons.
 }
 \details{
-Values match the printed Table 18.
-\code{population} is the printed Person figure, rounded separately from
-\code{males} and \code{females}, so it can differ from their sum by 1. India and
-Odisha follow the July 2020 edition, as in \link{population_projections_state},
-and there \code{population} is \code{males + females}.
+Values match the printed Table 18. \code{population} is the printed Person
+value, which the report rounds to thousands independently of \code{males} and
+\code{females}, so \code{population} can differ from \code{males + females} by up to 1,000.
+The India and Odisha rows use the July 2020 edition, as in
+\link{population_projections_state}, where \code{population} equals \code{males + females}.
 
-Coverage is narrower than \link{population_projections_state}: the report only
-breaks out 23 major states individually plus an "India" total, lumping the
-smaller North East states (Sikkim, Arunachal Pradesh, Nagaland, Manipur,
-Mizoram, Tripura, Meghalaya) into one "North East States Excluding Assam"
-row. Chandigarh, small UTs and Ladakh are not in this table at all.
+This table has fewer areas than \link{population_projections_state}. The report
+gives 23 large states separately, and an "India" total. One row, "North
+East States Excluding Assam", gives the sum of Sikkim, Arunachal Pradesh,
+Nagaland, Manipur, Mizoram, Tripura and Meghalaya. Chandigarh, the small
+UTs and Ladakh are not in this table.
 }
 \keyword{datasets}

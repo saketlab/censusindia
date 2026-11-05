@@ -13,8 +13,8 @@ sex_ratio(females, males)
 Numeric vector.
 }
 \description{
-Females per 1,000 males, the convention the Census of India reports.
+Females per 1,000 males. The Census of India uses this convention.
 }
 \examples{
-sex_ratio(census_2011_pca$population_female, census_2011_pca$population_male) |> head()
+sex_ratio(census_2011_pca$females, census_2011_pca$males) |> head()
 }

@@ -30,20 +30,20 @@ plot_map(
 )
 }
 \arguments{
-\item{data}{An sf object or data frame with geometry attached via
-\code{\link{attach_geometry}}}
+\item{data}{An \code{sf} object, or a data frame with geometry from
+\code{\link{attach_geometry}}.}
 
-\item{fill_var}{The variable to map to fill color (unquoted or string)}
+\item{fill_var}{Variable for the fill color (unquoted column name or string).}
 
-\item{title}{Optional title for the map}
+\item{title}{Optional title for the map.}
 
-\item{subtitle}{Optional subtitle for the map}
+\item{subtitle}{Optional subtitle for the map.}
 
-\item{legend_title}{Title for the legend}
+\item{legend_title}{Title for the legend.}
 
-\item{palette}{Color palette. Options include:
+\item{palette}{Color palette. Available options:
 \itemize{
-\item \code{"viridis"} - Perceptually uniform, colorblind-friendly (default)
+\item \code{"viridis"} - Perceptually uniform and colorblind-safe (default)
 \item \code{"red_blue"} - Diverging red to blue (red = high)
 \item \code{"blue_red"} - Diverging blue to red (blue = high)
 \item \code{"greens"} - Sequential green palette
@@ -53,52 +53,54 @@ plot_map(
 \item \code{"purple_green"} - Diverging purple to green
 }}
 
-\item{reverse}{Logical. Reverse the color palette direction? Default FALSE.}
+\item{reverse}{Logical. If \code{TRUE}, reverses the palette direction. Default
+\code{FALSE}.}
 
-\item{direction}{Numeric. Alternative to reverse: use -1 to reverse, 1 for default.
-If both reverse and direction are specified, direction takes precedence.}
+\item{direction}{Numeric. Alternative to \code{reverse}: \code{-1} reverses the palette
+and \code{1} keeps the default. Takes precedence over \code{reverse} if both are set.}
 
-\item{na_color}{Color for missing values. Default is "grey80"}
+\item{na_color}{Color for missing values. Default \code{"grey80"}.}
 
-\item{boundary_year}{Census year whose state boundaries to draw beneath the
-data, keeping India's full claimed extent on the map even where the census
-enumerates no districts. Defaults to the \code{year} column if present.}
+\item{boundary_year}{Census year of the state outline drawn beneath the data.
+This background layer preserves India's full claimed northern extent where
+district polygons are absent. If \code{NULL}, inferred from \code{data}.}
 
-\item{base_layer}{Logical. Draw India's full state outline beneath the
-data? Default TRUE}
+\item{base_layer}{Logical. If \code{TRUE} (default), draws the full state outline
+of India beneath the data.}
 
-\item{show_state_boundaries}{Logical. Overlay state boundaries?}
+\item{show_state_boundaries}{Logical. If \code{TRUE}, overlays state boundary lines
+on top of the data.}
 
-\item{state_boundary_color}{Color for state boundaries. Default is "black"}
+\item{state_boundary_color}{Color for state boundary lines. Default \code{"black"}.}
 
-\item{state_boundary_width}{Width of state boundary lines. Default is 0.3}
+\item{state_boundary_width}{Width of state boundary lines. Default \code{0.3}.}
 
-\item{trans}{Transformation for the color scale (e.g., "log10", "sqrt").
-Default is "identity" (no transformation)}
+\item{trans}{Transformation for the color scale (e.g., \code{"log10"}, \code{"sqrt"}).
+Default \code{"identity"}.}
 
-\item{midpoint}{Value to centre a diverging palette on, e.g. \code{0} for growth
-or \code{1000} for a sex ratio. Without it the palette centres on the middle of
-\code{limits}, which is rarely the meaningful value.}
+\item{midpoint}{Center value for a diverging palette (e.g., \code{0} for growth or
+\code{1000} for sex ratio). If \code{NULL}, defaults to the midpoint of \code{limits}.}
 
-\item{oob}{How to treat values outside \code{limits}. The ggplot2 default censors
-them to \code{na_color}, making them indistinguishable from genuinely missing
-data; pass \code{scales::squish} to clamp them to the nearest end instead.}
+\item{oob}{Out-of-bounds handler for values outside \code{limits}. By default
+ggplot2 maps out-of-bounds values to \code{na_color}, making them
+indistinguishable from missing data; pass \code{scales::squish} to clamp them to
+the nearest limit instead.}
 
-\item{limits}{Optional limits for the color scale as c(min, max)}
+\item{limits}{Optional numeric vector \code{c(min, max)} for the color scale.}
 
-\item{breaks}{Optional breaks for the legend}
+\item{breaks}{Optional breaks for the legend.}
 
-\item{labels}{Optional labels for the legend breaks}
+\item{labels}{Optional labels for the legend breaks.}
 
-\item{font_family}{Font family for all map text. Default \code{NULL} uses the
-system default; e.g. \code{"Arial"}.}
+\item{font_family}{Font family for all map text (e.g., \code{"Arial"}). Default
+\code{NULL} uses the system font.}
 
 \item{legend_position}{One of \code{"right"} (default), \code{"left"}, \code{"bottom"},
-\code{"top"}, or \code{"none"}. \code{"bottom"}/\code{"top"} also turns the colorbar
-horizontal.}
+\code{"top"}, or \code{"none"}. \code{"bottom"} and \code{"top"} orient the colorbar
+horizontally.}
 }
 \value{
-A ggplot2 object
+A \code{ggplot2} object.
 }
 \description{
 Create a choropleth map from census data.
@@ -107,7 +109,7 @@ Create a choropleth map from census data.
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 # Calculate ST percentage and attach geometry
 st_data <- census_2011_pca |>
-  dplyr::mutate(st_pct = 100 * st_population / population_total) |>
+  dplyr::mutate(st_pct = 100 * st_population / population) |>
   attach_geometry(2011)
 
 # Create a basic map

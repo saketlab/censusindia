@@ -1,67 +1,69 @@
 #' Get population projections
 #'
-#' MOHFW population projections (2011-2036) at state or district level,
-#' based on the 2011 Census. District projections are available using
-#' either Census 2011 boundaries (640 districts, 5-year intervals) or
-#' current LGD boundaries (785 districts, annual).
+#' Queries Ministry of Health and Family Welfare (MoHFW) population projections
+#' (2011-2036, Census 2011 base) at state or district level. District
+#' projections are available on two boundary sets: Census 2011 districts (640
+#' districts at 5-year intervals) and Local Government Directory (LGD) districts
+#' (783 districts, annual).
 #'
-#' @param year Integer or integer vector of projection years. If NULL
-#'   (default), returns all available years.
+#' @param year Integer or integer vector of projection years, or `NULL`
+#'   (default) for all published years in the table.
 #' @param geography Geographic level: `"state"` or `"district"`.
-#' @param state Optional. Filter to specific state(s) by name or
-#'   abbreviation (e.g., `"Maharashtra"` or `"MH"`).
-#' @param boundary For district geography, which boundary system:
-#'   `"census2011"` (default, 640 districts) or `"lgd"` (785 districts).
-#'   Ignored for state geography.
-#' @param geometry If `TRUE`, attaches geographic boundaries (Census 2011).
-#'   Only works with `boundary = "census2011"` for district level.
-#' @param by_age If `TRUE`, returns one row per age group. States
-#'   come in 5-year bands from "0-4" to "80+"; districts in single years of
-#'   age 0-14, then 5-year bands 15-19 through 80+. See
-#'   [population_projections_state_age], [population_projections_district_age()]
-#'   and [population_projections_district_lgd_age()]. State coverage by age is
-#'   23 major states plus an "India" row and one North-East aggregate row,
-#'   "North East States Excluding Assam"; any other state is an error.
+#' @param state Optional state filter: one or more canonical state names or
+#'   two-letter codes (e.g., `"Maharashtra"` or `"MH"`).
+#' @param boundary District boundary system: `"census2011"` (default, 640
+#'   districts) or `"lgd"` (783 districts). Ignored when `geography = "state"`.
+#' @param geometry If `TRUE`, attaches Census 2011 boundaries and returns an
+#'   `sf` object. At district level, supported only when
+#'   `boundary = "census2011"`.
+#' @param by_age If `TRUE`, returns age-stratified rows. State projections use
+#'   5-year age bands from `"0-4"` to `"80+"`; district projections use single
+#'   years for ages 0-14 and 5-year bands from `"15-19"` to `"80+"`. See
+#'   [population_projections_state_age], [population_projections_district_age()],
+#'   and [population_projections_district_lgd_age()]. State age projections
+#'   cover 23 major states, `"India"`, and `"North East States Excluding Assam"`;
+#'   requesting other states with `by_age = TRUE` raises an error.
 #'
-#' @return A tibble (or sf object if `geometry = TRUE`) with columns:
-#'   `year`, `state_name_harmonized`, `males`, `females`, `population`,
-#'   `estimate`, `district` for district-level data, and `age_group` if
-#'   `by_age = TRUE`. `estimate` is `"published"` for a year printed in the
-#'   MOHFW tables, `"interpolated"` or `"extrapolated"` otherwise.
+#' @return A tibble (or an `sf` object if `geometry = TRUE`) with columns
+#'   `year`, `geography`, `state_code`, `state_name_harmonized`, `district`
+#'   (district level only), `age_group` (when `by_age = TRUE`), `males`,
+#'   `females`, `population`, and `estimate`. `geography` is `"india"` on
+#'   national rows. All counts are in persons. `estimate` is `"published"` for
+#'   years printed in the MoHFW/IIPS tables, `"interpolated"` for years between
+#'   printed years, and `"extrapolated"` for years after the last printed year.
 #'
 #' @details
-#' State-level data covers 2011-2036 and has 39 entries: 28 states, the 9
-#' UTs that MOHFW gives, the merged "Dadra & Nagar Haveli and Daman & Diu",
-#' and "India". MOHFW gives "Dadra & Nagar Haveli" and "Daman & Diu" as two
-#' UTs. This package adds the merged UT as the sum of the two. To get the sum
-#' of the states, remove "India" and one of the two Dadra/Daman forms. Refer
-#' to [population_projections_state]. Values are numbers of persons. This is
-#' also true for the state rows by age, but
-#' [population_projections_state_age] stores them in thousands.
+#' State projections cover 2011-2036 across 39 entries: 28 states, the 9 union
+#' territories printed by MoHFW (including separate `"Dadra & Nagar Haveli"` and
+#' `"Daman & Diu"` rows), the merged `"Dadra & Nagar Haveli and Daman & Diu"` UT
+#' (the sum of the two), and `"India"`. To sum across states without
+#' double-counting, exclude `"India"` and either the merged UT or the two
+#' constituent UTs; see [population_projections_state].
 #'
-#' The source data rounds Persons, Male, and Female independently (in
-#' thousands), so `population` may differ from `males + females` by up
-#' to 1000 at the state level.
+#' Because the state report rounds Persons, Male, and Female independently to
+#' the nearest thousand, `population` and `males + females` can differ by up to
+#' 1,000 at state level (2,000 for the summed UT).
 #'
-#' District-level Census 2011 data has projections at 5-year intervals
-#' (2011, 2016, 2021, 2026, 2031). LGD district data has annual
-#' projections from 2012 to 2031.
+#' Census 2011 district projections are published at 5-year intervals (2011,
+#' 2016, 2021, 2026, 2031); LGD district projections are annual from 2012 to
+#' 2031.
 #'
-#' A `year` absent from the table is estimated from the two nearest table
-#' years by geometric (exponential) growth, applied separately to `males`,
-#' `females` and `population`:
+#' When a requested `year` is between published table years, `get_population()`
+#' interpolates `males`, `females`, and `population` independently using
+#' geometric (exponential) growth between the two nearest published years:
 #'
 #' \deqn{P_t = P_1 (P_2 / P_1)^{(t - t_1) / (t_2 - t_1)}}
 #'
-#' Estimated districts need not sum exactly to
-#' the estimated state.
+#' Because each series is interpolated independently, summed district estimates
+#' need not equal the interpolated state estimate.
 #'
-#' Years after the last table year extrapolate with the last interval's rate,
-#' up to five years out: 2041 for states, 2036 for districts. Years before 2011
-#' or past that limit are an error.
+#' Years after the last published year are extrapolated using the final
+#' interval's growth rate for up to five years (to 2041 for states, 2036 for
+#' districts). Years before the start of the table or more than five years past
+#' the end raise an error.
 #'
-#' Telangana and Ladakh are included as separate entries even though
-#' they did not exist as states at the time of the 2011 Census.
+#' Telangana and Ladakh are reported as separate entries even though both were
+#' created after the 2011 Census.
 #'
 #' @examples
 #' # State-level projections for 2021
@@ -87,7 +89,7 @@ get_population <- function(year = NULL,
   boundary <- match.arg(boundary)
 
   if (geography == "state") {
-    data <- if (by_age) state_age_persons() else censusindia::population_projections_state
+    data <- if (by_age) censusindia::population_projections_state_age else censusindia::population_projections_state
   } else if (boundary == "lgd") {
     data <- if (by_age) population_projections_district_lgd_age() else censusindia::population_projections_district_lgd
   } else {
@@ -95,15 +97,15 @@ get_population <- function(year = NULL,
   }
 
   if (!is.null(state)) {
-    data <- filter_population_by_state(data, state)
+    data <- filter_by_state(data, state)
   }
 
   data$estimate <- "published"
   if (!is.null(year)) {
-    if (!rlang::is_integerish(year, finite = TRUE)) {
+    if (!length(year) || !rlang::is_integerish(year, finite = TRUE)) {
       cli::cli_abort("{.arg year} must be whole-number years.")
     }
-    year <- as.integer(year)
+    year <- unique(as.integer(year))
     missing_years <- setdiff(year, data$year)
     data <- dplyr::filter(data, .data$year %in% .env$year) |>
       dplyr::bind_rows(
@@ -128,13 +130,6 @@ get_population <- function(year = NULL,
   data
 }
 
-#' @noRd
-filter_population_by_state <- function(data, state) {
-  wanted <- resolve_states(state, present = unique(data$state_name_harmonized))
-  data |>
-    dplyr::filter(tolower(.data$state_name_harmonized) %in% tolower(.env$wanted))
-}
-
 #' Estimate projection years absent from a table
 #' @noRd
 estimate_population_years <- function(data, years) {
@@ -153,7 +148,6 @@ estimate_population_years <- function(data, years) {
   }
 
   # all.inside extrapolates with the end interval's rate
-  # ponytail: one-interval rate is noisy far out; use a longer baseline if that matters
   idx <- findInterval(years, known, all.inside = TRUE)
   extrap <- years > max(known)
   cli::cli_inform(c(
@@ -181,12 +175,4 @@ estimate_population_years <- function(data, years) {
     m[names(data)]
   })
   dplyr::bind_rows(rows)
-}
-
-#' population_projections_state_age in persons; Table 18 is stored in thousands
-#' @noRd
-state_age_persons <- function() {
-  d <- censusindia::population_projections_state_age
-  d[c("males", "females", "population")] <- d[c("males", "females", "population")] * 1000
-  d
 }

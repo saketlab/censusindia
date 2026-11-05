@@ -15,8 +15,7 @@ test_that("2001 and 2011 return the full district set", {
 test_that("year and geography are validated", {
   expect_error(get_census(1905, "state"), "Year")
   expect_error(get_census(2011, "planet"))
-  # 1961 is district only
-  expect_error(get_census(1961, "state"))
+  expect_error(get_census(1961, "subdistrict"))
   expect_error(get_census(1981, "subdistrict"))
 })
 

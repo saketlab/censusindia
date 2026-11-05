@@ -9,14 +9,14 @@ get_palette(name, reverse = FALSE)
 \arguments{
 \item{name}{Name of the palette}
 
-\item{reverse}{Logical. Reverse direction?}
+\item{reverse}{Logical. If TRUE, the direction is reversed.}
 }
 \value{
 A character vector of colors
 }
 \description{
-Get color palettes for maps. Available palettes: "viridis", "red_blue",
-"blue_red", "greens", "oranges", "reds", "blues", "purple_green".
+Gives a color palette for maps. The palettes are "viridis", "red_blue",
+"blue_red", "greens", "oranges", "reds", "blues" and "purple_green".
 }
 \examples{
 get_palette("blues")

@@ -12,32 +12,38 @@ attach_geometry(
 )
 }
 \arguments{
-\item{data}{A data frame containing census data with state/district names.}
+\item{data}{A data frame of census data with state names and, for
+districts, district names. \code{state_name_harmonized} and \code{district} join
+exactly; other name columns fall back to fuzzy matching.}
 
-\item{year}{Census year for boundaries. Available: 1941, 1951, 1961, 1971, 1981, 1991, 2001, 2011.}
+\item{year}{Census year of the boundaries. Available: 1941, 1951, 1961, 1971,
+1981, 1991, 2001, 2011.}
 
-\item{geography}{Geographic level: "state" or "district". If NULL (default),
-auto-detects based on available columns.}
+\item{geography}{Geographic level: \code{"state"} or \code{"district"}. If \code{NULL}
+(default), inferred from the columns of \code{data}.}
 
-\item{unmatched}{What to do when rows get no geometry, or when two rows are
-given the same polygon: \code{"warn"} (default), \code{"error"}, or \code{"ignore"}.
-Name matching falls back to substring and edit distance, so a district can
-be handed a wrong-but-similar shape; this is how the check surfaces.}
+\item{unmatched}{Action when rows get no geometry or when two distinct units
+claim the same polygon: \code{"warn"} (default), \code{"error"}, or \code{"ignore"}.
+Because fuzzy matching uses substrings and edit distance as a fallback, a
+district whose true polygon is missing can otherwise be assigned a neighbor's
+shape silently.}
 }
 \value{
-An sf object with geometry attached.
+An \code{sf} object with geometry attached.
 
-Boundary files are downloaded on first use; see \code{\link[=census_cache_dir]{census_cache_dir()}}.
+Boundary files are downloaded on first use and cached locally; see
+\code{\link[=census_cache_dir]{census_cache_dir()}}.
 }
 \description{
-Adds geometry for mapping. Auto-detects state or district level from
-available columns.
+Joins state or district boundary polygons to a census data frame for mapping.
+When \code{geography} is \code{NULL}, the geographic level is inferred from the columns
+of \code{data}.
 }
 \examples{
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 # Attach district boundaries
 census_2011_pca |>
-  dplyr::mutate(st_pct = 100 * st_population / population_total) |>
+  dplyr::mutate(st_pct = 100 * st_population / population) |>
   attach_geometry(2011)
 \dontshow{\}) # examplesIf}
 }

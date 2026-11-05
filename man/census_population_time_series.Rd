@@ -7,18 +7,19 @@
 \format{
 A tibble with 7,901 rows and 12 columns:
 \describe{
-\item{year}{Census year (1901, 1911, ..., 2011)}
+\item{year}{Census year (integer: 1901, 1911, ..., 2011). The column also
+has years that are not census years. Refer to the section below.}
 \item{geography}{Geographic level: "state" or "district"}
-\item{state_code}{Numeric state code}
-\item{state_name}{Name of the state}
-\item{state_name_harmonized}{Harmonized state name for joining across datasets}
-\item{district_code}{Numeric district code (0 for state-level)}
-\item{name}{Name of the state or district}
+\item{state_code}{Integer 2011 census code of the harmonized state}
+\item{state_name_harmonized}{Harmonized state name, used to join datasets}
+\item{state_name}{State name from the source}
+\item{district_code}{Integer district code. NA on state rows.}
+\item{district}{Name of the district. NA on state rows.}
 \item{population}{Total population}
 \item{males}{Male population}
 \item{females}{Female population}
-\item{variation_absolute}{Absolute change from previous census}
-\item{variation_percent}{Percentage change from previous census}
+\item{variation_absolute}{Absolute change from the previous census}
+\item{variation_percent}{Change from the previous census, in percent}
 }
 }
 \source{
@@ -30,18 +31,20 @@ Datasets." Harvard Dataverse. \doi{10.7910/DVN/ON8CP8}.
 census_population_time_series
 }
 \description{
-Decadal population at state and district levels, 1901-2011.
+Population at state and district level for each census from 1901 to 2011.
 }
 \section{Coverage limits}{
 
-Sikkim, Mizoram and Daman & Diu are absent from every year, so 2011 sums to
-1,208,903,947 across 626 districts rather than 1,210,854,977 across 640.
-\code{\link[=get_census]{get_census()}} uses the Primary Census Abstract for 2001 and 2011 instead.
-District rows also fall short of their state totals before 1961 (57 districts
-carry no population in 1901-1941) and in 1981, where all 27 Assam districts
-are missing while the state estimate is present. The \code{year} column further
-carries 1900, 1910, 1940, 1948, 1950, 1960, 1962 and 2021, which are not
-censuses; use \code{\link[=census_years]{census_years()}} before any \code{lag()}.
+Sikkim, Mizoram and Daman & Diu are not in the table for any year. For
+2001 and 2011, \code{\link[=get_census]{get_census()}} uses the Primary Census Abstract.
+
+The district rows do not add to their state totals before 1961 and in 1981.
+In 1901-1941, 57 districts have no population. In 1981, all 27 Assam
+districts are missing, but the state row is present.
+
+The \code{year} column also contains 1900, 1910, 1940, 1948, 1950, 1960, 1962
+and 2021. These are not census years. Use \code{\link[=census_years]{census_years()}} to remove them
+before you use \code{lag()}.
 }
 
 \keyword{datasets}

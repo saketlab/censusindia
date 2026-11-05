@@ -5,16 +5,19 @@
 \alias{census_1961_literacy}
 \title{Census 1961 literacy data}
 \format{
-A tibble with 347 rows and 8 columns:
+A tibble with 347 rows (26 state, 321 district) and 10 columns:
 \describe{
 \item{year}{Census year (1961)}
-\item{state}{Name of the state}
-\item{state_name_harmonized}{Harmonized state name for joining across datasets}
-\item{district}{Name of the district}
-\item{state_district_code}{Combined state-district code}
-\item{literacy_total}{Total literacy rate (percent)}
-\item{literacy_male}{Male literacy rate (percent)}
-\item{literacy_female}{Female literacy rate (percent)}
+\item{geography}{Geographic level: "state" or "district"}
+\item{state_code}{Integer 2011 census code of the harmonized state}
+\item{state_name_harmonized}{Harmonized state name, used to join datasets}
+\item{state_name}{State name from the source}
+\item{district_code}{Integer district code from the source. NA on state
+rows.}
+\item{district}{Name of the district. NA on state rows.}
+\item{literacy_rate}{Literacy rate, persons (percent)}
+\item{literacy_rate_male}{Male literacy rate (percent)}
+\item{literacy_rate_female}{Female literacy rate (percent)}
 }
 }
 \source{
@@ -26,6 +29,8 @@ Datasets." Harvard Dataverse. \doi{10.7910/DVN/ON8CP8}.
 census_1961_literacy
 }
 \description{
-District-level literacy rates from the 1961 Census.
+State and district literacy rates from the 1961 Census. The literacy
+columns are percentages of the population. The table has no counts.
+You cannot add the rates across areas.
 }
 \keyword{datasets}

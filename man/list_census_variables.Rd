@@ -7,17 +7,19 @@
 list_census_variables(year = NULL, geography = NULL, category = NULL)
 }
 \arguments{
-\item{year}{Filter to variables available for specific census year.}
+\item{year}{Census year(s) to filter by.}
 
-\item{geography}{Filter to "state", "district", or "subdistrict".}
+\item{geography}{\code{"state"}, \code{"district"}, or \code{"subdistrict"}.}
 
-\item{category}{Filter to "population", "literacy", "workers", "sc_st", "housing", "geography", or "change".}
+\item{category}{\code{"population"}, \code{"literacy"}, \code{"workers"}, \code{"sc_st"},
+\code{"housing"}, \code{"geography"}, or \code{"change"}.}
 }
 \value{
 A tibble of available variables.
 }
 \description{
-Available census variables, optionally filtered by year, geography, or category.
+Available census variables, optionally filtered by year, geography, or
+category.
 }
 \examples{
 list_census_variables()

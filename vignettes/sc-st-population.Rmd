@@ -34,16 +34,16 @@ library(patchwork)
 ```{r data}
 sc_st_2011 <- census_2011_pca |>
   mutate(
-    sc_pct = 100 * sc_population / population_total,
-    st_pct = 100 * st_population / population_total
+    sc_pct = 100 * sc_population / population,
+    st_pct = 100 * st_population / population
   ) |>
   attach_geometry(year = 2011, geography = "district")
 
 sc_st_1971 <- census_1971 |>
-  filter(geography == "district") |>
+  filter(geography == "district", sector == "total") |>
   mutate(
-    sc_pct = 100 * sc_population_total / population_total,
-    st_pct = 100 * st_population_total / population_total
+    sc_pct = 100 * sc_population / population,
+    st_pct = 100 * st_population / population
   ) |>
   attach_geometry(year = 1971, geography = "district")
 ```
@@ -102,7 +102,7 @@ compare_maps(
 state_summary <- census_2011_pca |>
   group_by(state_name_harmonized) |>
   summarise(
-    population = sum(population_total),
+    population = sum(population),
     sc_population = sum(sc_population),
     st_population = sum(st_population)
   ) |>
@@ -155,7 +155,7 @@ scatter_data <- sf::st_drop_geometry(sc_st_2011) |>
   mutate(
     is_extreme = sc_pct > quantile(sc_pct, 0.95, na.rm = TRUE) |
       st_pct > quantile(st_pct, 0.95, na.rm = TRUE),
-    label = ifelse(is_extreme, name, NA)
+    label = ifelse(is_extreme, district, NA)
   )
 
 ggplot(scatter_data, aes(sc_pct, st_pct)) +

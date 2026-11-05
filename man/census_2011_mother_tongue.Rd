@@ -10,33 +10,46 @@ Census of India 2011, C-16 Mother Tongue Tables.
 census_2011_mother_tongue()
 }
 \value{
-A tibble with 350,157 rows and 18 columns:
+A tibble with 1,050,471 rows (350,157 for each sector) and 16 columns:
 \describe{
-\item{state_code}{Numeric state code}
-\item{state_name}{Name of the state}
-\item{state_name_harmonized}{Harmonized state name for joining across datasets}
-\item{district_code}{District code ("000" for state total)}
-\item{area_name}{Name of the state or district}
+\item{year}{Census year (2011)}
+\item{geography}{"state", "district" or "subdistrict"}
+\item{sector}{Sector: "total", "rural" or "urban"}
+\item{state_code}{Integer state code}
+\item{state_name_harmonized}{Harmonized state name. Use it to join datasets}
+\item{state_name}{State name from the source}
+\item{district_code}{Integer district code. NA on state rows}
+\item{district}{District name as in \link{census_2011_pca}. NA on state rows}
+\item{subdistrict}{Subdistrict name from the source. NA above subdistrict level}
 \item{language_code}{Census language code}
 \item{language_name}{Name of the language or dialect}
 \item{language_level}{L1 for main languages, L2 for dialects}
-\item{language_group}{Numeric language group code}
-\item{total_persons}{Total speakers}
-\item{total_males}{Male speakers}
-\item{total_females}{Female speakers}
-\item{rural_persons}{Rural speakers}
-\item{rural_males}{Rural male speakers}
-\item{rural_females}{Rural female speakers}
-\item{urban_persons}{Urban speakers}
-\item{urban_males}{Urban male speakers}
-\item{urban_females}{Urban female speakers}
+\item{language_group}{Integer language group code}
+\item{speakers}{Speakers}
+\item{speakers_male}{Male speakers}
+\item{speakers_female}{Female speakers}
 }
 }
 \description{
-Mother tongue speakers by language at state and district levels from the
-2011 Census C-16 tables, with rural/urban and male/female breakdowns.
-Downloaded on first use; see \code{\link[=census_cache_dir]{census_cache_dir()}}. For per-district
-or per-subdistrict counts that sum correctly, use \code{\link[=census_languages]{census_languages()}}.
+Mother tongue speakers by language from the 2011 Census C-16 tables, at
+state, district and subdistrict level. The counts are by sector and by sex.
+The package downloads the table on first use. Refer to \code{\link[=census_cache_dir]{census_cache_dir()}}.
+\code{\link[=census_languages]{census_languages()}} gives the same counts for one level at a time, without
+the "Others" residual rows.
+}
+\details{
+The source file has no subdistrict code. A district and its subdistricts
+have the same \code{district_code}. The build sets \code{geography} from the row
+order: the rows of the district come first.
+
+The district rows, the
+subdistrict rows and the \link{census_2011_pca} population of a district have the
+same total. Filter to one \code{geography} before you add rows. The table
+also stores sector as rows, so filter to \code{sector == "total"} too.
+
+In Shajapur district (Madhya Pradesh), five tehsils (Agar, Shajapur,
+Gulana, Moman Badodiya, Shujalpur) have only one Hindi row each. The L1 row of Kalapipal holds the Hindi speakers of all six
+tehsils. The district rows are complete.
 }
 \examples{
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}

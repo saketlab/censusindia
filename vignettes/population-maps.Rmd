@@ -49,11 +49,12 @@ ggplot(pop_geo) +
 growth_years <- c(1951, 1961, 1971, 1981, 1991, 2001, 2011)
 
 pop <- census_population_time_series |>
+  census_years() |>
   filter(geography == "state") |>
-  arrange(state_name, year)
+  arrange(state_name_harmonized, year)
 
 growth <- pop |>
-  group_by(state_name) |>
+  group_by(state_name_harmonized) |>
   mutate(growth_rate = 100 * (population - lag(population)) / lag(population)) |>
   filter(!is.na(growth_rate), year %in% growth_years) |>
   ungroup()

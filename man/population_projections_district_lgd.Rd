@@ -3,16 +3,17 @@
 \docType{data}
 \name{population_projections_district_lgd}
 \alias{population_projections_district_lgd}
-\title{Population projections -- district level, LGD boundaries (2012-2031)}
+\title{Population projections: district level, LGD boundaries (2012-2031)}
 \format{
-A tibble with 15,660 rows and 6 columns:
+A tibble with 15,660 rows and 8 columns:
 \describe{
-\item{year}{Projection year (annual, 2012-2031)}
-\item{state_name_harmonized}{Harmonized state name for joining. Dadra &
-Nagar Haveli and Daman & Diu appear merged as one UT (their 2020
-administrative merger); the LGD source has no district-level way to
-split them back apart.}
-\item{district}{District name (LGD naming convention)}
+\item{year}{Projection year (each year, 2012-2031)}
+\item{geography}{Geographic level ("district")}
+\item{state_code}{Integer 2011 census state code}
+\item{state_name_harmonized}{Harmonized state name, used to join
+datasets. Dadra & Nagar Haveli and Daman & Diu are one UT, as merged
+in 2020. The LGD source has no district-level data to divide them.}
+\item{district}{District name (LGD names)}
 \item{males}{Projected male population}
 \item{females}{Projected female population}
 \item{population}{Projected total population (males + females)}
@@ -29,19 +30,22 @@ overlap analysis.
 population_projections_district_lgd
 }
 \description{
-MOHFW population projections scaled to current Local Government
-Directory (LGD) district boundaries. Annual projections from 2012 to
-2031, summed across age groups from \code{\link[=population_projections_district_lgd_age]{population_projections_district_lgd_age()}}.
+MOHFW population projections, scaled to the current Local Government
+Directory (LGD) district boundaries. The table gives one projection for
+each year from 2012 to 2031. Each value is the sum of the age groups in
+\code{\link[=population_projections_district_lgd_age]{population_projections_district_lgd_age()}}.
 }
 \section{Known defects}{
 
-Derived from \code{\link[=population_projections_district_age]{population_projections_district_age()}} by area overlap, so
-district sums do not exactly reproduce \link{population_projections_state},
-and Karnataka inherits the age tables' disagreement with
-\link{population_projections_district}.
-Theni (Tamil Nadu) 2017-2031 and the 80+ group of Moga (Punjab) and Tapi
-(Gujarat) in 2022-2026 are derived, as in
-\code{\link[=population_projections_district_age]{population_projections_district_age()}}.
+The values come from \code{\link[=population_projections_district_age]{population_projections_district_age()}}, scaled by
+area overlap. The district sums are not exactly equal to
+\link{population_projections_state}. Karnataka has the same difference from
+\link{population_projections_district} as the age tables.
+
+The report does not print some values. The values for Theni (Tamil Nadu)
+2017-2031 are calculated. The values for the 80+ group of Moga (Punjab)
+and Tapi (Gujarat) in 2022-2026 are also calculated.
+\code{\link[=population_projections_district_age]{population_projections_district_age()}} has the same values.
 }
 
 \keyword{datasets}

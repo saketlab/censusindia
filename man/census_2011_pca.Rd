@@ -9,20 +9,20 @@ A tibble with 640 rows and 19 columns:
 \describe{
 \item{year}{Census year (2011)}
 \item{geography}{Geographic level ("district")}
-\item{state_code}{Numeric state code}
-\item{state_name}{Name of the state}
-\item{state_name_harmonized}{Harmonized state name for joining across datasets}
-\item{district_code}{Numeric district code}
-\item{name}{Name of the district}
+\item{state_code}{Integer state code}
+\item{state_name_harmonized}{Harmonized state name, used to join datasets}
+\item{state_name}{State name from the source}
+\item{district_code}{Integer district code, unique in India (1-640)}
+\item{district}{Name of the district}
 \item{households}{Number of households}
-\item{population_total}{Total population}
-\item{population_male}{Male population}
-\item{population_female}{Female population}
-\item{population_0_6}{Population aged 0-6 years}
+\item{population}{Total population}
+\item{males}{Male population}
+\item{females}{Female population}
+\item{population_0_6}{Population of age 0-6 years}
 \item{sc_population}{Scheduled Caste population}
 \item{st_population}{Scheduled Tribe population}
-\item{literate_total}{Total literate population}
-\item{workers_total}{Total workers}
+\item{literate}{Literate population}
+\item{workers}{Total workers}
 \item{main_workers}{Main workers}
 \item{marginal_workers}{Marginal workers}
 \item{non_workers}{Non-workers}
@@ -37,13 +37,13 @@ Datasets." Harvard Dataverse. \doi{10.7910/DVN/ON8CP8}.
 census_2011_pca
 }
 \description{
-District-level population, SC/ST, literacy, and worker statistics from
-the 2011 Census. Covers all 640 districts; \code{population_total} sums to
+District-level population, SC/ST, literacy and worker data from the 2011
+Census. The table has all 640 districts. \code{population} adds to
 1,210,854,977, the 2011 India total.
 }
 \details{
-Aggregated at district level from the village-level 2011 PCA that also
-backs \code{\link[=census_2011_demographics]{census_2011_demographics()}}, \code{\link[=census_2011_workers]{census_2011_workers()}} and
-\code{\link[=census_2011_marginal_detail]{census_2011_marginal_detail()}}. For the 2001 round see \link{census_2001_pca}.
+The values are district sums of the village-level 2011 PCA. The same
+source gives \code{\link[=census_2011_demographics]{census_2011_demographics()}}, \code{\link[=census_2011_workers]{census_2011_workers()}} and
+\code{\link[=census_2011_marginal_detail]{census_2011_marginal_detail()}}. For 2001, refer to \link{census_2001_pca}.
 }
 \keyword{datasets}

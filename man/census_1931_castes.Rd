@@ -8,18 +8,19 @@
 A tibble with 2,226 rows and 17 columns:
 \describe{
 \item{year}{Census year (1931)}
-\item{province}{Province, princely state or agency, standardised}
+\item{province}{Province, princely state or agency, with a standard name}
 \item{unit_type}{\code{"British Province"}, \code{"Princely State"} or \code{"Agency"}}
-\item{caste}{Caste or community as printed}
-\item{rank}{Position in the province's ranked caste list, 1 the largest}
+\item{caste}{Caste or community from the source}
+\item{rank}{Position in the ranked caste list of the province. 1 is the
+largest.}
 \item{hindu,muslim,sikh,jain,buddhist,christian,tribal,parsi,jew}{Persons
-of the caste returned under each religion; \code{tribal} is the 1931 "Tribal"
-or "Primitive" religion return}
+of the caste in each religion. \code{tribal} is the 1931 "Tribal" or
+"Primitive" religion.}
 \item{total}{Sum of the religion columns}
-\item{total_ranked_list}{Total printed in the province's ranked list; NA
-for the Andaman & Nicobar Islands}
-\item{notes}{Compiler's flag, for example where \code{total} and
-\code{total_ranked_list} disagree}
+\item{total_ranked_list}{Total in the ranked list of the province. NA
+for the Andaman & Nicobar Islands.}
+\item{notes}{Note from the compiler, for example where \code{total} and
+\code{total_ranked_list} are different}
 }
 }
 \source{
@@ -32,15 +33,15 @@ Census of India, 1931.
 census_1931_castes
 }
 \description{
-Population of every caste and community listed in the caste tables of the
-1931 Census, cross-classified by religion, for 24 provinces, princely states
-and agencies of British India.
+Population of each caste and community in the caste tables of the 1931
+Census, by religion. The table has 24 provinces, princely states and
+agencies of British India.
 }
 \details{
-A religion column is NA where the province's table has no column for that
-religion, and 0 where the column exists and no one was returned. Ajmer-Merwara
-has totals only, so its religion columns and \code{total} are NA. Residual
-entries such as "Caste Unspecified" and "Indian Christian" are rows of their
-own.
+A religion column is NA if the table of the province has no column for
+that religion. The value is 0 if the column is present and has no
+persons. Ajmer-Merwara has only totals. Its religion columns and
+\code{total} are NA. Remainder entries, for example "Caste Unspecified" and
+"Indian Christian", are separate rows.
 }
 \keyword{datasets}

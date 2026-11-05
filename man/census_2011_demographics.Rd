@@ -10,31 +10,33 @@ Census of India 2011, Primary Census Abstract.
 census_2011_demographics()
 }
 \value{
-A tibble with 751,594 rows and 28 columns:
+A tibble with 751,594 rows and 29 columns. Male and female columns
+have a \code{_male} or \code{_female} suffix. A column without a suffix
+gives persons:
 \describe{
-\item{state_code}{Numeric state code}
-\item{district_code}{Numeric district code}
-\item{subdistrict_code}{Numeric subdistrict code}
-\item{town_village_code}{Town or village code}
-\item{ward_code}{Ward code}
-\item{level}{Geographic level (india, state, district, subdistrict, town, village, ward)}
+\item{year}{Census year (2011)}
+\item{geography}{Geographic level: "india", "state", "district",
+"subdistrict", "town", "village" or "ward"}
+\item{sector}{Sector: "total", "rural" or "urban"}
+\item{state_code,district_code,subdistrict_code,town_village_code,ward_code}{Integer
+geographic codes. NA above the level of the unit}
+\item{state_name_harmonized}{Harmonized state name. Use it to join datasets}
 \item{name}{Name of the geographic unit}
-\item{state_name_harmonized}{Harmonized state name for joining across datasets}
-\item{sector}{Sector: "total", "rural", or "urban"}
 \item{households}{Number of households}
-\item{population_total,population_male,population_female}{Total, male, and female population}
-\item{pop_0_6_total,pop_0_6_male,pop_0_6_female}{Population aged 0-6 years}
-\item{sc_total,sc_male,sc_female}{Scheduled Caste population}
-\item{st_total,st_male,st_female}{Scheduled Tribe population}
-\item{literate_total,literate_male,literate_female}{Literate population}
-\item{illiterate_total,illiterate_male,illiterate_female}{Illiterate population}
+\item{population,males,females}{Total, male, and female population}
+\item{population_0_6,population_0_6_male,population_0_6_female}{Population of age 0-6 years}
+\item{sc_population,sc_population_male,sc_population_female}{Scheduled Caste population}
+\item{st_population,st_population_male,st_population_female}{Scheduled Tribe population}
+\item{literate,literate_male,literate_female}{Literate population}
+\item{illiterate,illiterate_male,illiterate_female}{Illiterate population}
 }
 }
 \description{
-Population, SC/ST, and literacy counts from the 2011 Primary Census
-Abstract at all geographic levels (India, state, district, subdistrict,
-town/village, ward), split by total/rural/urban sector. Downloaded on first
-use; see \code{\link[=census_cache_dir]{census_cache_dir()}}. Use \code{\link[=at_level]{at_level()}} before summing.
+Population, SC/ST and literacy counts from the 2011 Primary Census Abstract.
+The table has all geographic levels (India, state, district, subdistrict,
+town/village, ward) and the total, rural and urban sectors. The package
+downloads the table on first use (refer to \code{\link[=census_cache_dir]{census_cache_dir()}}). Use
+\code{\link[=at_level]{at_level()}} before you add rows.
 }
 \examples{
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}

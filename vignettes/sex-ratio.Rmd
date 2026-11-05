@@ -132,7 +132,7 @@ tail(pop_2011 |> select(state_name_harmonized, sex_ratio), 5)
 change_data <- census_population_time_series |>
   filter(geography == "state", year %in% c(1961, 2011)) |>
   mutate(sex_ratio = 1000 * females / males) |>
-  select(state_name_harmonized, state_name_harmonized, year, sex_ratio) |>
+  select(state_name_harmonized, year, sex_ratio) |>
   tidyr::pivot_wider(names_from = year, values_from = sex_ratio, names_prefix = "y") |>
   mutate(change = y2011 - y1961) |>
   attach_geometry(year = 2011, geography = "state")

@@ -31,7 +31,7 @@ library(tidyr)
 library(ggplot2)
 
 state <- get_population(geography = "state") |>
-  filter(state_name_harmonized != "India")
+  filter(!state_name_harmonized %in% c("India", "Dadra & Nagar Haveli and Daman & Diu"))
 india <- get_population(geography = "state") |>
   filter(state_name_harmonized == "India")
 dist <- get_population(geography = "district")
@@ -546,7 +546,8 @@ lgd_ratio <- lgd |>
   group_by(state_name_harmonized) |>
   summarise(lgd_sum = sum(population), districts = n(), .groups = "drop") |>
   inner_join(
-    state |> filter(year == 2021) |> select(state_name_harmonized, state_total = population),
+    get_population(geography = "state", year = 2021) |>
+      select(state_name_harmonized, state_total = population),
     by = "state_name_harmonized"
   ) |>
   mutate(
@@ -559,12 +560,12 @@ ggplot(lgd_ratio, aes(ratio, state_name_harmonized)) +
   geom_segment(aes(x = 1, xend = ratio, yend = state_name_harmonized),
     colour = "grey80", linewidth = 0.5
   ) +
-  geom_point(colour = DIV_HIGH, size = 2.4) +
-  scale_x_continuous(breaks = c(0, 0.5, 1, 1.5, 2, 2.5)) +
+  geom_point(colour = ACCENT, size = 2.4) +
+  scale_x_continuous(labels = scales::number_format(accuracy = 0.005)) +
   labs(
     x = "Sum of LGD districts / state projection, 2021", y = NULL,
-    title = "population_projections_district_lgd does not reconcile to the state table",
-    subtitle = "Values should sit on the grey line at 1.0. Use population_projections_district instead",
+    title = "population_projections_district_lgd reconciles to the state table within 1.5%",
+    subtitle = "Ratio of summed LGD district projections to the state projection (1.000 = exact match)",
     caption = SRC
   )
 ```

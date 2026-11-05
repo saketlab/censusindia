@@ -5,17 +5,23 @@
 \alias{census_2011_sc_st}
 \title{Census 2011 Scheduled Castes and Scheduled Tribes (A-10/A-11)}
 \format{
-A tibble with 14,028 rows and 9 columns:
+A tibble with 14,028 rows and 12 columns:
 \describe{
 \item{year}{Census year (2011)}
-\item{state_name_harmonized}{Harmonized state name for joining across datasets}
-\item{district_name}{Name of the district}
-\item{category}{\code{"Scheduled Caste"} or \code{"Scheduled Tribe"}, spelled out}
-\item{category_code}{\code{"SC"} or \code{"ST"}, for filtering by the short form}
+\item{geography}{Geographic level ("district")}
+\item{state_code}{Integer state code}
+\item{state_name_harmonized}{Harmonized state name, used to join datasets}
+\item{district}{District name, as \link{census_2011_pca} writes it}
+\item{category}{\code{"Scheduled Caste"} or \code{"Scheduled Tribe"} (full name)}
+\item{category_code}{\code{"SC"} or \code{"ST"} (short form)}
 \item{caste_tribe_name}{Name of the caste or tribe}
+\item{parent_tribe}{The tribe that contains the tribe of this row ("Naga"
+for the (ST) rows of Nagaland). NA on other rows.}
 \item{population}{Population of the caste or tribe}
-\item{percentage}{Share of district population}
-\item{district_total_population}{Total district population}
+\item{percent}{\code{population / district_total_population * 100}, rounded
+to two decimal places}
+\item{district_total_population}{District population: the \code{population}
+column of \link{census_2011_pca} for the same district}
 }
 }
 \source{
@@ -29,17 +35,23 @@ District-level Scheduled Caste and Scheduled Tribe population from the 2011
 Census A-10 and A-11 tables.
 }
 \details{
-The two categories are not symmetric. Scheduled Tribes are enumerated by
-name, 581 of them. Scheduled Castes are not: all 582 SC rows carry the single
-label \code{"All Scheduled Castes"}, one per district. Nothing in this package
-resolves caste below that aggregate.
+The table gives each Scheduled Tribe by name: 581 names. The table does
+not give Scheduled Castes by name. All 582 SC rows have the label
+\code{"All Scheduled Castes"}, one row for each district.
 
-Filter with either spelling: \code{category} holds the long form, \code{category_code}
-holds \code{SC}/\code{ST}. \code{\link[=census_sc_st]{census_sc_st()}} accepts both.
+You can filter on two columns. \code{category} has the full name, and
+\code{category_code} has \code{SC} or \code{ST}. \code{\link[=census_sc_st]{census_sc_st()}} accepts the two forms.
 
-ST rows include \code{"Generic Tribes etc."}, the residual for members who
-returned no specific tribe: 585 rows, 2,804,148 people.
-\link{census_2011_tribes} is this table's ST rows with that residual removed and
-the names harmonised.
+The ST rows include \code{"Generic Tribes etc."}. These rows give the persons
+who did not give a specific tribe: 585 rows, 2,804,148 persons.
+\link{census_2011_tribes} contains the ST rows of this table, without these rows
+and with harmonized names.
+
+For Nagaland, the census tabulates the Scheduled Tribe \code{"Naga"} alongside its
+constituent tribes marked \code{"(ST)"} (\code{Angami(ST)}, \code{Ao(ST)}, ...). Those
+193 rows carry \code{parent_tribe = "Naga"}, and in each district the \code{"Naga"} row
+equals their sum. To count each person once, sum only rows where
+\code{is.na(parent_tribe)}; the ST rows then match \code{census_2011_pca$st_population}
+in every district (104,545,716 in total).
 }
 \keyword{datasets}

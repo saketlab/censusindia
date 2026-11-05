@@ -14,75 +14,77 @@ get_population(
 )
 }
 \arguments{
-\item{year}{Integer or integer vector of projection years. If NULL
-(default), returns all available years.}
+\item{year}{Integer or integer vector of projection years, or \code{NULL}
+(default) for all published years in the table.}
 
 \item{geography}{Geographic level: \code{"state"} or \code{"district"}.}
 
-\item{state}{Optional. Filter to specific state(s) by name or
-abbreviation (e.g., \code{"Maharashtra"} or \code{"MH"}).}
+\item{state}{Optional state filter: one or more canonical state names or
+two-letter codes (e.g., \code{"Maharashtra"} or \code{"MH"}).}
 
-\item{boundary}{For district geography, which boundary system:
-\code{"census2011"} (default, 640 districts) or \code{"lgd"} (785 districts).
-Ignored for state geography.}
+\item{boundary}{District boundary system: \code{"census2011"} (default, 640
+districts) or \code{"lgd"} (783 districts). Ignored when \code{geography = "state"}.}
 
-\item{geometry}{If \code{TRUE}, attaches geographic boundaries (Census 2011).
-Only works with \code{boundary = "census2011"} for district level.}
+\item{geometry}{If \code{TRUE}, attaches Census 2011 boundaries and returns an
+\code{sf} object. At district level, supported only when
+\code{boundary = "census2011"}.}
 
-\item{by_age}{If \code{TRUE}, returns one row per age group. States
-come in 5-year bands from "0-4" to "80+"; districts in single years of
-age 0-14, then 5-year bands 15-19 through 80+. See
-\link{population_projections_state_age}, \code{\link[=population_projections_district_age]{population_projections_district_age()}}
-and \code{\link[=population_projections_district_lgd_age]{population_projections_district_lgd_age()}}. State coverage by age is
-23 major states plus an "India" row and one North-East aggregate row,
-"North East States Excluding Assam"; any other state is an error.}
+\item{by_age}{If \code{TRUE}, returns age-stratified rows. State projections use
+5-year age bands from \code{"0-4"} to \code{"80+"}; district projections use single
+years for ages 0-14 and 5-year bands from \code{"15-19"} to \code{"80+"}. See
+\link{population_projections_state_age}, \code{\link[=population_projections_district_age]{population_projections_district_age()}},
+and \code{\link[=population_projections_district_lgd_age]{population_projections_district_lgd_age()}}. State age projections
+cover 23 major states, \code{"India"}, and \code{"North East States Excluding Assam"};
+requesting other states with \code{by_age = TRUE} raises an error.}
 }
 \value{
-A tibble (or sf object if \code{geometry = TRUE}) with columns:
-\code{year}, \code{state_name_harmonized}, \code{males}, \code{females}, \code{population},
-\code{estimate}, \code{district} for district-level data, and \code{age_group} if
-\code{by_age = TRUE}. \code{estimate} is \code{"published"} for a year printed in the
-MOHFW tables, \code{"interpolated"} or \code{"extrapolated"} otherwise.
+A tibble (or an \code{sf} object if \code{geometry = TRUE}) with columns
+\code{year}, \code{geography}, \code{state_code}, \code{state_name_harmonized}, \code{district}
+(district level only), \code{age_group} (when \code{by_age = TRUE}), \code{males},
+\code{females}, \code{population}, and \code{estimate}. \code{geography} is \code{"india"} on
+national rows. All counts are in persons. \code{estimate} is \code{"published"} for
+years printed in the MoHFW/IIPS tables, \code{"interpolated"} for years between
+printed years, and \code{"extrapolated"} for years after the last printed year.
 }
 \description{
-MOHFW population projections (2011-2036) at state or district level,
-based on the 2011 Census. District projections are available using
-either Census 2011 boundaries (640 districts, 5-year intervals) or
-current LGD boundaries (785 districts, annual).
+Queries Ministry of Health and Family Welfare (MoHFW) population projections
+(2011-2036, Census 2011 base) at state or district level. District
+projections are available on two boundary sets: Census 2011 districts (640
+districts at 5-year intervals) and Local Government Directory (LGD) districts
+(783 districts, annual).
 }
 \details{
-State-level data covers 2011-2036 and has 39 entries: 28 states, the 9
-UTs that MOHFW gives, the merged "Dadra & Nagar Haveli and Daman & Diu",
-and "India". MOHFW gives "Dadra & Nagar Haveli" and "Daman & Diu" as two
-UTs. This package adds the merged UT as the sum of the two. To get the sum
-of the states, remove "India" and one of the two Dadra/Daman forms. Refer
-to \link{population_projections_state}. Values are numbers of persons. This is
-also true for the state rows by age, but
-\link{population_projections_state_age} stores them in thousands.
+State projections cover 2011-2036 across 39 entries: 28 states, the 9 union
+territories printed by MoHFW (including separate \code{"Dadra & Nagar Haveli"} and
+\code{"Daman & Diu"} rows), the merged \code{"Dadra & Nagar Haveli and Daman & Diu"} UT
+(the sum of the two), and \code{"India"}. To sum across states without
+double-counting, exclude \code{"India"} and either the merged UT or the two
+constituent UTs; see \link{population_projections_state}.
 
-The source data rounds Persons, Male, and Female independently (in
-thousands), so \code{population} may differ from \code{males + females} by up
-to 1000 at the state level.
+Because the state report rounds Persons, Male, and Female independently to
+the nearest thousand, \code{population} and \code{males + females} can differ by up to
+1,000 at state level (2,000 for the summed UT).
 
-District-level Census 2011 data has projections at 5-year intervals
-(2011, 2016, 2021, 2026, 2031). LGD district data has annual
-projections from 2012 to 2031.
+Census 2011 district projections are published at 5-year intervals (2011,
+2016, 2021, 2026, 2031); LGD district projections are annual from 2012 to
+2031.
 
-A \code{year} absent from the table is estimated from the two nearest table
-years by geometric (exponential) growth, applied separately to \code{males},
-\code{females} and \code{population}:
+When a requested \code{year} is between published table years, \code{get_population()}
+interpolates \code{males}, \code{females}, and \code{population} independently using
+geometric (exponential) growth between the two nearest published years:
 
 \deqn{P_t = P_1 (P_2 / P_1)^{(t - t_1) / (t_2 - t_1)}}
 
-Estimated districts need not sum exactly to
-the estimated state.
+Because each series is interpolated independently, summed district estimates
+need not equal the interpolated state estimate.
 
-Years after the last table year extrapolate with the last interval's rate,
-up to five years out: 2041 for states, 2036 for districts. Years before 2011
-or past that limit are an error.
+Years after the last published year are extrapolated using the final
+interval's growth rate for up to five years (to 2041 for states, 2036 for
+districts). Years before the start of the table or more than five years past
+the end raise an error.
 
-Telangana and Ladakh are included as separate entries even though
-they did not exist as states at the time of the 2011 Census.
+Telangana and Ladakh are reported as separate entries even though both were
+created after the 2011 Census.
 }
 \examples{
 # State-level projections for 2021

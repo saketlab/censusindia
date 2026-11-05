@@ -2,7 +2,7 @@
 % Please edit documentation in R/download.R
 \name{population_projections_district_age}
 \alias{population_projections_district_age}
-\title{Population projections, district level, Census 2011 boundaries, by age group (2012-2031)}
+\title{Population projections: district level, Census 2011 boundaries, by age group (2012-2031)}
 \source{
 Same as \link{population_projections_district}.
 }
@@ -10,34 +10,42 @@ Same as \link{population_projections_district}.
 population_projections_district_age()
 }
 \value{
-A tibble with 371,200 rows and 7 columns:
+A tibble with 371,200 rows and 9 columns:
 \describe{
 \item{year}{Projection year (annual, 2012-2031)}
-\item{state_name_harmonized}{Harmonized state name for joining}
-\item{district}{District name (Census 2011 naming convention)}
+\item{geography}{Geographic level ("district")}
+\item{state_code}{Integer 2011 census state code}
+\item{state_name_harmonized}{Harmonized state name. Use it to join datasets}
+\item{district}{District name as in Census 2011}
 \item{age_group}{Single years "0".."14", then 5-year bands "15-19"
-through "80+"}
+to "80+"}
 \item{males}{Projected male population}
 \item{females}{Projected female population}
 \item{population}{Projected total population (males + females)}
 }
 }
 \description{
-Age-stratified detail behind \link{population_projections_district}, on Census
-2011 district boundaries (no LGD spatial apportionment involved). Same
-age-group scheme as \code{\link[=population_projections_district_lgd_age]{population_projections_district_lgd_age()}}: single
-years 0-14, then 5-year bands through 80+. Downloaded on first use;
-see \code{\link[=census_cache_dir]{census_cache_dir()}}.
+The age-group detail of \link{population_projections_district}, on Census 2011
+district boundaries. No LGD area apportionment applies. The age groups are
+the same as in \code{\link[=population_projections_district_lgd_age]{population_projections_district_lgd_age()}}: single years
+0-14, then 5-year bands to 80+. The package downloads the table on first
+use. Refer to \code{\link[=census_cache_dir]{census_cache_dir()}}.
 }
 \details{
-Values are as printed in the IIPS report. District names match
-\link{population_projections_district}.
+The values are from the printed IIPS report. The district names agree
+with \link{population_projections_district}.
 
-Two blocks are derived because the PDF does not print them. Moga (Punjab)
-and Tapi (Gujarat) print no 80+ row for 2022-2026; it is the printed All
-ages minus the other printed age groups. Theni's (Tamil Nadu) 2017-2031
-pages repeat Madurai's numbers; Karnataka's age tables sum to a
-different projection from \link{population_projections_district}.
+The PDF does not print two blocks, so the package derives them. Moga
+(Punjab) and Tapi (Gujarat) have no 80+ row for 2022-2026. Their 80+ value
+is the printed All ages minus the other printed age groups. The 2017-2031
+pages of Theni (Tamil Nadu) repeat the numbers of Madurai.
+
+The printed age tables for Karnataka are a different projection from Table 8
+of the same report. The package keeps their age-sex shares and scales them
+to Table 8.
+Between the five-year points of Table 8, it interpolates geometrically.
+The age groups of each district add to
+\link{population_projections_district}. The LGD tables come from these values.
 }
 \examples{
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}

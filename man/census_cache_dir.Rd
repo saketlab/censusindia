@@ -10,21 +10,23 @@ census_cache_dir()
 clear_census_cache()
 }
 \value{
-\code{census_cache_dir()} returns the cache path, which may not exist
-yet. \code{clear_census_cache()} deletes it and invisibly returns that path.
+\code{census_cache_dir()} returns the cache directory path (which may not
+yet exist on disk). \code{clear_census_cache()} deletes the cache directory,
+clears the in-memory session cache, and returns the path invisibly.
 }
 \description{
-Census boundaries and the seven largest tables are downloaded on first use,
-checked against a pinned MD5 checksum, and kept here for later sessions.
+Census boundary files and the seven largest tables are downloaded on first
+use, verified against pinned MD5 checksums, and cached on disk across R
+sessions.
 }
 \details{
-The cache lives in \code{\link[tools:R_user_dir]{tools::R_user_dir()}}. Set the option
-\code{censusindia.cache_dir} to use another directory.
+By default the cache lives in \code{\link[tools:R_user_dir]{tools::R_user_dir()}}. Set
+\code{options(censusindia.cache_dir = ...)} to use a different directory.
 }
 \examples{
 census_cache_dir()
 }
 \seealso{
-\code{\link[=census_download]{census_download()}} to fetch everything at once;
-\code{\link[=clear_geometry_cache]{clear_geometry_cache()}} to release what the session holds in memory.
+\code{\link[=census_download]{census_download()}} downloads all remote files upfront;
+\code{\link[=clear_geometry_cache]{clear_geometry_cache()}} evicts objects cached in session memory.
 }

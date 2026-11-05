@@ -9,20 +9,21 @@ A tibble with 593 rows and 19 columns:
 \describe{
 \item{year}{Census year (2001)}
 \item{geography}{Geographic level ("district")}
-\item{state_code}{Numeric state code}
-\item{state_name}{Name of the state}
-\item{state_name_harmonized}{Harmonized state name for joining across datasets}
-\item{district_code}{Numeric district code}
-\item{name}{Name of the district}
+\item{state_code}{Integer state code}
+\item{state_name_harmonized}{Harmonized state name, used to join datasets}
+\item{state_name}{State name from the source}
+\item{district_code}{Integer district code. Each state has its own
+numbers. One code can occur in more than one state.}
+\item{district}{Name of the district}
 \item{households}{Number of households}
-\item{population_total}{Total population}
-\item{population_male}{Male population}
-\item{population_female}{Female population}
-\item{population_0_6}{Population aged 0-6 years}
+\item{population}{Total population}
+\item{males}{Male population}
+\item{females}{Female population}
+\item{population_0_6}{Population of age 0-6 years}
 \item{sc_population}{Scheduled Caste population}
 \item{st_population}{Scheduled Tribe population}
-\item{literate_total}{Total literate population}
-\item{workers_total}{Total workers}
+\item{literate}{Literate population}
+\item{workers}{Total workers}
 \item{main_workers}{Main workers}
 \item{marginal_workers}{Marginal workers}
 \item{non_workers}{Non-workers}
@@ -35,18 +36,14 @@ Census of India 2001, Primary Census Abstract.
 census_2001_pca
 }
 \description{
-District-level population, SC/ST, literacy, and worker statistics from
-the 2001 Census. Covers 593 districts; \code{population_total} sums to
-1,028,610,328, the 2001 India total.
+District-level population, SC/ST, literacy and worker data from the 2001
+Census. The table has 593 districts. \code{population} adds to 1,028,610,328,
+the 2001 India total.
 }
 \details{
-Use 2001 boundaries with \code{\link[=attach_geometry]{attach_geometry()}}. Districts are 2001 vintage,
-so the 2011 boundary file has no polygon for several of them and will
-mismatch others: \verb{North Cachar Hills} (renamed Dima Hasao in 2010) and an
-undivided \code{Medinipur} (split into Purba and Paschim in 2002) both resolve
-to the wrong 2011 district. See \link{census_2011_pca} for the 2011 round.
-
-Until version 0.0.0.9000 this table shipped as \code{census_2011_pca} with a
-hard-coded \code{year} of 2011.
+Use the 2001 boundaries with \code{\link[=attach_geometry]{attach_geometry()}}. The 2011 boundary file
+has no polygon for some 2001 districts and the wrong polygon for others,
+for example \verb{North Cachar Hills} and the undivided \code{Medinipur}. For 2011,
+refer to \link{census_2011_pca}.
 }
 \keyword{datasets}

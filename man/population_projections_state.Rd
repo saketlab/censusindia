@@ -3,12 +3,15 @@
 \docType{data}
 \name{population_projections_state}
 \alias{population_projections_state}
-\title{Population projections - state level (2011-2036)}
+\title{Population projections: state level (2011-2036)}
 \format{
-A tibble with 1014 rows (39 entries x 26 years) and 5 columns:
+A tibble with 1014 rows (39 entries x 26 years) and 7 columns:
 \describe{
 \item{year}{Projection year (2011-2036)}
-\item{state_name_harmonized}{Harmonized state name for joining}
+\item{geography}{"india" on the India rows, "state" on all other rows}
+\item{state_code}{Integer 2011 census state code. NA for India, Ladakh
+and the merged Dadra & Nagar Haveli and Daman & Diu.}
+\item{state_name_harmonized}{Harmonized state name, used to join datasets}
 \item{males}{Projected male population}
 \item{females}{Projected female population}
 \item{population}{Projected total population}
@@ -39,18 +42,18 @@ in January 2020. This row is the sum of the two UTs. It has the same
 name as in the LGD district table, so data from 2020 and later can join.
 \item "India", the national total.
 }
-Thus the population of the two old UTs is in the table two times. To get
-the sum of the states, remove "India". Also remove the merged UT, or remove
-the two old UTs.
+The population of the two former UTs appears twice in the table. When
+summing across states, exclude \code{"India"} and either the merged UT or the two
+former UTs.
 
-Values are numbers of persons. The source rounds persons, males and
-females to thousands separately. Thus \code{population} can be different from
-\code{males + females} by a maximum of 1000. For the merged UT, the maximum is
-2000, because the row is the sum of two rounded rows.
+Values are counts of persons. Because the source report rounds persons,
+males, and females to thousands independently, \code{population} can differ from
+\code{males + females} by up to 1,000 (or up to 2,000 for the merged UT, which is
+the sum of two rounded rows).
 
 Values are the same as Table 8 of the report. The India and Odisha rows
 use the July 2020 edition. That edition changed the male projection for
-Odisha. Thus the two rows are different from the November 2019 report
+Odisha. The two rows are different from the November 2019 report
 at the link below.
 }
 \keyword{datasets}

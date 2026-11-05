@@ -5,27 +5,37 @@
 \alias{census_1981}
 \title{Census 1981 Primary Census Abstract}
 \format{
-A tibble with 2,364 rows and 39 columns including:
+A tibble with 2,365 rows and 38 columns:
 \describe{
 \item{year}{Census year (1981)}
-\item{geo_id}{Unique geographic identifier}
-\item{geo_name}{Name of the geographic unit}
-\item{level}{Geographic level (india, state, district)}
-\item{state}{Name of the state}
-\item{state_name_harmonized}{Harmonized state name for joining across datasets}
-\item{district}{Name of the district (if applicable)}
-\item{sector}{Sector: "total", "rural", or "urban"}
+\item{geography}{Geographic level: "india", "state", "district", "town"
+or "urban_agglomeration"}
+\item{sector}{Sector: "total", "rural" or "urban"}
+\item{state_code}{Integer 2011 census code of the harmonized state. NA on
+the India rows.}
+\item{state_name_harmonized}{Harmonized state name, used to join datasets}
+\item{state_name}{State name from the source}
+\item{district}{Name of the district. NA above district level and on
+urban agglomerations.}
+\item{name}{Name of the unit from the source. Urban
+agglomerations have only this name.}
 \item{area_km2}{Area in square kilometers}
-\item{total_persons}{Total population}
-\item{total_males}{Male population}
-\item{total_females}{Female population}
-\item{literate_persons}{Total literate population}
-\item{main_workers_persons}{Total main workers}
-\item{cultivators_persons}{Total cultivators}
-\item{agri_labour_persons}{Total agricultural labourers}
-\item{hh_industry_persons}{Household industry workers}
-\item{other_workers_persons}{Other workers}
-\item{non_workers_persons}{Non-workers}
+\item{occupied_houses}{Number of occupied residential houses}
+\item{households}{Number of households}
+\item{population, males, females}{Population: persons, males and females}
+\item{literate, literate_male, literate_female}{Literate population}
+\item{main_workers, main_workers_male, main_workers_female}{Main workers}
+\item{cultivators, cultivators_male, cultivators_female}{Main workers
+who are cultivators}
+\item{agri_labour, agri_labour_male, agri_labour_female}{Main workers
+who are agricultural laborers}
+\item{hh_industry, hh_industry_male, hh_industry_female}{Main workers in
+household industry}
+\item{other_workers, other_workers_male, other_workers_female}{Other main
+workers}
+\item{marginal_workers, marginal_workers_male,
+marginal_workers_female}{Marginal workers}
+\item{non_workers, non_workers_male, non_workers_female}{Non-workers}
 }
 }
 \source{
@@ -37,16 +47,26 @@ Datasets." Harvard Dataverse. \doi{10.7910/DVN/ON8CP8}.
 census_1981
 }
 \description{
-State and district data from the 1981 Census with literacy and worker
-classification.
+State and district data from the 1981 Census, with literacy and worker
+categories.
 }
-\section{Known defects}{
+\details{
+The table stores geographic levels and sectors as rows. \code{geography} is
+\code{"india"}, \code{"state"}, \code{"district"}, \code{"town"}, or \code{"urban_agglomeration"},
+with one row per sector. Call \code{\link[=at_level]{at_level()}} (or filter \code{geography} and
+\code{sector == "total"}) before summing across rows. Each of the 398 districts
+has a total, rural, and urban row; towns and urban agglomerations have only
+an urban row.
 
-The source is OCR'd and carries transcription errors. Of 420 rows with a
-rural and urban counterpart, 83 fail \code{rural + urban == total}; the largest
-gap is 101,809,324 in Himachal Pradesh \code{non_workers_males}, a powers-of-ten
-slip rather than rounding. District sums disagree with the state row in 19 of
-30 states. Check any column you rely on before trusting it.
+Verified against the printed volume (\code{India_1981_PCA_General.pdf}). In every
+state and district, persons = males + females and total = rural + urban for
+population, literacy, and each worker category, and districts sum to their
+state. OCR errors, leading digits clipped in the scan, and printing errors in
+the source volume were corrected.
+
+\href{https://github.com/saketlab/censusindia/blob/main/inst/ocr-corrections.csv}{inst/ocr-corrections.csv}
+records every correction with its page and evidence. The urban row of Guna,
+printed in the volume but omitted from the digitized source, was restored.
+Assam held no census in 1981 and has no rows.
 }
-
 \keyword{datasets}

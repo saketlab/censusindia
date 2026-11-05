@@ -1,19 +1,18 @@
-#' Base layer carrying India's full claimed extent
+#' Base layer with the full claimed extent of India
 #'
-#' A `ggplot2` layer of the state polygons for a census year, drawn as flat
-#' fill. Put it under a district choropleth so the national outline stays whole:
-#' the census enumerates no districts in the territory India claims but does not
-#' administer, so a district layer alone truncates the north by roughly two
-#' degrees of latitude.
+#' A `ggplot2` layer of the state polygons for a census year, with a flat fill.
+#' Put it below a district choropleth to keep the national outline complete.
+#' The census has no districts in the territory that India claims but does not
+#' administer.
 #'
-#' [plot_map()] adds this automatically. Use it directly when hand-rolling a map
-#' with [ggplot2::geom_sf()].
+#' [plot_map()] adds this layer automatically. Use it directly when you make a
+#' map with [ggplot2::geom_sf()].
 #'
-#' @param year Census year whose boundaries to draw. One of 1941, 1951, 1961,
-#'   1971, 1981, 1991, 2001, 2011.
-#' @param fill Fill colour for the base. Defaults to the grey [plot_map()] uses
-#'   for missing values.
-#' @param ... Passed to [ggplot2::geom_sf()].
+#' @param year Census year of the boundaries. One of 1941, 1951, 1961, 1971,
+#'   1981, 1991, 2001, 2011.
+#' @param fill Fill color for the base layer. The default is the grey that
+#'   [plot_map()] uses for missing values.
+#' @param ... Arguments for [ggplot2::geom_sf()].
 #'
 #' @return A `ggplot2` layer.
 #' @examplesIf interactive() && requireNamespace("ggplot2", quietly = TRUE)
@@ -32,12 +31,13 @@ census_base_layer <- function(year, fill = "grey80", ...) {
 
 #' Shared theme for censusindia figures
 #'
-#' `theme_census()` for plots with axes, `theme_census_map()` for choropleths.
+#' `theme_census()` is for plots with axes. `theme_census_map()` is for
+#' choropleths.
 #'
 #' @param base_size Base font size in points.
 #' @return A `ggplot2` theme.
 #' @examplesIf requireNamespace("ggplot2", quietly = TRUE)
-#' ggplot2::ggplot(census_2011_pca, ggplot2::aes(literate_total, population_total)) +
+#' ggplot2::ggplot(census_2011_pca, ggplot2::aes(literate, population)) +
 #'   ggplot2::geom_point() +
 #'   theme_census()
 #' @export
@@ -93,12 +93,12 @@ theme_census_map <- function(base_size = 11) {
 
 #' Sex ratio
 #'
-#' Females per 1,000 males, the convention the Census of India reports.
+#' Females per 1,000 males. The Census of India uses this convention.
 #'
 #' @param females,males Counts, of equal length.
 #' @return Numeric vector.
 #' @examples
-#' sex_ratio(census_2011_pca$population_female, census_2011_pca$population_male) |> head()
+#' sex_ratio(census_2011_pca$females, census_2011_pca$males) |> head()
 #' @export
 sex_ratio <- function(females, males) {
   1000 * females / males
@@ -109,7 +109,7 @@ sex_ratio <- function(females, males) {
 #' @param part,whole Counts, of equal length.
 #' @return Numeric vector.
 #' @examples
-#' share(census_2011_pca$literate_total, census_2011_pca$population_total) |> head()
+#' share(census_2011_pca$literate, census_2011_pca$population) |> head()
 #' @export
 share <- function(part, whole) {
   100 * part / whole

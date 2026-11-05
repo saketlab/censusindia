@@ -30,38 +30,21 @@ library(scales)
 ```
 
 ```{r data}
-data(census_2011_pca)
-
 districts <- census_2011_pca |>
   mutate(
-    sc_pct = 100 * sc_population / population_total,
-    st_pct = 100 * st_population / population_total
+    sc_pct = 100 * sc_population / population,
+    st_pct = 100 * st_population / population
   )
 
 boundaries <- get_census_boundaries(2011, "district")
-
 state_bounds <- get_census_boundaries(2011, "state")
-
-map_df <- boundaries |>
-  mutate(pop_key = paste0(
-    gsub("[^a-z0-9]", "", tolower(state_name_harmonized)), "_",
-    gsub("[^a-z0-9]", "", tolower(district_name))
-  )) |>
-  left_join(
-    districts |>
-      mutate(pop_key = paste0(
-        gsub("[^a-z0-9]", "", tolower(state_name_harmonized)), "_",
-        gsub("[^a-z0-9]", "", tolower(name))
-      )) |>
-      select(pop_key, population_total, sc_pct, st_pct),
-    by = "pop_key"
-  )
+map_df <- attach_geometry(districts, 2011, geography = "district")
 ```
 
 ```{r map-population}
 ggplot() +
   geom_sf(data = boundaries, fill = "grey80", color = "grey85", linewidth = 0.03) +
-  geom_sf(data = map_df, aes(fill = population_total), color = "grey60", linewidth = 0.05) +
+  geom_sf(data = map_df, aes(fill = population), color = "grey60", linewidth = 0.05) +
   geom_sf(data = state_bounds, fill = NA, color = "grey20", linewidth = 0.4) +
   scale_fill_viridis_c(
     option = "viridis", direction = 1, begin = 0.1, end = 0.9,
@@ -70,7 +53,7 @@ ggplot() +
   ) +
   labs(
     title = "District population (Census 2011)",
-    subtitle = "Log scale — Thane (MH) at 11 million, Dibang Valley (AR) at 8,000"
+    subtitle = "Log scale. Thane (MH) at 11 million, Dibang Valley (AR) at 8,000"
   ) +
   theme_void() +
   theme(
@@ -122,13 +105,13 @@ ggplot() +
 
 ```{r table-top-bottom}
 districts |>
-  arrange(desc(population_total)) |>
+  arrange(desc(population)) |>
   slice(c(1:10, (n() - 9):n())) |>
   mutate(
     rank = c(1:10, (nrow(districts) - 9):nrow(districts)),
-    population_total = format(population_total, big.mark = ",")
+    population = format(population, big.mark = ",")
   ) |>
-  select(rank, name, state_name_harmonized, population_total) |>
+  select(rank, district, state_name_harmonized, population) |>
   knitr::kable(
     col.names = c("Rank", "District", "State/UT", "Population"),
     caption = "Ten most and least populous districts (Census 2011)"

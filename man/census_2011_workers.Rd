@@ -10,32 +10,37 @@ Census of India 2011, Primary Census Abstract.
 census_2011_workers()
 }
 \value{
-A tibble with 751,594 rows and 42 columns:
+A tibble with 751,594 rows and 43 columns. Male and female columns
+have a \code{_male} or \code{_female} suffix. A column without a suffix
+gives persons:
 \describe{
-\item{state_code,district_code,subdistrict_code,town_village_code,ward_code}{Geographic codes}
-\item{level}{Geographic level (india, state, district, subdistrict, town, village, ward)}
+\item{year}{Census year (2011)}
+\item{geography}{Geographic level: "india", "state", "district",
+"subdistrict", "town", "village" or "ward"}
+\item{sector}{Sector: "total", "rural" or "urban"}
+\item{state_code,district_code,subdistrict_code,town_village_code,ward_code}{Integer
+geographic codes. NA above the level of the unit}
+\item{state_name_harmonized}{Harmonized state name. Use it to join datasets}
 \item{name}{Name of the geographic unit}
-\item{state_name_harmonized}{Harmonized state name for joining across datasets}
-\item{sector}{Sector: "total", "rural", or "urban"}
-\item{total_workers_total,total_workers_male,total_workers_female}{All workers}
-\item{main_workers_total,main_workers_male,main_workers_female}{Main workers}
-\item{main_cultivators_total,main_cultivators_male,main_cultivators_female}{Main cultivators}
-\item{main_agri_labour_total,main_agri_labour_male,main_agri_labour_female}{Main agricultural labourers}
-\item{main_hh_industry_total,main_hh_industry_male,main_hh_industry_female}{Main household industry workers}
-\item{main_other_total,main_other_male,main_other_female}{Main other workers}
-\item{marginal_workers_total,marginal_workers_male,marginal_workers_female}{Marginal workers}
-\item{marginal_cultivators_total,marginal_cultivators_male,marginal_cultivators_female}{Marginal cultivators}
-\item{marginal_agri_labour_total,marginal_agri_labour_male,marginal_agri_labour_female}{Marginal agricultural labourers}
-\item{marginal_hh_industry_total,marginal_hh_industry_male,marginal_hh_industry_female}{Marginal household industry workers}
-\item{marginal_other_total,marginal_other_male,marginal_other_female}{Marginal other workers}
+\item{workers,workers_male,workers_female}{All workers}
+\item{main_workers,main_workers_male,main_workers_female}{Main workers}
+\item{main_cultivators,main_cultivators_male,main_cultivators_female}{Main cultivators}
+\item{main_agri_labour,main_agri_labour_male,main_agri_labour_female}{Main agricultural labourers}
+\item{main_hh_industry,main_hh_industry_male,main_hh_industry_female}{Main household industry workers}
+\item{main_other,main_other_male,main_other_female}{Main other workers}
+\item{marginal_workers,marginal_workers_male,marginal_workers_female}{Marginal workers}
+\item{marginal_cultivators,marginal_cultivators_male,marginal_cultivators_female}{Marginal cultivators}
+\item{marginal_agri_labour,marginal_agri_labour_male,marginal_agri_labour_female}{Marginal agricultural labourers}
+\item{marginal_hh_industry,marginal_hh_industry_male,marginal_hh_industry_female}{Marginal household industry workers}
+\item{marginal_other,marginal_other_male,marginal_other_female}{Marginal other workers}
 }
 }
 \description{
-Worker classification from the 2011 Primary Census Abstract at all
-geographic levels, split by total/rural/urban sector. Main and marginal
-workers are broken down by activity (cultivators, agricultural labourers,
-household industry, other workers). Downloaded on first use; see
-\code{\link[=census_cache_dir]{census_cache_dir()}}. Use \code{\link[=at_level]{at_level()}} before summing.
+Workers by type from the 2011 Primary Census Abstract. The table has all
+geographic levels and the total, rural and urban sectors. It divides main and
+marginal workers by activity: cultivators, agricultural labourers, household
+industry and other workers. The package downloads the table on first use
+(refer to \code{\link[=census_cache_dir]{census_cache_dir()}}). Use \code{\link[=at_level]{at_level()}} before you add rows.
 }
 \examples{
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}

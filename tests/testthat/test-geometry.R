@@ -87,3 +87,23 @@ test_that("census_base_layer returns something ggplot can draw", {
   expect_s3_class(p, "ggplot")
   expect_silent(invisible(ggplot2::ggplot_build(p)))
 })
+
+test_that("join warnings name the rows even when an empty district column is present", {
+  skip_if_no_remote()
+  st <- census_population_time_series[census_population_time_series$year == 1941 &
+    census_population_time_series$geography == "state", ]
+  expect_true("district" %in% names(st) && all(is.na(st$district)))
+  w <- tryCatch(attach_geometry(st, 1941, "state"), warning = conditionMessage)
+  expect_match(w, "got no geometry")
+  expect_false(grepl("NA, NA", w))
+})
+
+test_that("multi-row tables per district do not trigger false duplicate-polygon warnings", {
+  skip_no_sf()
+  st_ga <- census_sc_st("ST", state = "GA")
+  expect_gt(nrow(st_ga), 2)
+  expect_no_warning(g <- attach_geometry(st_ga, 2011))
+  expect_equal(nrow(g), nrow(st_ga))
+  expect_equal(sum(sf::st_is_empty(g$geometry)), 0)
+  expect_identical(names(g)[ncol(g)], "geometry")
+})

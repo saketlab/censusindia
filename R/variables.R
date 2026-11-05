@@ -1,10 +1,12 @@
 #' List census variables
 #'
-#' Available census variables, optionally filtered by year, geography, or category.
+#' Available census variables, optionally filtered by year, geography, or
+#' category.
 #'
-#' @param year Filter to variables available for specific census year.
-#' @param geography Filter to "state", "district", or "subdistrict".
-#' @param category Filter to "population", "literacy", "workers", "sc_st", "housing", "geography", or "change".
+#' @param year Census year(s) to filter by.
+#' @param geography `"state"`, `"district"`, or `"subdistrict"`.
+#' @param category `"population"`, `"literacy"`, `"workers"`, `"sc_st"`,
+#'   `"housing"`, `"geography"`, or `"change"`.
 #' @return A tibble of available variables.
 #'
 #' @examples
@@ -16,14 +18,13 @@
 list_census_variables <- function(year = NULL, geography = NULL, category = NULL) {
   vars <- censusindia::census_variables
   in_list <- function(col, value) {
+    vals <- as.character(value)
     vapply(strsplit(col, ",", fixed = TRUE), function(v) {
-      any(trimws(v) == as.character(value))
+      any(trimws(v) %in% vals)
     }, logical(1))
   }
   if (!is.null(year)) vars <- vars[in_list(vars$years, year) & !is.na(vars$years), ]
-  if (!is.null(geography)) {
-    vars <- vars[in_list(vars$geographies, geography) & !is.na(vars$geographies), ]
-  }
+  if (!is.null(geography)) vars <- vars[vars$geography %in% geography, ]
   if (!is.null(category)) vars <- vars |> dplyr::filter(.data$category %in% .env$category)
   vars
 }
@@ -32,7 +33,7 @@ list_census_variables <- function(year = NULL, geography = NULL, category = NULL
 #'
 #' Geographic levels available for each census year.
 #'
-#' @return A tibble showing available year-geography combinations.
+#' @return A tibble of available year and geography combinations.
 #' @examples
 #' list_census_geographies()
 #' @export
@@ -51,6 +52,7 @@ list_census_geographies <- function() {
     1941L, "district", "Population time series",
     1951L, "state", "Population time series",
     1951L, "district", "Population time series",
+    1961L, "state", "Literacy table",
     1961L, "district", "Literacy table",
     1971L, "state", "Primary Census Abstract",
     1971L, "district", "Primary Census Abstract",
@@ -70,7 +72,8 @@ list_census_geographies <- function() {
 #'
 #' States and union territories with codes, abbreviations, and regions.
 #'
-#' @param region Filter by region: "North", "South", "East", "West", "Central", "Northeast", "Islands".
+#' @param region Region(s) to filter by: `"North"`, `"South"`, `"East"`,
+#'   `"West"`, `"Central"`, `"Northeast"`, or `"Islands"`.
 #' @return A tibble of states with codes, names, abbreviations, and regions.
 #'
 #' @examples
@@ -81,16 +84,16 @@ list_census_geographies <- function() {
 list_states <- function(region = NULL) {
   states <- censusindia::india_states
   if (!is.null(region)) {
-    states <- states |> dplyr::filter(.data$region == .env$region)
+    states <- states |> dplyr::filter(.data$region %in% .env$region)
   }
   states
 }
 
 #' Search census variables
 #'
-#' Find census variables by keyword in names and labels.
+#' Search census variables by keyword across variable names and labels.
 #'
-#' @param pattern Character string or regex pattern to search.
+#' @param pattern Character string or regular expression pattern.
 #' @return A tibble of matching variables.
 #'
 #' @examples

@@ -2,32 +2,31 @@
 % Please edit documentation in R/theme.R
 \name{census_base_layer}
 \alias{census_base_layer}
-\title{Base layer carrying India's full claimed extent}
+\title{Base layer with the full claimed extent of India}
 \usage{
 census_base_layer(year, fill = "grey80", ...)
 }
 \arguments{
-\item{year}{Census year whose boundaries to draw. One of 1941, 1951, 1961,
-1971, 1981, 1991, 2001, 2011.}
+\item{year}{Census year of the boundaries. One of 1941, 1951, 1961, 1971,
+1981, 1991, 2001, 2011.}
 
-\item{fill}{Fill colour for the base. Defaults to the grey \code{\link[=plot_map]{plot_map()}} uses
-for missing values.}
+\item{fill}{Fill color for the base layer. The default is the grey that
+\code{\link[=plot_map]{plot_map()}} uses for missing values.}
 
-\item{...}{Passed to \code{\link[ggplot2:geom_sf]{ggplot2::geom_sf()}}.}
+\item{...}{Arguments for \code{\link[ggplot2:geom_sf]{ggplot2::geom_sf()}}.}
 }
 \value{
 A \code{ggplot2} layer.
 }
 \description{
-A \code{ggplot2} layer of the state polygons for a census year, drawn as flat
-fill. Put it under a district choropleth so the national outline stays whole:
-the census enumerates no districts in the territory India claims but does not
-administer, so a district layer alone truncates the north by roughly two
-degrees of latitude.
+A \code{ggplot2} layer of the state polygons for a census year, with a flat fill.
+Put it below a district choropleth to keep the national outline complete.
+The census has no districts in the territory that India claims but does not
+administer.
 }
 \details{
-\code{\link[=plot_map]{plot_map()}} adds this automatically. Use it directly when hand-rolling a map
-with \code{\link[ggplot2:geom_sf]{ggplot2::geom_sf()}}.
+\code{\link[=plot_map]{plot_map()}} adds this layer automatically. Use it directly when you make a
+map with \code{\link[ggplot2:geom_sf]{ggplot2::geom_sf()}}.
 }
 \examples{
 \dontshow{if (interactive() && requireNamespace("ggplot2", quietly = TRUE)) withAutoprint(\{ # examplesIf}
