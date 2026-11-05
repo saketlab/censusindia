@@ -32,6 +32,19 @@ template:
         gtag('js', new Date());
         gtag('config', 'G-V71CLNJRTR');
       </script>
+      <script>
+        (function(){
+          var stored = localStorage.getItem('bs-color-scheme');
+          if (!stored) {
+            stored = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          }
+          document.documentElement.setAttribute('data-bs-theme', stored);
+        })();
+      </script>
+      <style>
+        /* keep figures as drawn; skip pkgdown's dark-mode invert of img.r-plt */
+        img.r-plt { filter: none !important; }
+      </style>
       <meta name="keywords" content="India Census, R package, census data, demographics, population, districts, states, 1901-2011, choropleth maps, spatial analysis, India statistics">
       <meta name="author" content="Saket Choudhary">
       <meta name="robots" content="index, follow">
@@ -41,7 +54,12 @@ template:
       <meta property="og:site_name" content="censusindia">
       <meta property="og:locale" content="en_US">
       <meta property="og:description" content="Digitised Census of India data from 1901 to 2011 for R. Population, literacy, SC/ST, workers, mother tongue, and tribal data with geographic boundaries for mapping.">
+      <meta property="og:image" content="https://censusindia.saketlab.org/reference/figures/social-card.png">
+      <meta property="og:image:width" content="1800">
+      <meta property="og:image:height" content="945">
+      <meta property="og:image:alt" content="censusindia: Census of India data for R, 1901-2011">
       <meta name="twitter:card" content="summary_large_image">
+      <meta name="twitter:image" content="https://censusindia.saketlab.org/reference/figures/social-card.png">
       <script type="application/ld+json">
       {
         "@context": "https://schema.org",

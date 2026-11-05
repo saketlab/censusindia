@@ -28,7 +28,7 @@
 ^\.DS_Store$
 ^\.Rhistory$
 ^man/figures/logo_.*$
-^man/figures/social-card\.png$
+^man/figures/social-(card|preview)\.png$
 ^man/figures/logo\.(pdf|svg)$
 ^CRAN-SUBMISSION$
 ^pkgdown$
