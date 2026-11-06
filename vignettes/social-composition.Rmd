@@ -35,8 +35,8 @@ library(patchwork)
 composition <- census_2011_pca |>
   filter(geography == "district") |>
   mutate(
-    sc_pct = 100 * sc_population / population,
-    st_pct = 100 * st_population / population,
+    sc_pct = share(sc_population, population),
+    st_pct = share(st_population, population),
     general_pct = 100 - sc_pct - st_pct
   ) |>
   filter(!is.na(sc_pct), !is.na(st_pct), general_pct >= 0)
@@ -112,7 +112,7 @@ composition |>
     title = "Distribution of SC population across districts",
     subtitle = "States ordered by median SC percentage"
   ) +
-  theme_minimal() +
+  theme_census() +
   theme(legend.position = "right")
 ```
 
@@ -135,7 +135,7 @@ composition |>
     title = "Distribution of ST population across districts",
     subtitle = "States ordered by median ST percentage"
   ) +
-  theme_minimal() +
+  theme_census() +
   theme(legend.position = "right")
 ```
 
@@ -155,7 +155,7 @@ p1 <- ggplot(diversity_composition, aes(sc_pct, effective_languages)) +
     y = "Effective languages",
     title = "SC% vs linguistic diversity"
   ) +
-  theme_minimal()
+  theme_census()
 
 p2 <- ggplot(diversity_composition, aes(st_pct, effective_languages)) +
   geom_hex(bins = 30) +
@@ -166,7 +166,7 @@ p2 <- ggplot(diversity_composition, aes(st_pct, effective_languages)) +
     y = "Effective languages",
     title = "ST% vs linguistic diversity"
   ) +
-  theme_minimal()
+  theme_census()
 
 p1 + p2
 ```

@@ -34,16 +34,16 @@ library(patchwork)
 ```{r data}
 sc_st_2011 <- census_2011_pca |>
   mutate(
-    sc_pct = 100 * sc_population / population,
-    st_pct = 100 * st_population / population
+    sc_pct = share(sc_population, population),
+    st_pct = share(st_population, population)
   ) |>
   attach_geometry(year = 2011, geography = "district")
 
 sc_st_1971 <- census_1971 |>
-  filter(geography == "district", sector == "total") |>
+  at_level("district") |>
   mutate(
-    sc_pct = 100 * sc_population / population,
-    st_pct = 100 * st_population / population
+    sc_pct = share(sc_population, population),
+    st_pct = share(st_population, population)
   ) |>
   attach_geometry(year = 1971, geography = "district")
 ```
@@ -107,8 +107,8 @@ state_summary <- census_2011_pca |>
     st_population = sum(st_population)
   ) |>
   mutate(
-    sc_pct = round(100 * sc_population / population, 1),
-    st_pct = round(100 * st_population / population, 1)
+    sc_pct = round(share(sc_population, population), 1),
+    st_pct = round(share(st_population, population), 1)
   ) |>
   arrange(desc(sc_pct + st_pct))
 
@@ -126,8 +126,6 @@ state_summary |>
 ```
 
 ```{r bivariate-map, fig.height=10}
-boundaries <- get_census_boundaries(2011, "district")
-
 bivariate_data <- sc_st_2011 |>
   mutate(
     sc_pct = ifelse(is.na(sc_pct), 0, sc_pct),
@@ -135,15 +133,13 @@ bivariate_data <- sc_st_2011 |>
   ) |>
   bi_class(x = sc_pct, y = st_pct, style = "quantile", dim = 3)
 
-map <- ggplot() +
-  geom_sf(data = boundaries, fill = "grey85", color = "grey70", linewidth = 0.05) +
-  geom_sf(data = bivariate_data, aes(fill = bi_class), color = "grey50", linewidth = 0.1, show.legend = FALSE) +
-  bi_scale_fill(pal = "BlueOr", dim = 3, na.value = "grey85") +
-  labs(
-    title = "SC and ST population distribution (2011)",
-    subtitle = "Bivariate choropleth showing joint distribution"
-  ) +
-  bi_theme()
+map <- plot_map(bivariate_data, "bi_class",
+  title = "SC and ST population distribution (2011)",
+  subtitle = "Bivariate choropleth showing joint distribution",
+  na_color = "grey85",
+  unit_boundary_color = "grey50", legend_position = "none"
+) +
+  bi_scale_fill(pal = "BlueOr", dim = 3, na.value = "grey85")
 
 legend <- bi_legend(pal = "BlueOr", dim = 3, xlab = "SC % ", ylab = "ST % ", size = 8)
 
@@ -175,5 +171,5 @@ ggplot(scatter_data, aes(sc_pct, st_pct)) +
     title = "SC vs ST concentration by district (2011)",
     subtitle = "Districts tend to have either high SC or high ST, rarely both"
   ) +
-  theme_minimal()
+  theme_census()
 ```

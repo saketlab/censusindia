@@ -16,7 +16,8 @@ A character vector of colors
 }
 \description{
 Gives a color palette for maps. The palettes are "viridis", "red_blue",
-"blue_red", "greens", "oranges", "reds", "blues" and "purple_green".
+"blue_red", "greens", "oranges", "reds", "blues", "purple_green" and
+"inferno".
 }
 \examples{
 get_palette("blues")

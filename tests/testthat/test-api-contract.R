@@ -74,6 +74,14 @@ test_that("/population returns canonical columns with an estimate column", {
   }
 })
 
+test_that("/population serves subdistricts by method", {
+  r <- api_get("/population", "year=2021&geography=subdistrict&state=GA")
+  expect_canonical(r)
+  expect_identical(unique(r$json$estimate), "derived")
+  expect_equal(api_get("/population", "geography=subdistrict&method=guess")$status, 400)
+  expect_equal(api_get("/population", "geography=state&method=urban_rural")$status, 400)
+})
+
 test_that("/population interpolates and labels the estimate", {
   r <- suppressMessages(api_get("/population", "year=2013&geography=district&state=KL"))
   expect_equal(r$status, 200)

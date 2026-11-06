@@ -129,3 +129,101 @@ test_that("requested variables come back under their canonical name", {
   expect_true(all(c("workers", "literate") %in% names(d)))
   expect_false(any(c("workers_total", "literate_total") %in% names(d)))
 })
+
+test_that("map helpers give the expected layers and counts", {
+  skip_if_not_installed("sf")
+  skip_if_not_installed("ggplot2")
+  square <- function(x) {
+    sf::st_polygon(list(rbind(c(x, 0), c(x + 1000, 0), c(x + 1000, 1000), c(x, 1000), c(x, 0))))
+  }
+  d <- sf::st_sf(
+    state_name_harmonized = c("A", "B"), value = c(1, 3), panel = c("x", "y"),
+    geometry = sf::st_sfc(square(0), square(5000), crs = 32643)
+  )
+
+  expect_equal(area_km2(d), c(1, 1), tolerance = 1e-6)
+
+  dots <- census_bubble_layer(d, "value")
+  expect_equal(dots[[1]][[1]]$data$value, c(3, 1)) # large dots first
+  expect_error(census_bubble_layer(d, "nope"), "not a column")
+
+  p <- plot_map(d, "value", base_layer = FALSE, state = "A", facet = "panel", dark = TRUE)
+  expect_equal(p$layers[[1]]$data$state_name_harmonized, "A")
+  expect_s3_class(p$facet, "FacetWrap")
+  expect_equal(p$theme$plot.background$fill, "black")
+})
+
+test_that("plot_dot_density_map draws one dot per `per_dot` units", {
+  skip_if_no_remote()
+  d <- attach_geometry(
+    data.frame(state_name_harmonized = "Kerala", population = 3e5, year = 2011),
+    2011,
+    geography = "state"
+  )
+  p <- plot_dot_density_map(d, "population", per_dot = 1e5)
+  expect_equal(nrow(p$layers[[2]]$data), 3)
+})
+
+test_that("plot_dot_density_map gives each dot the value of its own unit", {
+  skip_if_no_remote()
+  d <- attach_geometry(
+    data.frame(
+      state_name_harmonized = c("Kerala", "Goa", "Sikkim"), population = c(2e5, 3e5, 0),
+      density = c(1, 2, 3), year = 2011
+    ),
+    2011,
+    geography = "state"
+  )
+  dots <- plot_dot_density_map(d, "population", color = "density", dark = TRUE)$layers[[2]]$data
+  home <- d$density[unlist(sf::st_intersects(dots, d))]
+  expect_equal(home, dots$dot_value)
+  expect_equal(sort(dots$dot_value), c(1, 1, 2, 2, 2))
+})
+
+test_that("theme_census_map renders in light and dark", {
+  skip_if_not_installed("ggplot2")
+  grDevices::pdf(NULL)
+  on.exit(grDevices::dev.off())
+  p <- ggplot2::ggplot(data.frame(x = 1, y = 1), ggplot2::aes(x, y)) +
+    ggplot2::geom_point() +
+    ggplot2::labs(title = "t", caption = "c")
+  for (dark in c(FALSE, TRUE)) {
+    expect_s3_class(ggplot2::ggplotGrob(p + theme_census_map(dark = dark)), "gtable")
+  }
+  expect_equal(theme_census_map(dark = TRUE)$plot.caption$colour, "white")
+})
+
+test_that("bubble and dot density maps reject scale arguments without color", {
+  skip_if_not_installed("ggplot2")
+  d <- sf::st_sf(
+    v = 1, geometry = sf::st_sfc(sf::st_point(c(0, 0)) |> sf::st_buffer(1), crs = 32643)
+  )
+  expect_error(plot_bubble_map(d, "v", trans = "log10"), "must be empty")
+  expect_error(plot_dot_density_map(d, "v", limits = c(0, 1)), "must be empty")
+})
+
+test_that("get_census_boundaries honours state at every level", {
+  skip_if_no_remote()
+  d <- get_census_boundaries(2011, "district", state = "Kerala")
+  expect_equal(unique(d$state_name_harmonized), "Kerala")
+  expect_equal(nrow(get_census_boundaries(2011, "state", state = "Kerala")), 1)
+})
+
+test_that("filter_by_state reads only the name columns of sf data", {
+  d <- sf::st_sf(
+    state_name_harmonized = c("Kerala", "Goa"),
+    geometry = sf::st_sfc(sf::st_point(c(0, 0)), sf::st_point(c(1, 1)))
+  )
+  expect_equal(nrow(censusindia:::filter_by_state(d, "Kerala")), 1)
+  err <- tryCatch(censusindia:::filter_by_state(d, "Punjab"), error = conditionMessage)
+  expect_false(grepl("POINT|c\\(0", err))
+})
+
+test_that("plot_map(state =) outlines the parent of a successor state", {
+  skip_if_no_remote()
+  skip_if_not_installed("ggplot2")
+  d <- suppressWarnings(get_population(2021, geometry = TRUE)) # Telangana shares a polygon
+  p <- plot_map(d, "population", state = "Telangana")
+  expect_equal(unique(p$layers[[1]]$data$state_name_harmonized), "Andhra Pradesh")
+  expect_equal(unique(p$layers[[2]]$data$state_name_harmonized), "Telangana")
+})

@@ -4,24 +4,49 @@
 \alias{get_census_boundaries}
 \title{Get census boundaries}
 \usage{
-get_census_boundaries(year, geography = c("state", "district"))
+get_census_boundaries(
+  year,
+  geography = c("state", "district", "village"),
+  state = NULL
+)
 }
 \arguments{
 \item{year}{Census year. Available: 1941, 1951, 1961, 1971, 1981, 1991, 2001,
 2011.}
 
-\item{geography}{Geographic level: \code{"state"} or \code{"district"}.}
+\item{geography}{Geographic level: \code{"state"}, \code{"district"} or \code{"village"}.}
+
+\item{state}{One or more state names or two-letter codes. Necessary for
+\code{geography = "village"}. Optional at the other levels.}
 }
 \value{
-An \code{sf} object with columns \code{year}, \code{geography}, \code{state_code},
-\code{state_name_harmonized}, \code{state_name}, \code{district} (district level only),
-\code{id}, and \code{geometry}.
-
-Boundary files are downloaded on first use and cached locally; see
-\code{\link[=census_cache_dir]{census_cache_dir()}}.
+An \code{sf} object. At state and district level, the columns are \code{year},
+\code{geography}, \code{state_code}, \code{state_name_harmonized}, \code{state_name}, \code{district}
+(district level only), \code{id}, and \code{geometry}. At village level, the columns
+are \code{year}, \code{geography} (\code{"village"} or \code{"town"}), \code{state_code},
+\code{state_name_harmonized}, \code{district_code}, \code{subdistrict_code},
+\code{town_village_code}, \code{name}, and \code{geometry}.
 }
 \description{
-Retrieve state or district boundary polygons for a census year.
+Retrieve state, district, village or town boundary polygons for a census
+year.
+}
+\details{
+Use \code{geography = "village"} only with \code{year = 2011}. You must give \code{state}.
+The result has villages and towns of the 2011 Census, with their census
+codes. Areas with no census code, for example forests, are not in the result.
+
+Most large city corporations have no polygon. Coverage of the population is
+complete in Haryana and partial in Maharashtra. The Delhi file does not agree
+with the census. Do not use it.
+
+The state files use the current states. Thus, \code{"Andhra Pradesh"} also gets
+Telangana, and \code{"Jammu & Kashmir"} also gets Ladakh. \code{"Daman & Diu"} and
+\code{"Dadra & Nagar Haveli"} share one file. The \code{state_name_harmonized} column
+gives the state in the 2011 Census.
+
+The package downloads boundary files on first use and keeps them in a local
+cache. Refer to \code{\link[=census_cache_dir]{census_cache_dir()}}.
 }
 \examples{
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}

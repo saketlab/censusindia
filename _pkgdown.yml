@@ -45,6 +45,19 @@ template:
         /* keep figures as drawn; skip pkgdown's dark-mode invert of img.r-plt */
         img.r-plt { filter: none !important; }
       </style>
+      <script>
+        /* <picture> follows the OS theme: make it follow the site switch */
+        (function(){
+          function sync(){
+            var dark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+            document.querySelectorAll('picture source').forEach(function(s){
+              s.media = dark ? 'all' : 'not all';
+            });
+          }
+          new MutationObserver(sync).observe(document.documentElement, {attributes: true, attributeFilter: ['data-bs-theme']});
+          document.addEventListener('DOMContentLoaded', sync);
+        })();
+      </script>
       <meta name="keywords" content="India Census, R package, census data, demographics, population, districts, states, 1901-2011, choropleth maps, spatial analysis, India statistics">
       <meta name="author" content="Saket Choudhary">
       <meta name="robots" content="index, follow">
@@ -116,6 +129,8 @@ navbar:
         href: articles/primary-census-abstract.html
       - text: Population maps
         href: articles/population-maps.html
+      - text: Population density maps
+        href: articles/population-density.html
       - text: Population dynamics
         href: articles/population-dynamics.html
       - text: Population projections
@@ -175,11 +190,14 @@ reference:
   - census_download
 
 - title: "Population Projections"
-  desc: "MOHFW population projections (2011-2036)"
+  desc: "MoHFW state and IIPS district projections (2011-2036), and figures derived from them"
   contents:
   - get_population
+  - population_projections
   - population_projections_state
   - population_projections_state_age
+  - population_projections_state_urban
+  - population_projections_state_rural
   - population_projections_district
   - population_projections_district_age
   - population_projections_district_lgd
@@ -211,19 +229,37 @@ reference:
   - plotting
   - plot_map
   - compare_maps
+  - plot_bubble_map
+  - plot_dot_density_map
+  - area_km2
   - get_palette
   - census_base_layer
   - theme_census
+  - census_colors
 
 - title: "Derived measures"
-  desc: "Rates the census reports by convention"
+  desc: "Rates, changes and diversity measures"
   contents:
   - sex_ratio
   - share
+  - percent_change
+  - shannon_entropy
+  - gini_coefficient
+  - language_diversity
+
+- title: "Composition of districts"
+  desc: "Compare and cluster districts by tribe or language"
+  contents:
+  - composition_matrix
+  - composition_distance
+  - composition_clusters
+  - composition_pca
+  - adjusted_rand_index
 
 - title: "Variable Discovery"
   desc: "Available census variables"
   contents:
+  - list_census_datasets
   - list_census_variables
   - list_census_geographies
   - list_states
@@ -245,3 +281,7 @@ footer:
   components:
     developed_by: "Developed by [Saket Lab](https://saketlab.org)"
     built_with: "Built with [pkgdown](https://pkgdown.r-lib.org/)"
+
+# plots have dark text
+figures:
+  bg: white

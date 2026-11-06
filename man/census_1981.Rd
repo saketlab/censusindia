@@ -54,15 +54,15 @@ categories.
 The table stores geographic levels and sectors as rows. \code{geography} is
 \code{"india"}, \code{"state"}, \code{"district"}, \code{"town"}, or \code{"urban_agglomeration"},
 with one row per sector. Call \code{\link[=at_level]{at_level()}} (or filter \code{geography} and
-\code{sector == "total"}) before summing across rows. Each of the 398 districts
-has a total, rural, and urban row; towns and urban agglomerations have only
-an urban row.
+\code{sector == "total"}) before you sum rows. Each of the 398 districts has a
+total, rural, and urban row. Towns and urban agglomerations have only an
+urban row.
 
 Verified against the printed volume (\code{India_1981_PCA_General.pdf}). In every
 state and district, persons = males + females and total = rural + urban for
 population, literacy, and each worker category, and districts sum to their
-state. OCR errors, leading digits clipped in the scan, and printing errors in
-the source volume were corrected.
+state. We corrected OCR errors, first digits that the scan clipped, and print
+errors in the source volume.
 
 \href{https://github.com/saketlab/censusindia/blob/main/inst/ocr-corrections.csv}{inst/ocr-corrections.csv}
 records every correction with its page and evidence. The urban row of Guna,

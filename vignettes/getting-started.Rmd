@@ -33,38 +33,15 @@ goes down to village and ward.
 
 
 ```{r inventory}
-span <- function(v) {
-  v <- sort(unique(v[!is.na(v)]))
-  if (!length(v)) {
-    return(NA_character_)
-  }
-  if (length(v) <= 3) paste(v, collapse = ", ") else sprintf("%d-%d (%d)", min(v), max(v), length(v))
-}
-
-grain <- function(d) {
-  if ("geography" %in% names(d)) {
-    return(paste(sort(unique(d$geography)), collapse = "/"))
-  }
-  if ("district" %in% names(d)) "district" else NA_character_
-}
-
-vapply(sort(utils::data(package = "censusindia")$results[, "Item"]), function(n) {
-  d <- get(n, envir = asNamespace("censusindia"))
-  yr <- if ("year" %in% names(d)) span(d$year) else stringr::str_extract(n, "\\d{4}")
-  c(
-    years = yr %||% "-", grain = grain(d) %||% "-",
-    rows = format(nrow(d), big.mark = ","), cols = as.character(ncol(d))
-  )
-}, character(4)) |>
-  t() |>
-  knitr::kable()
+list_census_datasets() |>
+  knitr::kable(format.args = list(big.mark = ","))
 ```
 
 Population is available across all twelve censuses, 1901 to 2011. 
 The detailed abstracts exist for five years only: 1961 (literacy), 1971, 1981, 2001 and
 2011. 
 
-## Attaching maps
+## Attach maps
 
 Any indicator can go straight onto the boundaries of its census year:
 
@@ -102,11 +79,11 @@ c(
 )
 ```
 
-## Finding a variable
+## Find a variable
 
 All tables share one column schema, and `get_census(variables = ...)` also
 computes derived indicators (`literacy_rate`, `sex_ratio`, `sc_percent`,
-`st_percent`) where the underlying counts exist. `list_census_variables()`
+`st_percent`) where the source counts exist. `list_census_variables()`
 lists all 50 variable-geography combinations across 25 distinct variables.
 
 ```{r search}
@@ -145,8 +122,8 @@ Literacy, SC/ST and worker counts live in the abstracts, for 2001 and 2011:
 census_2001_pca |>
   summarise(
     districts = n(),
-    literate_pct = 100 * sum(literate) / sum(population),
-    worker_pct = 100 * sum(workers) / sum(population)
+    literate_pct = share(sum(literate), sum(population)),
+    worker_pct = share(sum(workers), sum(population))
   )
 ```
 
@@ -183,19 +160,19 @@ census_2001_pca_full |>
   filter(sector != "total") |>
   group_by(sector) |>
   summarise(
-    cultivators = 100 * sum(main_cultivators) / sum(main_workers),
-    agri_labour = 100 * sum(main_agri_labour) / sum(main_workers),
-    hh_industry = 100 * sum(main_hh_industry) / sum(main_workers),
-    other = 100 * sum(main_other) / sum(main_workers),
+    cultivators = share(sum(main_cultivators), sum(main_workers)),
+    agri_labour = share(sum(main_agri_labour), sum(main_workers)),
+    hh_industry = share(sum(main_hh_industry), sum(main_workers)),
+    other = share(sum(main_other), sum(main_workers)),
     .groups = "drop"
   )
 ```
 
-1971 and 1981 have their own abstracts in `census_1971` and `census_1981`;
+1971 and 1981 have their own abstracts in `census_1971` and `census_1981`.
 1961 has literacy only. The 1931 caste tables, by province and religion, are in
 `census_1931_castes` and `census_1931_exterior_castes`.
 
-## Attaching geometry
+## Attach geometry
 
 Districts split and change names between censuses. `attach_geometry()` joins
 data to the boundary vintage of its census year:
@@ -213,30 +190,31 @@ lapply(YEARS, function(y) {
   ggplot() +
   geom_sf(fill = "grey95", colour = "grey40", linewidth = 0.15) +
   facet_wrap(~year, nrow = 2) +
-  theme_void(base_size = 10) +
+  theme_census_map(base_size = 10) +
   theme(strip.text = element_text(face = "bold"))
 ```
 
 
-```{r district-vintage}
-rate <- function(d, y) {
-  g <- suppressWarnings(attach_geometry(d, year = y, geography = "district"))
-  sprintf("%d/%d", sum(!sf::st_is_empty(g$geometry)), nrow(d))
-}
+```{r district-vintage, warning = FALSE}
+abstract <- census_1971 |>
+  at_level("district") |>
+  attach_geometry(1971, geography = "district")
+series <- census_population_time_series |>
+  filter(year == 1971) |>
+  at_level("district") |>
+  attach_geometry(1971, geography = "district")
 
 c(
-  `1971 abstract + 1971` = rate(filter(census_1971, geography == "district", sector == "total"), 1971),
-  `time series 1971 + 1971` = rate(
-    filter(census_population_time_series, geography == "district", year == 1971), 1971
-  )
+  `1971 abstract + 1971` = sum(!sf::st_is_empty(abstract$geometry)),
+  `time series 1971 + 1971` = sum(!sf::st_is_empty(series$geometry))
 )
 ```
 
 District maps need the abstract for that year. 
 
-Boundary files are parsed once and held for the session. `clear_geometry_cache()`
-releases them, `compare_maps()` puts several years on one colour scale, and
-`get_palette()` returns the ramps `plot_map()` draws with.
+The package parses boundary files once and keeps them for the session.
+`clear_geometry_cache()` releases them. `compare_maps()` puts several years on one
+color scale. `get_palette()` returns the ramps that `plot_map()` uses.
 
 ```{r palette}
 get_palette("blue_red")
@@ -270,15 +248,15 @@ proj |>
   mutate(added = population - lag(population)) |>
   filter(!is.na(added)) |>
   ggplot(aes(year, added / 1e6)) +
-  geom_col(fill = "#08519C", width = 0.7) +
+  geom_col(fill = census_colors()[["accent"]], width = 0.7) +
   labs(x = NULL, y = "Millions added that year") +
-  theme_minimal()
+  theme_census()
 ```
 
-District projections are available on two boundary systems: `census2011` covers
+District projections are available on two boundary systems. `census2011` covers
 the 640 Census 2011 districts at five-year steps (interpolated for intermediate
-years), while `lgd` covers 783 Local Government Directory districts annually
-from 2012 to 2031, area-apportioned from the Census 2011 age projections.
+years). `lgd` covers 783 Local Government Directory districts annually from 2012
+to 2031, area-apportioned from the Census 2011 age projections.
 
 ```{r projections-district}
 c(
@@ -287,15 +265,15 @@ c(
 )
 ```
 
-## Going below district level
+## Data below district level
 
 2011 also has the abstract at the village/ward level. The three tables
-together are 63 MB, so they are downloaded on first use and cached
-(`census_cache_dir()` says where):
+together are 63 MB, so the package downloads them on first use and keeps them
+in a cache (`census_cache_dir()` gives the location):
 
 ```{r detail-use}
 census_2011_demographics() |>
-  filter(geography == "district", sector == "total") |>
+  at_level("district") |>
   summarise(districts = n(), population = sum(population))
 ```
 
@@ -314,8 +292,8 @@ census_2011_linguistic_diversity |>
   select(district, n_languages, effective_languages, coverage)
 ```
 
-`coverage` is the share of the district population C-16 gives a named mother
-tongue. It drops to 0.04 in parts of Nagaland, where the unscheduled languages
-fall into unnamed residual categories, so an unfiltered ranking puts those
-districts on top.
+`coverage` is the share of the district population with a named mother tongue
+in C-16. It decreases to 0.04 in parts of Nagaland. There, the unscheduled
+languages are in unnamed residual categories. Thus, if you do not filter, these
+districts are at the top of the list.
 

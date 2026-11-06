@@ -80,7 +80,8 @@ normalize_codes <- function(x) {
 #' "Sub-district" -> "subdistrict", "UA" -> "urban_agglomeration".
 #' @noRd
 normalize_geography <- function(x) {
-  x <- tolower(gsub("[- ]", "", x))
-  x[x == "ua"] <- "urban_agglomeration"
-  x
+  u <- unique(x) # many rows, few levels
+  n <- tolower(gsub("[- ]", "", u))
+  n[n == "ua"] <- "urban_agglomeration"
+  n[match(x, u)]
 }

@@ -43,11 +43,11 @@ and \code{"Angami(ST)"} becomes \code{"Angami"}. The 581 source names become 481
 tribe names. Different states write the same tribe in
 different ways, and some names differ only in spaces.
 
-This table contains the ST rows of \link{census_2011_sc_st} excluding
+This table contains the ST rows of \link{census_2011_sc_st}, but not
 \code{"Generic Tribes etc."}. The constituent tribes of Nagaland carry
-\code{parent_tribe = "Naga"}, as in \link{census_2011_sc_st}. Before summing within a
-district, exclude either those rows or the \code{"Naga"} umbrella rows so each
-Naga person is counted only once. The \code{"Naga (ST)"} row (Naga with no
+\code{parent_tribe = "Naga"}, as in \link{census_2011_sc_st}. Before you sum in a
+district, exclude either those rows or the \code{"Naga"} umbrella rows. This counts
+each Naga person only once. The \code{"Naga (ST)"} row (Naga with no
 specific tribe) is harmonized to \code{"Naga (unspecified)"}.
 }
 \keyword{datasets}

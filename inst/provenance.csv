@@ -19,6 +19,8 @@
 "population_projections_district_lgd","IIPS, Projection of District Level Annual Population by Quinquennial Agegroup and Sex","fix-projection-inconsistencies.R build-age-projections.R","test-reconciliation.R","dee0dda90828af4f9e9dafbe13749483"
 "population_projections_state","MoHFW (2020), Population Projections for India and States 2011-2036","build-age-projections.R","test-reconciliation.R","56f8395407e7a64940039a63dd5c5a4a"
 "population_projections_state_age","MoHFW (2020), Population Projections for India and States 2011-2036 Table 18","build-age-projections.R","test-na-fixes.R","939c9a4ec0b229e31e68e6a366d9f0ac"
+"population_projections_state_rural","Derived: MoHFW (2020), Population Projections for India and States 2011-2036 Table 8 minus Table 9","build-state-sector-projections.R","test-population-subdistrict.R","9a5ff45a25ec771e7631fcfbf5ab8beb"
+"population_projections_state_urban","MoHFW (2020), Population Projections for India and States 2011-2036 Table 9","build-state-sector-projections.R","test-population-subdistrict.R","1c286ee9e20012b9ecbd68fec858bee5"
 "census_2011_demographics","Jolad & Singh (2026), Indian Census Data Collection 1901-2026, Harvard Dataverse doi:10.7910/DVN/ON8CP8","","test-reconciliation.R",""
 "census_2011_marginal_detail","Jolad & Singh (2026), Indian Census Data Collection 1901-2026, Harvard Dataverse doi:10.7910/DVN/ON8CP8","","",""
 "census_2011_mother_tongue","Census of India 2011, C-16 Mother Tongue","","test-language-tables.R",""

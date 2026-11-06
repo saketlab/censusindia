@@ -2,8 +2,8 @@
 # Launch with: censusindia::serve()
 
 #* @apiTitle Census India API
-#* @apiDescription Query Census of India population and demographic data by year, geography, state, and variable. Requests with `geometry=true` return GeoJSON. Every endpoint returns at most 10,000 rows (100 GeoJSON features) per request; page with `limit` and `offset`, and read the total from the `X-Total-Count` header.
-#* @apiVersion 0.3.0
+#* @apiDescription Query Census of India population and demographic data by year, geography, state, and variable. Requests with `geometry=true` return GeoJSON. Every endpoint returns at most 10,000 rows (100 GeoJSON features) per request. Page with `limit` and `offset`. Read the total from the `X-Total-Count` header.
+#* @apiVersion 0.4.0
 
 # "a, b,,c" -> c("a", "b", "c"); empty -> NULL
 csv <- function(x) {
@@ -236,9 +236,9 @@ function(pattern = "", req, res) {
 #* Query census data
 #* @param year Census year. One of 1901, 1911, 1921, 1931, 1941, 1951, 1961, 1971, 1981, 1991, 2001, 2011.
 #* @param geography Geography level: state, district, or subdistrict.
-#* @param state Comma-separated state names or two-letter codes. Census tables have no India row; omit to get every state.
+#* @param state Comma-separated state names or two-letter codes. Census tables have no India row. Omit this parameter to get all states.
 #* @param variables Comma-separated variable names to return.
-#* @param sector total, rural or urban. Rural and urban exist for 1971 and 1981 only; other years are a 400.
+#* @param sector total, rural or urban. Rural and urban exist for 1971 and 1981 only. Other years give a 400 error.
 #* @param geometry Return a GeoJSON FeatureCollection with boundaries.
 #* @get /query
 function(year = 2011, geography = "state", state = "", variables = "",
@@ -254,22 +254,24 @@ function(year = 2011, geography = "state", state = "", variables = "",
 }
 
 #* Query population projections
-#* @param year Projection year or years (comma-separated, or a range such as 2021:2026). Years between projections are interpolated, years up to five past the last table year extrapolated; the `estimate` column says which.
-#* @param geography Geography level: state or district.
+#* @param year Projection year or years (comma-separated, or a range such as 2021:2026). The API interpolates years between projections. It extrapolates up to five years past the last table year. The `estimate` column shows which method applies.
+#* @param geography Geography level: state, district or subdistrict. The package derives subdistrict figures.
 #* @param state Comma-separated state names or two-letter codes.
 #* @param boundary District boundary system: census2011 or lgd.
-#* @param by_age Return age-stratified rows. States by age cover 23 major states, India and "North East States Excluding Assam"; others are a 400.
+#* @param by_age Return age-stratified rows. States by age cover 23 major states, India and "North East States Excluding Assam". Other states give a 400 error.
 #* @param geometry Return a GeoJSON FeatureCollection with boundaries.
+#* @param method Subdistrict level only: constant_share or urban_rural.
 #* @get /population
 function(year = "", geography = "state", state = "", boundary = "census2011",
-         by_age = FALSE, geometry = FALSE, req, res) {
+         by_age = FALSE, geometry = FALSE, method = "constant_share", req, res) {
   respond(req, res, get_population(
     year = as_whole(year),
     geography = word(geography),
     state = csv(state),
     boundary = word(boundary),
     geometry = flag(geometry),
-    by_age = flag(by_age)
+    by_age = flag(by_age),
+    method = word(method)
   ))
 }
 
@@ -304,7 +306,7 @@ function(category = "", state = "", req, res) {
   respond(req, res, census_sc_st(csv(category), csv(state)))
 }
 
-#* Shipped datasets that can be fetched whole with /dataset/<name>
+#* Shipped datasets. Use /dataset/<name> to get a full dataset.
 #* @get /datasets
 function(req, res) {
   respond(req, res, DATASETS)

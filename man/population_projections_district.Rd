@@ -26,7 +26,8 @@ District Level Annual Population by Quinquennial Agegroup and Sex.
 population_projections_district
 }
 \description{
-MOHFW population projections for the 640 districts of the 2011 Census
+International Institute for Population Sciences (IIPS) projections, built on
+the MoHFW state projections, for the 640 districts of the 2011 Census
 boundaries. The table gives projections for 2011, 2016, 2021, 2026 and
 2031.
 }

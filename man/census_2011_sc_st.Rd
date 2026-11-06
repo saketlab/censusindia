@@ -51,7 +51,7 @@ For Nagaland, the census tabulates the Scheduled Tribe \code{"Naga"} alongside i
 constituent tribes marked \code{"(ST)"} (\code{Angami(ST)}, \code{Ao(ST)}, ...). Those
 193 rows carry \code{parent_tribe = "Naga"}, and in each district the \code{"Naga"} row
 equals their sum. To count each person once, sum only rows where
-\code{is.na(parent_tribe)}; the ST rows then match \code{census_2011_pca$st_population}
+\code{is.na(parent_tribe)}. The ST rows then match \code{census_2011_pca$st_population}
 in every district (104,545,716 in total).
 }
 \keyword{datasets}

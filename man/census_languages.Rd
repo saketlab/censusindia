@@ -18,9 +18,9 @@ census_languages(
 \item{language_group}{Optional integer vector of \code{language_group} codes to
 keep, or \code{NULL} (default) for all groups.}
 
-\item{sector}{\code{"total"} (default), \code{"rural"}, or \code{"urban"}. Because sector is
-stored as rows, summing without filtering \code{sector} double-counts every
-speaker.}
+\item{sector}{\code{"total"} (default), \code{"rural"}, or \code{"urban"}. The table stores
+sector as rows. If you sum and do not filter \code{sector}, you count each
+speaker more than one time.}
 
 \item{state}{Optional state filter: one or more canonical state names or
 two-letter codes, as in \code{\link[=get_census]{get_census()}}.}
@@ -33,10 +33,10 @@ language per area. Columns match \link{census_2011_district_languages} or
 \description{
 The C-16 mother tongue table (\code{\link[=census_2011_mother_tongue]{census_2011_mother_tongue()}}) stacks state,
 district, and subdistrict rows in a single table where subdistricts share
-their parent district's \code{district_code}. Summing by \code{district_code} without
-filtering \code{geography} double-counts every speaker. \code{census_languages()}
-returns a single geographic level and sector at a time, excluding the
-\code{"Others"} residual rows.
+their parent district's \code{district_code}. If you sum by \code{district_code} and do
+not filter \code{geography}, you count each speaker more than one time.
+\code{census_languages()} returns one geographic level and sector at a time. It
+does not return the \code{"Others"} residual rows.
 }
 \examples{
 census_languages("district") |> head()

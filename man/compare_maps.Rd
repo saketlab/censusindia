@@ -26,7 +26,7 @@ label.}
 
 \item{ncol}{Number of columns in the layout.}
 
-\item{palette}{Color palette; see \code{\link{plot_map}} for options.}
+\item{palette}{Color palette. Refer to \code{\link{plot_map}} for options.}
 
 \item{common_scale}{Logical. If \code{TRUE} (default), all panels share the same
 color scale limits.}
@@ -52,11 +52,11 @@ library(dplyr)
 
 st_1971 <- census_1971 |>
   filter(geography == "district", sector == "total") |>
-  mutate(st_pct = 100 * st_population / population) |>
+  mutate(st_pct = share(st_population, population)) |>
   attach_geometry(1971)
 
 st_2011 <- census_2011_pca |>
-  mutate(st_pct = 100 * st_population / population) |>
+  mutate(st_pct = share(st_population, population)) |>
   attach_geometry(2011)
 
 # Compare

@@ -16,8 +16,8 @@ census_years(data)
 \description{
 \link{census_population_time_series} includes non-decennial years (1900, 1910,
 1940, 1948, 1950, 1960, 1962, and 2021) alongside the twelve decennial
-censuses. Computing \code{lag()} on the unfiltered table silently produces 1-year
-or 13-year intervals instead of 10-year intervals.
+censuses. If you use \code{lag()} on the unfiltered table, you silently get 1-year
+or 13-year intervals, not 10-year intervals.
 }
 \examples{
 census_population_time_series |>

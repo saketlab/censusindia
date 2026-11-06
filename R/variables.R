@@ -94,7 +94,7 @@ list_states <- function(region = NULL) {
 #' Search census variables by keyword across variable names and labels.
 #'
 #' @param pattern Character string or regular expression pattern.
-#' @return A tibble of matching variables.
+#' @return A tibble of the variables that match.
 #'
 #' @examples
 #' search_census_variables("population")
@@ -107,4 +107,48 @@ search_census_variables <- function(pattern) {
       grepl(pattern, variable, ignore.case = TRUE) |
         grepl(pattern, label, ignore.case = TRUE)
     )
+}
+
+#' List the datasets in the package
+#'
+#' Gives one row for each dataset in `data/`. The remote tables are functions,
+#' so they are not in this list.
+#'
+#' @return A tibble with `dataset`, `years`, `geography`, `rows` and `columns`.
+#' @examples
+#' list_census_datasets()
+#' @export
+list_census_datasets <- function() {
+  names <- sort(utils::data(package = "censusindia")$results[, "Item"])
+  rows <- lapply(names, function(name) {
+    d <- getExportedValue("censusindia", name)
+    tibble::tibble(
+      dataset = name,
+      years = dataset_years(d, name),
+      geography = dataset_geography(d),
+      rows = nrow(d),
+      columns = ncol(d)
+    )
+  })
+  dplyr::bind_rows(rows)
+}
+
+#' @noRd
+dataset_years <- function(d, name) {
+  if (!"year" %in% names(d)) {
+    return(stringr::str_extract(name, "[0-9]{4}"))
+  }
+  v <- sort(unique(d$year[!is.na(d$year)]))
+  if (length(v) <= 3) {
+    return(paste(v, collapse = ", "))
+  }
+  sprintf("%d-%d (%d)", min(v), max(v), length(v))
+}
+
+#' @noRd
+dataset_geography <- function(d) {
+  if ("geography" %in% names(d)) {
+    return(paste(sort(unique(d$geography)), collapse = "/"))
+  }
+  if ("district" %in% names(d)) "district" else NA_character_
 }

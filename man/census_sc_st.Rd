@@ -8,8 +8,8 @@ census_sc_st(category = NULL, state = NULL)
 }
 \arguments{
 \item{category}{\code{"SC"}, \code{"ST"}, \code{"Scheduled Caste"}, \code{"Scheduled Tribe"}, or
-\code{NULL} (default) to keep both categories. Case-insensitive; accepts a
-vector.}
+\code{NULL} (default) to keep both categories. The match is
+case-insensitive. You can give a vector.}
 
 \item{state}{Optional state filter: one or more canonical state names or
 two-letter codes, as in \code{\link[=get_census]{get_census()}}.}
@@ -24,8 +24,8 @@ A tibble of \link{census_2011_sc_st} rows.
 \code{census_sc_st()} accepts either form, case-insensitively.
 }
 \details{
-Individual Scheduled Tribes are listed by name (581 tribes). Scheduled Castes
-are reported only as a single district aggregate (\code{"All Scheduled Castes"},
+The table gives individual Scheduled Tribes by name (581 tribes). It gives
+Scheduled Castes only as a single district aggregate (\code{"All Scheduled Castes"},
 582 districts).
 }
 \examples{

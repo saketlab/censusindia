@@ -38,8 +38,9 @@ are numbers of persons.
 }
 \details{
 Values match the printed Table 18. \code{population} is the printed Person
-value, which the report rounds to thousands independently of \code{males} and
-\code{females}, so \code{population} can differ from \code{males + females} by up to 1,000.
+value. The report rounds this value to thousands, independently of \code{males}
+and \code{females}. Thus, \code{population} can differ from \code{males + females} by up to
+1,000.
 The India and Odisha rows use the July 2020 edition, as in
 \link{population_projections_state}, where \code{population} equals \code{males + females}.
 

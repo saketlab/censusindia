@@ -43,17 +43,22 @@ name as in the LGD district table, so data from 2020 and later can join.
 \item "India", the national total.
 }
 The population of the two former UTs appears twice in the table. When
-summing across states, exclude \code{"India"} and either the merged UT or the two
-former UTs.
+you sum states, exclude \code{"India"} and either the merged UT or the two former
+UTs.
 
 Values are counts of persons. Because the source report rounds persons,
 males, and females to thousands independently, \code{population} can differ from
 \code{males + females} by up to 1,000 (or up to 2,000 for the merged UT, which is
 the sum of two rounded rows).
 
+The text of the report gives growth figures that differ from its tables. This
+table follows Table 8. Goa and the small UTs are extended from past growth
+rates, which gives Daman & Diu implausible growth and sex ratios.
+
 Values are the same as Table 8 of the report. The India and Odisha rows
 use the July 2020 edition. That edition changed the male projection for
 Odisha. The two rows are different from the November 2019 report
-at the link below.
+at the link below. The July 2020 edition is at
+\url{https://web.archive.org/web/20261106103105/https://www.mohfw-dohfw.gov.in/static/uploads/2025/10/1c3c2048814bd3747f44e661f8547055.pdf}.
 }
 \keyword{datasets}

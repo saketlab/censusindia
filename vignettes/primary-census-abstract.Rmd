@@ -29,33 +29,8 @@ data("census_2011_pca")
 ```
 
 ```{r design}
-INK <- "#1c1c1c"
-INK_MUTED <- "#6b6b6b"
-ACCENT <- get_palette("blues")[8]
-DIV_LOW <- get_palette("blue_red")[2]
-DIV_MID <- "grey92"
-DIV_HIGH <- get_palette("blue_red")[10]
-
-theme_pca <- theme_minimal(base_size = 11) +
-  theme(
-    plot.title = element_text(face = "bold", size = rel(1.15), colour = INK),
-    plot.subtitle = element_text(colour = INK_MUTED, margin = margin(b = 10)),
-    plot.caption = element_text(colour = INK_MUTED, size = rel(0.8), hjust = 0),
-    plot.title.position = "plot", plot.caption.position = "plot",
-    axis.title = element_text(colour = INK_MUTED, size = rel(0.9)),
-    axis.text = element_text(colour = INK_MUTED),
-    panel.grid.minor = element_blank(),
-    panel.grid.major = element_line(colour = "grey92", linewidth = 0.3),
-    legend.position = "bottom"
-  )
-theme_set(theme_pca)
-
-theme_map <- theme_void(base_size = 11) +
-  theme(
-    plot.title = element_text(face = "bold", colour = INK),
-    plot.subtitle = element_text(colour = INK_MUTED, margin = margin(b = 8)),
-    legend.position = "right", legend.key.width = unit(0.4, "cm")
-  )
+col <- census_colors()
+theme_set(theme_census())
 
 SRC <- "Source: Census of India, Primary Census Abstract"
 ```
@@ -69,8 +44,8 @@ bind_rows(
   summarise(
     districts = n(),
     population = sum(population),
-    literate_pct = 100 * sum(literate) / sum(population),
-    worker_pct = 100 * sum(workers) / sum(population),
+    literate_pct = share(sum(literate), sum(population)),
+    worker_pct = share(sum(workers), sum(population)),
     .groups = "drop"
   ) |>
   mutate(population = format(population, big.mark = ",")) |>
@@ -79,57 +54,39 @@ bind_rows(
 
 ```{r geometry}
 geo_2001 <- census_2001_pca |>
-  mutate(literate_pct = 100 * literate / population) |>
+  mutate(literate_pct = share(literate, population)) |>
   attach_geometry(2001, geography = "district")
 
 geo_2011 <- census_2011_pca |>
-  mutate(literate_pct = 100 * literate / population) |>
+  mutate(literate_pct = share(literate, population)) |>
   attach_geometry(2011, geography = "district")
 
 c(`2001` = nrow(geo_2001), `2011` = nrow(geo_2011))
 ```
 
 ```{r literacy-maps, fig.height = 5.5, fig.width = 10}
-lit_map <- function(d, year) {
-  ggplot(d) +
-    geom_sf(aes(fill = literate_pct), colour = NA) +
-    scale_fill_gradient2(
-      low = DIV_HIGH, mid = DIV_MID, high = DIV_LOW, midpoint = 55,
-      limits = c(30, 80), oob = scales::squish, na.value = "grey85",
-      name = "Literate (%)"
-    ) +
-    labs(title = year) +
-    theme_map
-}
-
-patchwork::wrap_plots(lit_map(geo_2001, "2001"), lit_map(geo_2011, "2011")) +
+compare_maps(
+  list("2001" = geo_2001, "2011" = geo_2011), "literate_pct",
+  palette = "blue_red", reverse = TRUE, midpoint = 55, limits = c(30, 80),
+  oob = scales::squish, na_color = "grey85", legend_title = "Literate (%)",
+  show_state_boundaries = FALSE
+) +
   patchwork::plot_annotation(
     title = "Literacy rises from 54.5% to 63.1% of the population",
     subtitle = "Each round on its own district boundaries. Grey = unmatched",
     caption = SRC,
-    theme = theme(
-      plot.title = element_text(face = "bold", size = rel(1.15), colour = INK),
-      plot.subtitle = element_text(colour = INK_MUTED),
-      plot.caption = element_text(colour = INK_MUTED, size = rel(0.8), hjust = 0)
-    )
+    theme = theme_census()
   )
 ```
 
 ```{r state-change, fig.height = 8}
-by_state <- function(d, round) {
-  d |>
-    group_by(state_name_harmonized) |>
-    summarise(
-      population = sum(population),
-      literate_pct = 100 * sum(literate) / sum(population),
-      .groups = "drop"
-    ) |>
-    mutate(round = round)
-}
-
-states <- bind_rows(by_state(census_2001_pca, "y2001"), by_state(census_2011_pca, "y2011")) |>
-  select(state_name_harmonized, round, literate_pct) |>
-  pivot_wider(names_from = round, values_from = literate_pct) |>
+states <- bind_rows(
+  y2001 = get_census(2001, "state", variables = "literacy_rate"),
+  y2011 = get_census(2011, "state", variables = "literacy_rate"),
+  .id = "round"
+) |>
+  select(state_name_harmonized, round, literacy_rate) |>
+  pivot_wider(names_from = round, values_from = literacy_rate) |>
   filter(!is.na(y2001), !is.na(y2011)) |>
   mutate(
     gain = y2011 - y2001,
@@ -141,7 +98,7 @@ ggplot(states, aes(y = state_name_harmonized)) +
     colour = "grey75", linewidth = 0.8
   ) +
   geom_point(aes(x = y2001), colour = "grey55", size = 2.4) +
-  geom_point(aes(x = y2011), colour = ACCENT, size = 2.8) +
+  geom_point(aes(x = y2011), colour = col[["accent"]], size = 2.8) +
   labs(
     x = "Literate, % of population", y = NULL,
     title = "Every state gains literacy between 2001 and 2011",
@@ -164,14 +121,14 @@ census_2001_pca_full |>
   filter(sector != "total") |>
   group_by(sector) |>
   summarise(
-    literate = 100 * sum(literate) / sum(population),
-    workers = 100 * sum(workers) / sum(population),
+    literate = share(sum(literate), sum(population)),
+    workers = share(sum(workers), sum(population)),
     .groups = "drop"
   ) |>
   pivot_longer(-sector) |>
   ggplot(aes(value, name, fill = sector)) +
   geom_col(position = "dodge", width = 0.6) +
-  scale_fill_manual(values = c(rural = "#999999", urban = ACCENT), name = NULL) +
+  scale_fill_manual(values = c(rural = "#999999", urban = col[["accent"]]), name = NULL) +
   labs(
     x = "% of population", y = NULL,
     title = "Urban India is more literate but no more likely to be working, 2001",
@@ -190,7 +147,7 @@ census_2001_pca_full |>
   ) |>
   pivot_longer(everything(), names_to = "category", values_to = "workers") |>
   ggplot(aes(workers / 1e6, reorder(category, workers))) +
-  geom_col(fill = ACCENT, width = 0.65) +
+  geom_col(fill = col[["accent"]], width = 0.65) +
   labs(
     x = "Main workers (millions)", y = NULL,
     title = "Cultivation and agricultural labour account for half of main workers, 2001",
@@ -204,14 +161,14 @@ census_2001_pca_full |>
   filter(sector == "total") |>
   group_by(state_name_harmonized) |>
   summarise(
-    male = 100 * sum(literate_male) / sum(males),
-    female = 100 * sum(literate_female) / sum(females),
+    male = share(sum(literate_male), sum(males)),
+    female = share(sum(literate_female), sum(females)),
     .groups = "drop"
   ) |>
   mutate(gap = male - female, state_name_harmonized = reorder(state_name_harmonized, gap)) |>
   ggplot(aes(gap, state_name_harmonized, fill = gap)) +
   geom_col(width = 0.7) +
-  scale_fill_gradient(low = DIV_MID, high = DIV_HIGH, guide = "none") +
+  scale_fill_gradient(low = col[["mid"]], high = col[["high"]], guide = "none") +
   labs(
     x = "Male minus female literacy (percentage points)", y = NULL,
     title = "The literacy gender gap is 18 points nationally in 2001",
@@ -222,15 +179,14 @@ census_2001_pca_full |>
 
 ```{r claims, include = FALSE}
 # Titles above state specific numbers. Fail the build rather than ship a stale one.
-lit <- function(d) 100 * sum(d$literate) / sum(d$population)
 f <- dplyr::filter(census_2001_pca_full, sector == "total")
 stopifnot(
   nrow(census_2001_pca) == 593, nrow(census_2011_pca) == 640,
-  round(lit(census_2001_pca), 1) == 54.5,
-  round(lit(census_2011_pca), 1) == 63.1,
+  round(share(sum(census_2001_pca$literate), sum(census_2001_pca$population)), 1) == 54.5,
+  round(share(sum(census_2011_pca$literate), sum(census_2011_pca$population)), 1) == 63.1,
   all(states$gain > 0),
-  round(100 * sum(f$literate_male) / sum(f$males) -
-    100 * sum(f$literate_female) / sum(f$females)) == 18,
+  round(share(sum(f$literate_male), sum(f$males)) -
+    share(sum(f$literate_female), sum(f$females))) == 18,
   sum(f$main_cultivators) + sum(f$main_agri_labour) >
     sum(f$main_hh_industry) + sum(f$main_other)
 )

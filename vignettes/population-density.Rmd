@@ -1,0 +1,253 @@
+---
+title: "Population density maps"
+output:
+  rmarkdown::html_vignette:
+    self_contained: true
+vignette: >
+  %\VignetteIndexEntry{Population density maps}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 9,
+  fig.height = 8,
+  fig.align = "center",
+  warning = FALSE,
+  message = FALSE,
+  dev = "png",
+  dpi = 150
+)
+```
+
+This vignette maps population density in India for 2011 and 2031. We use
+`population_projections()` for population and the 2011 district boundaries for
+area.
+
+We make three types of map. A fill map shows density. A bubble map also shows
+population size. In a dot density map, each dot shows a fixed number of people.
+
+The national maps stop at district level. The last section shows one state at
+subdistrict and village level. The totals for 2031 are IIPS projections. This
+package calculates the rural and urban figures (see `?population_projections`).
+Gray areas have no district data, except on the black map.
+
+```{r load}
+library(censusindia)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(patchwork)
+library(sf)
+```
+
+## Density by district
+
+We get the districts for two years, attach the boundaries, and calculate density.
+
+```{r data}
+districts <- population_projections("district", year = c(2011, 2031)) |>
+  select(year, sector, state_name_harmonized, district, population) |>
+  pivot_wider(names_from = c(sector, year), values_from = population) |>
+  attach_geometry(2011, geography = "district")
+
+districts <- districts |>
+  filter(!st_is_empty(geometry)) |>
+  mutate(
+    area = area_km2(geometry),
+    density_2011 = total_2011 / area,
+    density_2031 = total_2031 / area,
+    density_change = percent_change(density_2031, density_2011),
+    rural_density_2031 = pmax(rural_2031 / area, 1),
+    total_millions = total_2031 / 1e6,
+    urban_millions = urban_2031 / 1e6
+  )
+```
+
+Density has a large range. We use one log scale for the two maps.
+
+```{r fill-maps, fig.height = 6.5, fig.alt = "District density maps of India, 2011 and 2031."}
+compare_maps(
+  list(
+    "2011" = mutate(districts, density = density_2011),
+    "2031" = mutate(districts, density = density_2031)
+  ),
+  "density",
+  palette = "oranges", limits = c(1, 50000), trans = "log10", oob = scales::squish,
+  breaks = c(10, 100, 1000, 10000), labels = scales::label_comma(),
+  legend_title = "People per km²", na_color = "grey85",
+  state_boundary_color = "white", state_boundary_width = 0.2, legend_position = "bottom"
+) &
+  theme(legend.position = "bottom")
+```
+
+## Density on a black map
+
+A district with high density is bright, and a district with low density is dark.
+The colors show calculated density. This map is not a satellite image of lights
+at night. Areas with no district data are black.
+
+```{r black-map, dev.args = list(bg = "black"), fig.alt = "District density map of India on a black background. Dense areas are bright."}
+plot_map(districts, "density_2031",
+  title = "Population density by district, 2031",
+  palette = "inferno", dark = TRUE, trans = "log10",
+  limits = c(10, 50000), oob = scales::squish,
+  breaks = c(10, 100, 1000, 10000), labels = scales::label_comma(),
+  legend_title = "People per km²",
+  show_state_boundaries = TRUE, state_boundary_width = 0.1
+)
+```
+
+The next map shows the same density with dots. Each dot shows 50,000 people. The
+dot color shows the density of its district. We put each dot at a random position
+in its district.
+
+```{r black-map-dots, dev.args = list(bg = "black"), fig.alt = "Dot density map of India on a black background, one dot per 50,000 people. Dense areas are bright."}
+set.seed(2031)
+plot_dot_density_map(districts, "total_2031",
+  per_dot = 5e4, color = "density_2031", dark = TRUE,
+  trans = "log10", limits = c(10, 50000), oob = scales::squish,
+  breaks = c(10, 100, 1000, 10000), labels = scales::label_comma(),
+  color_title = "People per km²",
+  title = "One dot for every 50,000 people, 2031",
+  subtitle = "Placed at random within each district"
+)
+```
+
+## Bubble map
+
+We show each district as one dot. Dot size shows the population in 2031. Dot color
+shows density. A large, dark dot shows many people in a small area.
+
+```{r bubble-map, fig.alt = "Map of India with one dot per district, sized by population and colored by density."}
+plot_bubble_map(districts, "total_millions", "density_2031",
+  title = "Population and density by district, 2031",
+  size_breaks = c(1, 5, 10, 15), size_title = "People, millions",
+  trans = "log10", limits = c(10, 50000), oob = scales::squish,
+  breaks = c(10, 100, 1000, 10000), labels = scales::label_comma(),
+  color_title = "People per km²"
+)
+```
+
+## One dot per 100,000 people
+
+Here, each dot shows 100,000 people. The dots are close together where density is
+high. We put each dot at a random position in its district. One dot does not show
+a real location.
+
+```{r dot-density, fig.alt = "Map of India with one dot per 100,000 people."}
+set.seed(2031)
+plot_dot_density_map(districts, "total_2031",
+  title = "One dot for every 100,000 people, 2031",
+  subtitle = "Placed at random within each district"
+)
+```
+
+## Change in density
+
+Next, we map the change in density from 2011 to 2031. District area is constant.
+This change is equal to the change in population.
+
+Density falls in some districts, for example New Delhi, Mumbai, and Ratnagiri. In
+these districts, the IIPS tables give a smaller share of the state population.
+
+The scale stops at 60%. Daman and Dadra & Nagar Haveli are above this limit. MoHFW
+projects small union territories from their growth rates for 1981 to 2011. Do not
+use these two values.
+
+```{r change-map, fig.alt = "District map of India of the change in density from 2011 to 2031."}
+plot_map(districts, "density_change",
+  title = "Change in density by district, 2011 to 2031",
+  palette = "blue_red", midpoint = 0, limits = c(-60, 60), oob = scales::squish,
+  breaks = c(-60, -30, 0, 30, 60),
+  labels = c("-60% or less", "-30%", "0", "+30%", "+60% or more"),
+  legend_title = "Change in density", na_color = "grey85",
+  show_state_boundaries = TRUE, state_boundary_color = "grey30", state_boundary_width = 0.2
+)
+```
+
+## Rural density and urban population
+
+Next, we show two measures on one map. The fill shows rural density. The dots show
+urban population. This package calculates these figures. Use this map only to
+compare areas.
+
+```{r rural-urban, fig.alt = "District map of India of rural density, with dots for urban population."}
+plot_map(districts, "rural_density_2031",
+  title = "Rural density and urban population by district, 2031",
+  palette = "greens", trans = "log10", limits = c(1, 3000), oob = scales::squish,
+  breaks = c(1, 10, 100, 1000), labels = scales::label_comma(),
+  legend_title = "Rural people per km²", na_color = "grey85",
+  show_state_boundaries = TRUE, state_boundary_color = "white", state_boundary_width = 0.2
+) +
+  census_bubble_layer(
+    filter(districts, urban_2031 > 0), "urban_millions",
+    max_size = 6, size_breaks = c(1, 5, 10, 15), size_title = "Urban people, millions"
+  )
+```
+
+## Below the district level
+
+District totals hide the local pattern. `get_census_boundaries(2011, "village", state = ...)`
+gives village and town polygons for one state, and `attach_geometry()` joins them
+to the census by code. We use the 2011 Census population, because projections do
+not go to individual towns.
+
+We use Haryana, because polygons cover all of its population. Coverage is not
+the same in all states. The polygons do not include most large city corporations,
+so they cover 74.5% of the population of India. Do a check of the coverage before
+you use a different state. Do not use the Delhi file. Its populations do not agree
+with the census.
+
+```{r haryana-data}
+haryana <- bind_rows(
+  at_level(census_2011_demographics(), "village", sector = "rural"),
+  at_level(census_2011_demographics(), "town", sector = "urban")
+) |>
+  filter(state_name_harmonized == "Haryana") |>
+  distinct(town_village_code, .keep_all = TRUE) |>
+  attach_geometry(2011, geography = "village", unmatched = "ignore") |>
+  filter(!st_is_empty(geometry))
+
+by_level <- list(
+  District = haryana |>
+    group_by(district_code) |>
+    summarise(population = sum(population)),
+  Subdistrict = haryana |>
+    group_by(district_code, subdistrict_code) |>
+    summarise(population = sum(population), .groups = "drop"),
+  `Village and town` = haryana
+) |>
+  lapply(function(d) mutate(d, density = population / area_km2(d)))
+
+tibble::tibble(
+  Level = names(by_level),
+  Units = vapply(by_level, nrow, integer(1)),
+  `Median density` = round(vapply(by_level, function(d) median(d$density), numeric(1))),
+  `Highest density` = round(vapply(by_level, function(d) max(d$density), numeric(1)))
+) |>
+  knitr::kable(format.args = list(big.mark = ","))
+```
+
+The maps use one scale. Each map has the same people and the same area. Only the
+size of the units changes. Gray areas on the village map are the 199 villages
+with no population.
+
+```{r haryana-maps, fig.height = 4.5, fig.alt = "Density maps of Haryana at district, subdistrict and village level."}
+compare_maps(
+  by_level, "density",
+  palette = "oranges", limits = c(30, 30000), trans = "log10", oob = scales::squish,
+  breaks = c(100, 1000, 10000), labels = scales::label_comma(),
+  legend_title = "People per km²", show_state_boundaries = FALSE, base_layer = FALSE,
+  legend_position = "bottom"
+) &
+  theme(legend.position = "bottom")
+```
+
+The village and town polygons come from the
+[National Water Data Portal](https://nwdp.nwic.gov.in/dataset/9bad17f2-9d88-428d-98ad-831ef01ae2e4).
+We calculate the area of each unit from its polygon, so these values are not the
+same as the published census density.

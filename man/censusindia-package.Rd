@@ -6,9 +6,9 @@
 \alias{censusindia-package}
 \title{censusindia: Census of India Data, 1901-2011, with Boundaries and Projections}
 \description{
-\if{html}{\figure{logo.svg}{options: style='float: right' alt='logo' width='120'}}
+\if{html}{\figure{logo.png}{options: style='float: right' alt='logo' width='120'}}
 
-Tables from every decennial Census of India from 1901 to 2011: population time series, Primary Census Abstracts at state, district and sub-district level, mother tongue tables, Scheduled Caste and Scheduled Tribe populations, and the 1931 caste tables by religion, together with Ministry of Health and Family Welfare population projections to 2036. Historical series are drawn from Jolad and Singh (2026) \doi{10.7910/DVN/ON8CP8}. Census variables can be returned with state or district boundaries of the matching census year attached for mapping. Boundary files and the largest village-level tables are downloaded on first use and cached locally.
+Tables from each decennial Census of India, 1901 to 2011: population time series, Primary Census Abstracts at state, district and sub-district level, mother tongue, Scheduled Caste and Scheduled Tribe populations, and the 1931 caste tables by religion. Includes Ministry of Health and Family Welfare population projections to 2036, with derived rural, urban, sub-district and village figures. Boundaries for maps cover states and districts by census year, and villages for 2011. Historical series come from Jolad and Singh (2026) \doi{10.7910/DVN/ON8CP8}. Boundary files and the largest village-level tables download on first use to a local cache.
 }
 \seealso{
 Useful links:

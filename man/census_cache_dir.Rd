@@ -10,8 +10,8 @@ census_cache_dir()
 clear_census_cache()
 }
 \value{
-\code{census_cache_dir()} returns the cache directory path (which may not
-yet exist on disk). \code{clear_census_cache()} deletes the cache directory,
+\code{census_cache_dir()} returns the cache directory path (the directory can
+be absent from the disk). \code{clear_census_cache()} deletes the cache directory,
 clears the in-memory session cache, and returns the path invisibly.
 }
 \description{
@@ -27,6 +27,6 @@ By default the cache lives in \code{\link[tools:R_user_dir]{tools::R_user_dir()}
 census_cache_dir()
 }
 \seealso{
-\code{\link[=census_download]{census_download()}} downloads all remote files upfront;
-\code{\link[=clear_geometry_cache]{clear_geometry_cache()}} evicts objects cached in session memory.
+\code{\link[=census_download]{census_download()}} downloads all remote files at once.
+\code{\link[=clear_geometry_cache]{clear_geometry_cache()}} removes cached objects from the session memory.
 }

@@ -98,11 +98,34 @@ relabel_boundaries <- function(shapes, year, geography) {
 }
 
 #' @noRd
-add_geometry <- function(data, year, geography, unmatched = "warn") {
-  if (!requireNamespace("sf", quietly = TRUE)) {
-    cli::cli_abort("Package {.pkg sf} is required for geometry support.")
+add_village_geometry <- function(data, year) {
+  if (!"town_village_code" %in% names(data)) {
+    cli::cli_abort("{.arg data} has no {.field town_village_code} column.")
   }
+  shapes <- get_census_boundaries(
+    year, "village",
+    state = unique(data$state_name_harmonized)
+  )
+  out <- dplyr::left_join(
+    data, shapes[c("town_village_code", "geometry")],
+    by = "town_village_code"
+  )
+  sf::st_as_sf(out)
+}
 
+#' @noRd
+finish_geometry <- function(out, year, unmatched) {
+  out <- report_join_quality(out, unmatched)
+  # the map functions read this to pick the outline drawn underneath
+  attr(out, "census_boundary_year") <- year
+  out
+}
+
+#' @noRd
+add_geometry <- function(data, year, geography, unmatched = "warn") {
+  if (geography %in% c("village", "town")) {
+    return(finish_geometry(add_village_geometry(data, year), year, unmatched))
+  }
   if (!geography %in% c("state", "district")) {
     cli::cli_warn("Geometry not available for {.val {geography}} level")
     return(data)
@@ -126,10 +149,7 @@ add_geometry <- function(data, year, geography, unmatched = "warn") {
     return(data)
   }
 
-  out <- report_join_quality(out, unmatched)
-  # plot_map() reads this to pick the outline drawn underneath
-  attr(out, "census_boundary_year") <- year
-  out
+  finish_geometry(out, year, unmatched)
 }
 
 #' Reports rows with no geometry, and polygons that more than one row claims.
@@ -438,42 +458,41 @@ normalize_name <- function(x) {
 
 #' Attach geographic boundaries to census data
 #'
-#' Joins state or district boundary polygons to a census data frame for mapping.
+#' Joins state, district or village boundary polygons to a census data frame for
+#' maps.
 #' When `geography` is `NULL`, the geographic level is inferred from the columns
 #' of `data`.
 #'
 #' @param data A data frame of census data with state names and, for
 #'   districts, district names. `state_name_harmonized` and `district` join
-#'   exactly; other name columns fall back to fuzzy matching.
+#'   exactly. Other name columns use fuzzy matching as a fallback. Villages and
+#'   towns join by `town_village_code`.
 #' @param year Census year of the boundaries. Available: 1941, 1951, 1961, 1971,
 #'   1981, 1991, 2001, 2011.
-#' @param geography Geographic level: `"state"` or `"district"`. If `NULL`
+#' @param geography Geographic level: `"state"`, `"district"` or `"village"`. If `NULL`
 #'   (default), inferred from the columns of `data`.
 #' @param unmatched Action when rows get no geometry or when two distinct units
 #'   claim the same polygon: `"warn"` (default), `"error"`, or `"ignore"`.
-#'   Because fuzzy matching uses substrings and edit distance as a fallback, a
-#'   district whose true polygon is missing can otherwise be assigned a neighbor's
-#'   shape silently.
+#'   Fuzzy matching uses substrings and edit distance as a fallback. Thus,
+#'   without this check, a district with no true polygon can silently get the
+#'   shape of a neighbor.
 #'
 #' @return An `sf` object with geometry attached.
 #'
-#' Boundary files are downloaded on first use and cached locally; see
-#' [census_cache_dir()].
+#' @details
+#' The package downloads boundary files on first use and keeps them in a local
+#' cache. Refer to [census_cache_dir()].
 #'
 #' @examplesIf interactive()
 #' # Attach district boundaries
 #' census_2011_pca |>
-#'   dplyr::mutate(st_pct = 100 * st_population / population) |>
+#'   dplyr::mutate(st_pct = share(st_population, population)) |>
 #'   attach_geometry(2011)
 #'
 #' @export
 attach_geometry <- function(data, year, geography = NULL,
                             unmatched = c("warn", "error", "ignore")) {
   unmatched <- match.arg(unmatched)
-  if (!requireNamespace("sf", quietly = TRUE)) {
-    cli::cli_abort("Package {.pkg sf} is required for geometry support.")
-  }
-
   if (is.null(geography)) {
     if ("geography" %in% names(data)) {
       g <- intersect(unique(data$geography), c("district", "state"))
@@ -490,17 +509,37 @@ attach_geometry <- function(data, year, geography = NULL,
 
 #' Get census boundaries
 #'
-#' Retrieve state or district boundary polygons for a census year.
+#' Retrieve state, district, village or town boundary polygons for a census
+#' year.
+#'
+#' Use `geography = "village"` only with `year = 2011`. You must give `state`.
+#' The result has villages and towns of the 2011 Census, with their census
+#' codes. Areas with no census code, for example forests, are not in the result.
+#'
+#' Most large city corporations have no polygon. Coverage of the population is
+#' complete in Haryana and partial in Maharashtra. The Delhi file does not agree
+#' with the census. Do not use it.
+#'
+#' The state files use the current states. Thus, `"Andhra Pradesh"` also gets
+#' Telangana, and `"Jammu & Kashmir"` also gets Ladakh. `"Daman & Diu"` and
+#' `"Dadra & Nagar Haveli"` share one file. The `state_name_harmonized` column
+#' gives the state in the 2011 Census.
 #'
 #' @param year Census year. Available: 1941, 1951, 1961, 1971, 1981, 1991, 2001,
 #'   2011.
-#' @param geography Geographic level: `"state"` or `"district"`.
-#' @return An `sf` object with columns `year`, `geography`, `state_code`,
-#'   `state_name_harmonized`, `state_name`, `district` (district level only),
-#'   `id`, and `geometry`.
+#' @param geography Geographic level: `"state"`, `"district"` or `"village"`.
+#' @param state One or more state names or two-letter codes. Necessary for
+#'   `geography = "village"`. Optional at the other levels.
+#' @return An `sf` object. At state and district level, the columns are `year`,
+#'   `geography`, `state_code`, `state_name_harmonized`, `state_name`, `district`
+#'   (district level only), `id`, and `geometry`. At village level, the columns
+#'   are `year`, `geography` (`"village"` or `"town"`), `state_code`,
+#'   `state_name_harmonized`, `district_code`, `subdistrict_code`,
+#'   `town_village_code`, `name`, and `geometry`.
 #'
-#' Boundary files are downloaded on first use and cached locally; see
-#' [census_cache_dir()].
+#' @details
+#' The package downloads boundary files on first use and keeps them in a local
+#' cache. Refer to [census_cache_dir()].
 #'
 #' @examplesIf interactive()
 #' boundaries <- get_census_boundaries(1971, "district")
@@ -508,12 +547,9 @@ attach_geometry <- function(data, year, geography = NULL,
 #'   ggplot2::geom_sf()
 #'
 #' @export
-get_census_boundaries <- function(year, geography = c("state", "district")) {
+get_census_boundaries <- function(year, geography = c("state", "district", "village"),
+                                  state = NULL) {
   geography <- match.arg(geography)
-
-  if (!requireNamespace("sf", quietly = TRUE)) {
-    cli::cli_abort("Package {.pkg sf} is required for geometry support.")
-  }
 
   if (length(year) != 1L || is.na(year) || !year %in% BOUNDARY_YEARS) {
     cli::cli_abort(c(
@@ -521,5 +557,80 @@ get_census_boundaries <- function(year, geography = c("state", "district")) {
       "i" = "Available years: {BOUNDARY_YEARS}"
     ))
   }
-  get_cached_geometry(year, geography)
+  if (geography == "village") {
+    return(get_village_geometry(year, state))
+  }
+  shapes <- get_cached_geometry(year, geography)
+  if (is.null(state)) shapes else filter_by_state(shapes, state)
+}
+
+#' @noRd
+state_slug <- function(state) gsub("[^a-z]+", "-", gsub("&", "and", tolower(state)))
+
+#' 2011 Census states of the files named for current states
+#' @noRd
+village_file_parents <- function() {
+  moved <- .state_succession[.state_succession$created > 2011L, ]
+  stats::setNames(
+    c(as.list(moved$parent), list(c("Dadra & Nagar Haveli", "Daman & Diu"))),
+    state_slug(c(moved$state, .merged_ut))
+  )
+}
+
+#' @noRd
+village_file_states <- function(file) {
+  slug <- sub("[.]geojson$", "", file)
+  parents <- village_file_parents()[[slug]]
+  if (!is.null(parents)) {
+    return(parents)
+  }
+  states <- censusindia::india_states$state_name_harmonized
+  states[state_slug(states) == slug]
+}
+
+#' @noRd
+village_files <- function(state) {
+  state <- resolve_states(state)
+  parents <- village_file_parents()
+  merged <- parents[[state_slug(.merged_ut)]]
+  extra <- names(Filter(function(p) any(p %in% state), parents))
+  paste0(unique(c(state_slug(setdiff(state, merged)), extra)), ".geojson")
+}
+
+#' @noRd
+get_village_geometry <- function(year, state) {
+  if (year != 2011L) {
+    cli::cli_abort("Village boundaries are available for 2011 only.")
+  }
+  if (is.null(state)) {
+    cli::cli_abort(c(
+      "{.arg state} is necessary with {.code geography = \"village\"}.",
+      "i" = "Each state is a separate download."
+    ))
+  }
+  files <- village_files(state)
+  parts <- lapply(files, function(file) {
+    rlang::env_cache(.session_cache, paste0("village_", file), read_village_file(file))
+  })
+  dplyr::bind_rows(parts)
+}
+
+#' @noRd
+read_village_file <- function(file) {
+  shapes <- sf::st_read(village_file(file), quiet = TRUE)["village_code"]
+  shapes$town_village_code <- suppressWarnings(as.integer(shapes$village_code))
+  # drops polygons with a code from an unrelated state
+  codes <- census_2011_demographics() |>
+    dplyr::filter(
+      .data$geography %in% c("village", "town"),
+      .data$state_name_harmonized %in% village_file_states(file)
+    ) |>
+    dplyr::distinct(.data$town_village_code, .keep_all = TRUE)
+  cols <- c(
+    "year", "geography", "state_code", "state_name_harmonized", "district_code",
+    "subdistrict_code", "town_village_code", "name"
+  )
+  shapes <- dplyr::inner_join(shapes, codes[cols], by = "town_village_code")
+  # a village in parts has one row for each part
+  dedupe_shapes(repair_geometry(shapes[cols]), "town_village_code")
 }

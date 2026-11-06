@@ -1,4 +1,4 @@
-#' Plotting functions for census data
+#' Plot functions for census data
 #'
 #' @description
 #' Choropleth maps and comparison plots of census data.
@@ -6,11 +6,13 @@
 #' @name plotting
 NULL
 
-#' Create a choropleth map from census data.
+#' Create a choropleth map from census data
 #'
 #' @param data An `sf` object, or a data frame with geometry from
 #'   \code{\link{attach_geometry}}.
 #' @param fill_var Variable for the fill color (unquoted column name or string).
+#'   A numeric variable gets a continuous scale. Other variables get a discrete
+#'   scale, and `palette` has no effect.
 #' @param title Optional title for the map.
 #' @param subtitle Optional subtitle for the map.
 #' @param legend_title Title for the legend.
@@ -24,6 +26,7 @@ NULL
 #'     \item \code{"reds"} - Sequential red palette
 #'     \item \code{"blues"} - Sequential blue palette
 #'     \item \code{"purple_green"} - Diverging purple to green
+#'     \item \code{"inferno"} - Sequential black to yellow, for `dark = TRUE`
 #'   }
 #' @param reverse Logical. If `TRUE`, reverses the palette direction. Default
 #'   `FALSE`.
@@ -34,19 +37,32 @@ NULL
 #'   district polygons are absent. If `NULL`, inferred from `data`.
 #' @param base_layer Logical. If `TRUE` (default), draws the full state outline
 #'   of India beneath the data.
-#' @param na_color Color for missing values. Default `"grey80"`.
+#' @param na_color Color for missing values. Default `"grey80"`, or `"black"` if
+#'   `dark = TRUE`.
+#' @param state Optional state names. The map shows only these states. The
+#'   column `state_name_harmonized` of `data` must have these names.
+#' @param facet Optional name of a column. The map has one panel for each value
+#'   of this column. Use `base_layer = FALSE` if the panels have different
+#'   boundary years.
+#' @param dark Logical. If `TRUE`, the map has a black background and white text.
+#'   Use it with `palette = "inferno"`, so that high values are bright. See
+#'   [theme_census_map()] for the device background.
+#' @param unit_boundary_color Color of the lines around each unit of `data`. The
+#'   default `NA` draws no lines.
+#' @param unit_boundary_width Width of the lines around each unit of `data`.
 #' @param show_state_boundaries Logical. If `TRUE`, overlays state boundary lines
 #'   on top of the data.
-#' @param state_boundary_color Color for state boundary lines. Default `"black"`.
+#' @param state_boundary_color Color for state boundary lines. Default `"black"`,
+#'   or `"grey35"` if `dark = TRUE`.
 #' @param state_boundary_width Width of state boundary lines. Default `0.3`.
 #' @param trans Transformation for the color scale (e.g., `"log10"`, `"sqrt"`).
 #'   Default `"identity"`.
 #' @param midpoint Center value for a diverging palette (e.g., `0` for growth or
 #'   `1000` for sex ratio). If `NULL`, defaults to the midpoint of `limits`.
-#' @param oob Out-of-bounds handler for values outside `limits`. By default
-#'   ggplot2 maps out-of-bounds values to `na_color`, making them
-#'   indistinguishable from missing data; pass `scales::squish` to clamp them to
-#'   the nearest limit instead.
+#' @param oob Out-of-bounds handler for values outside `limits`. By default,
+#'   ggplot2 maps out-of-bounds values to `na_color`. You cannot then distinguish
+#'   them from missing data. Use `scales::squish` to clamp them to the nearest
+#'   limit.
 #' @param limits Optional numeric vector `c(min, max)` for the color scale.
 #' @param breaks Optional breaks for the legend.
 #' @param labels Optional labels for the legend breaks.
@@ -61,7 +77,7 @@ NULL
 #' @examplesIf interactive()
 #' # Calculate ST percentage and attach geometry
 #' st_data <- census_2011_pca |>
-#'   dplyr::mutate(st_pct = 100 * st_population / population) |>
+#'   dplyr::mutate(st_pct = share(st_population, population)) |>
 #'   attach_geometry(2011)
 #'
 #' # Create a basic map
@@ -83,11 +99,11 @@ plot_map <- function(data,
                      palette = "viridis",
                      reverse = FALSE,
                      direction = NULL,
-                     na_color = "grey80",
+                     na_color = if (dark) "black" else "grey80",
                      boundary_year = NULL,
                      base_layer = TRUE,
                      show_state_boundaries = FALSE,
-                     state_boundary_color = "black",
+                     state_boundary_color = if (dark) "grey35" else "black",
                      state_boundary_width = 0.3,
                      trans = "identity",
                      midpoint = NULL,
@@ -96,28 +112,15 @@ plot_map <- function(data,
                      breaks = NULL,
                      labels = NULL,
                      font_family = NULL,
-                     legend_position = "right") {
-  if (!requireNamespace("ggplot2", quietly = TRUE)) {
-    cli::cli_abort("Package {.pkg ggplot2} is required.")
-  }
-  if (!requireNamespace("sf", quietly = TRUE)) {
-    cli::cli_abort("Package {.pkg sf} is required.")
-  }
-
-  if (!inherits(data, "sf")) {
-    if ("geometry" %in% names(data)) {
-      data <- sf::st_as_sf(data)
-    } else {
-      cli::cli_abort("{.arg data} must be an {.cls sf} object or have a {.field geometry} column.")
-    }
-  }
-
+                     legend_position = "right",
+                     state = NULL,
+                     facet = NULL,
+                     dark = FALSE,
+                     unit_boundary_color = NA,
+                     unit_boundary_width = 0.1) {
   # substitute() before fill_var is evaluated, or plot_map(d, value) fails
   fill_var_name <- resolve_fill_var(substitute(fill_var), names(data), function() fill_var, parent.frame())
-
-  if (!fill_var_name %in% names(data)) {
-    cli::cli_abort("{.arg fill_var} {.val {fill_var_name}} is not a column of {.arg data}.")
-  }
+  data <- as_map_data(data, fill_var_name)
 
   if (is.null(legend_title)) {
     legend_title <- fill_var_name
@@ -130,9 +133,16 @@ plot_map <- function(data,
   colors <- get_palette(palette, reverse)
 
   base_sf <- if (base_layer) {
-    census_base_shapes(
-      if (is.null(boundary_year)) detect_year(data) else boundary_year
-    )
+    census_base_shapes(boundary_year %||% detect_year(data))
+  }
+
+  if (!is.null(state)) {
+    data <- filter_by_state(data, state)
+    if (!is.null(base_sf)) {
+      # a successor state draws the outline of its parent
+      outline <- remap_successor_states(data$state_name_harmonized, base_sf$year[1])
+      base_sf <- base_sf[base_sf$state_name_harmonized %in% outline, ]
+    }
   }
 
   p <- ggplot2::ggplot()
@@ -145,7 +155,8 @@ plot_map <- function(data,
   p <- p + ggplot2::geom_sf(
     data = data,
     ggplot2::aes(fill = .data[[fill_var_name]]),
-    color = NA
+    color = unit_boundary_color,
+    linewidth = unit_boundary_width
   )
 
   if (show_state_boundaries && is.null(base_sf)) {
@@ -186,24 +197,205 @@ plot_map <- function(data,
     barheight = ggplot2::unit(bar_size[2], "cm")
   )
 
-  p <- p + do.call(ggplot2::scale_fill_gradientn, scale_args)
+  p <- p + if (is.numeric(data[[fill_var_name]])) {
+    do.call(ggplot2::scale_fill_gradientn, scale_args)
+  } else {
+    ggplot2::scale_fill_hue(na.value = na_color, name = legend_title)
+  }
 
   if (!is.null(title) || !is.null(subtitle)) {
     p <- p + ggplot2::labs(title = title, subtitle = subtitle)
   }
 
-  p <- p + ggplot2::theme_void(base_family = if (is.null(font_family)) "" else font_family) +
+  p <- p + theme_census_map(dark = dark) +
     ggplot2::theme(
-      plot.title = ggplot2::element_text(hjust = 0.5, size = 12, face = "bold"),
-      plot.subtitle = ggplot2::element_text(hjust = 0.5, size = 10),
+      text = ggplot2::element_text(family = font_family),
       legend.position = legend_position,
       legend.title = ggplot2::element_text(size = 9),
       legend.text = ggplot2::element_text(size = 8),
       plot.margin = ggplot2::margin(5, 5, 5, 5)
     )
 
+  if (!is.null(facet)) {
+    p <- p + ggplot2::facet_wrap(facet, nrow = 2) +
+      ggplot2::theme(strip.text = ggplot2::element_text(face = "bold"))
+  }
   p
 }
+
+#' Bubble map with one dot for each unit
+#'
+#' `plot_bubble_map()` makes a map with one dot for each unit. The dot size shows
+#' one column, and the dot color can show a second column.
+#' `census_bubble_layer()` gives only the dots, so that you can add them to
+#' [plot_map()].
+#'
+#' The dot area is proportional to `size`. Each dot is on the surface of its
+#' unit.
+#'
+#' @param data An `sf` object of polygons, or a data frame with geometry from
+#'   [attach_geometry()].
+#' @param size Name of the column for the dot size.
+#' @param color Optional name of the column for the dot color.
+#' @param ... Arguments for [ggplot2::scale_color_gradientn()], for example
+#'   `trans`, `limits`, `breaks` and `labels`. Use these only with `color`.
+#' @param title,subtitle Optional text for the map.
+#' @param palette Palette for `color`. See [get_palette()]. The first two colors
+#'   are not used.
+#' @param max_size Size of the largest dot.
+#' @param size_breaks Optional breaks for the size legend.
+#' @param size_title Title of the size legend.
+#' @param color_title Title of the color legend.
+#' @param dot_color For `census_bubble_layer()`: dot color if `color` is `NULL`.
+#' @param alpha For `census_bubble_layer()`: dot opacity.
+#' @param boundary_year Census year of the state outline. If `NULL`, the function
+#'   finds the year from `data`.
+#' @param dark Logical. If `TRUE`, the map has a black background and white text.
+#'   See [theme_census_map()] for the device background.
+#'
+#' @return `plot_bubble_map()` gives a `ggplot2` object. `census_bubble_layer()`
+#'   gives a list of `ggplot2` layers.
+#' @seealso [plot_dot_density_map()]
+#' @examplesIf interactive()
+#' districts <- census_2011_pca |>
+#'   dplyr::mutate(millions = population / 1e6) |>
+#'   attach_geometry(2011)
+#' plot_bubble_map(districts, "millions", size_title = "People, millions")
+#' plot_map(districts, "literate") + census_bubble_layer(districts, "millions")
+#' @export
+plot_bubble_map <- function(data,
+                            size,
+                            color = NULL,
+                            ...,
+                            title = NULL,
+                            subtitle = NULL,
+                            palette = "oranges",
+                            max_size = 5,
+                            size_breaks = ggplot2::waiver(),
+                            size_title = NULL,
+                            color_title = NULL,
+                            dark = FALSE,
+                            boundary_year = NULL) {
+  data <- as_map_data(data, c(size, color))
+  if (is.null(color)) rlang::check_dots_empty()
+  p <- ggplot2::ggplot() +
+    dot_base_layer(boundary_year %||% detect_year(data), dark) +
+    census_bubble_layer(
+      data, size, color,
+      max_size = max_size, size_breaks = size_breaks, size_title = size_title
+    )
+  rm(data) # the plot keeps this frame
+  if (!is.null(color)) p <- p + dot_color_scale(palette, color, color_title, ...)
+  p + ggplot2::labs(title = title, subtitle = subtitle) + theme_census_map(dark = dark)
+}
+
+#' @rdname plot_bubble_map
+#' @export
+census_bubble_layer <- function(data,
+                                size,
+                                color = NULL,
+                                max_size = 5,
+                                size_breaks = ggplot2::waiver(),
+                                size_title = NULL,
+                                dot_color = census_colors()[["accent"]],
+                                alpha = 0.8) {
+  data <- as_map_data(data, c(size, color))
+  # reassigned: aes() keeps this frame
+  data <- suppressWarnings(sf::st_point_on_surface(data))
+  # small dots on top
+  data <- data[order(data[[size]], decreasing = TRUE), ]
+  list(
+    if (is.null(color)) {
+      ggplot2::geom_sf(
+        data = data, ggplot2::aes(size = .data[[size]]),
+        color = dot_color, alpha = alpha, shape = 16
+      )
+    } else {
+      ggplot2::geom_sf(
+        data = data, ggplot2::aes(size = .data[[size]], color = .data[[color]]),
+        alpha = alpha, shape = 16
+      )
+    },
+    ggplot2::scale_size_area(
+      max_size = max_size, breaks = size_breaks,
+      name = size_title %||% size
+    )
+  )
+}
+
+#' Dot density map of a count
+#'
+#' Each dot shows `per_dot` units of `value`. The function puts each dot at a
+#' random position in its unit, so one dot does not show a real location. Use
+#' [set.seed()] to get the same map again.
+#'
+#' @inheritParams plot_bubble_map
+#' @param value Name of the column with the count.
+#' @param per_dot Count that one dot shows.
+#' @param color Optional name of a column. Each dot gets the color of its unit,
+#'   and dots with high values are on top.
+#' @param dot_color Dot color if `color` is `NULL`.
+#' @param dot_size Dot size.
+#'
+#' @return A `ggplot2` object.
+#' @seealso [plot_bubble_map()]
+#' @examplesIf interactive()
+#' census_2011_pca |>
+#'   attach_geometry(2011) |>
+#'   plot_dot_density_map("population")
+#' @export
+plot_dot_density_map <- function(data,
+                                 value,
+                                 per_dot = 1e5,
+                                 color = NULL,
+                                 ...,
+                                 title = NULL,
+                                 subtitle = NULL,
+                                 palette = "inferno",
+                                 color_title = NULL,
+                                 dot_color = get_palette("oranges")[[8]],
+                                 dot_size = 0.6,
+                                 dark = FALSE,
+                                 boundary_year = NULL) {
+  data <- as_map_data(data, c(value, color))
+  if (is.null(color)) rlang::check_dots_empty()
+  n <- round(data[[value]] / per_dot)
+  n[is.na(n)] <- 0
+  drawn <- n > 0
+  # st_sample() can give a stray point for size 0
+  # no CRS: faster, dots uniform in degrees
+  # rep() below relies on st_sample() keeping unit order
+  points <- sf::st_sample(sf::st_set_crs(sf::st_geometry(data)[drawn], NA), size = n[drawn])
+  dots <- sf::st_sf(geometry = sf::st_set_crs(points, sf::st_crs(data)))
+  if (!is.null(color)) dots$dot_value <- rep(data[[color]][drawn], n[drawn])
+  p <- ggplot2::ggplot() +
+    dot_base_layer(boundary_year %||% detect_year(data), dark)
+  rm(data) # the plot keeps this frame
+  if (is.null(color)) {
+    p <- p + ggplot2::geom_sf(data = dots, size = dot_size, shape = 16, stroke = 0, color = dot_color)
+  } else {
+    p <- p +
+      ggplot2::geom_sf(
+        data = dots[order(dots$dot_value), ], ggplot2::aes(color = .data$dot_value),
+        size = dot_size, shape = 16, stroke = 0
+      ) +
+      dot_color_scale(palette, color, color_title, ...)
+  }
+  p + ggplot2::labs(title = title, subtitle = subtitle) + theme_census_map(dark = dark)
+}
+
+#' Area in square kilometres
+#'
+#' @param x An `sf` object or a geometry column.
+#' @return Numeric vector, one value for each feature.
+#' @examples
+#' square <- sf::st_sfc(
+#'   sf::st_polygon(list(rbind(c(0, 0), c(1000, 0), c(1000, 1000), c(0, 1000), c(0, 0)))),
+#'   crs = 32643
+#' )
+#' area_km2(square)
+#' @export
+area_km2 <- function(x) as.numeric(sf::st_area(x)) / 1e6
 
 #' Compare maps across years
 #'
@@ -212,7 +404,7 @@ plot_map <- function(data,
 #' @param fill_var Variable to map (unquoted column name or string).
 #' @param title Title for the combined plot.
 #' @param ncol Number of columns in the layout.
-#' @param palette Color palette; see \code{\link{plot_map}} for options.
+#' @param palette Color palette. Refer to \code{\link{plot_map}} for options.
 #' @param common_scale Logical. If `TRUE` (default), all panels share the same
 #'   color scale limits.
 #' @param limits Optional numeric vector `c(min, max)` for the shared color
@@ -229,11 +421,11 @@ plot_map <- function(data,
 #'
 #' st_1971 <- census_1971 |>
 #'   filter(geography == "district", sector == "total") |>
-#'   mutate(st_pct = 100 * st_population / population) |>
+#'   mutate(st_pct = share(st_population, population)) |>
 #'   attach_geometry(1971)
 #'
 #' st_2011 <- census_2011_pca |>
-#'   mutate(st_pct = 100 * st_population / population) |>
+#'   mutate(st_pct = share(st_population, population)) |>
 #'   attach_geometry(2011)
 #'
 #' # Compare
@@ -309,7 +501,8 @@ compare_maps <- function(data_list,
 #' Get color palette
 #'
 #' Gives a color palette for maps. The palettes are "viridis", "red_blue",
-#' "blue_red", "greens", "oranges", "reds", "blues" and "purple_green".
+#' "blue_red", "greens", "oranges", "reds", "blues", "purple_green" and
+#' "inferno".
 #'
 #' @param name Name of the palette
 #' @param reverse Logical. If TRUE, the direction is reversed.
@@ -352,6 +545,10 @@ get_palette <- function(name, reverse = FALSE) {
     viridis = c(
       "#440154", "#482878", "#3E4A89", "#31688E", "#26828E",
       "#1F9E89", "#35B779", "#6DCD59", "#B4DE2C", "#FDE725"
+    ),
+    inferno = c(
+      "#000004", "#1B0C42", "#4B0C6B", "#781C6D", "#A52C60",
+      "#CF4446", "#ED6925", "#FB9A06", "#F7D03C", "#FCFFA4"
     )
   )
 
@@ -368,6 +565,42 @@ get_palette <- function(name, reverse = FALSE) {
   }
 
   colors
+}
+
+#' @noRd
+as_map_data <- function(data, cols) {
+  if (!requireNamespace("ggplot2", quietly = TRUE)) {
+    cli::cli_abort("Package {.pkg ggplot2} is required.")
+  }
+  if (!inherits(data, "sf")) {
+    if (!"geometry" %in% names(data)) {
+      cli::cli_abort("{.arg data} must be an {.cls sf} object or have a {.field geometry} column.")
+    }
+    data <- sf::st_as_sf(data)
+  }
+  missing_cols <- setdiff(cols, names(data))
+  if (length(missing_cols)) {
+    cli::cli_abort("{.val {missing_cols}} {?is/are} not {?a column/columns} of {.arg data}.")
+  }
+  data
+}
+
+#' @noRd
+dot_base_layer <- function(year, dark) {
+  ggplot2::geom_sf(
+    data = census_base_shapes(year), fill = if (dark) "black" else "grey96",
+    color = if (dark) "grey35" else "grey75", linewidth = 0.2
+  )
+}
+
+#' the palette start is too pale or too dark for dots
+#' @noRd
+dot_color_scale <- function(palette, color, color_title, ...) {
+  ggplot2::scale_color_gradientn(
+    colors = get_palette(palette)[-(1:2)],
+    name = color_title %||% color,
+    ...
+  )
 }
 
 #' Gives the state outline to draw below a map. The outline comes from the

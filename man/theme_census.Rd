@@ -7,10 +7,15 @@
 \usage{
 theme_census(base_size = 11)
 
-theme_census_map(base_size = 11)
+theme_census_map(base_size = 11, dark = FALSE)
 }
 \arguments{
 \item{base_size}{Base font size in points.}
+
+\item{dark}{Logical. If \code{TRUE}, the map has a black background and white text.
+A map with a fixed aspect ratio does not fill the full image.
+\code{\link[ggplot2:ggsave]{ggplot2::ggsave()}} fills the remaining area. With \code{\link[grDevices:png]{grDevices::png()}} or
+knitr, set the device background to black, for example \code{png(bg = "black")}.}
 }
 \value{
 A \code{ggplot2} theme.

@@ -10,7 +10,7 @@ search_census_variables(pattern)
 \item{pattern}{Character string or regular expression pattern.}
 }
 \value{
-A tibble of matching variables.
+A tibble of the variables that match.
 }
 \description{
 Search census variables by keyword across variable names and labels.

@@ -19,12 +19,13 @@ one of the village-level 2011 tables).}
 \code{data} filtered to \code{level} and \code{sector}.
 }
 \description{
-The village-level 2011 tables (\code{\link[=census_2011_demographics]{census_2011_demographics()}},
-\code{\link[=census_2011_workers]{census_2011_workers()}}, \code{\link[=census_2011_marginal_detail]{census_2011_marginal_detail()}}) and \link{census_1981}
-stack multiple geographic levels (from India down to village or ward) and
-three sectors (\code{"total"}, \code{"rural"}, \code{"urban"}) in the same table. Summing
-rows without filtering both \code{geography} and \code{sector} counts people multiple
-times. \code{at_level()} filters \code{geography} and, when a \code{sector} column is
+Some tables stack multiple geographic levels and three sectors in one table.
+These are \link{census_1981} and the village-level 2011 tables
+(\code{\link[=census_2011_demographics]{census_2011_demographics()}}, \code{\link[=census_2011_workers]{census_2011_workers()}},
+\code{\link[=census_2011_marginal_detail]{census_2011_marginal_detail()}}). The
+levels go from India to village or ward. The sectors are \code{"total"}, \code{"rural"},
+and \code{"urban"}. If you sum rows and do not filter both \code{geography} and
+\code{sector}, you count people multiple times. \code{at_level()} filters \code{geography} and, when a \code{sector} column is
 present, \code{sector}.
 }
 \details{
@@ -32,10 +33,10 @@ The levels \code{"india"}, \code{"state"}, \code{"district"}, \code{"subdistrict
 \code{"village"} are additively exact: each level sums to its parent, and
 \code{rural + urban == total}.
 
-The levels \code{"town"} and \code{"ward"} are \strong{not} additive: the Census lists a
+The levels \code{"town"} and \code{"ward"} are \strong{not} additive. The Census lists a
 municipality and the same municipality with its outgrowths as separate town
-rows (for example, \verb{BBMP (M Corp.)} and \verb{BBMP (M Corp. + OG)} in Bengaluru),
-and ward rows do not always sum to the parent town row. Use town and ward
+rows (for example, \verb{BBMP (M Corp.)} and \verb{BBMP (M Corp. + OG)} in Bengaluru).
+Ward rows do not always sum to the parent town row. Use town and ward
 rows for lookups, not aggregation.
 }
 \examples{

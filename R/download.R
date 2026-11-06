@@ -1,10 +1,11 @@
 DATA_URL <- "https://geo.bharatviz.org/_censusindia"
+VILLAGE_URL <- "https://geo.bharatviz.org/geojsons/admin/villages-nwdp"
 
 #' Gives the remote files, their version directory and their pinned MD5
 #' (inst/manifest.csv).
 #' @noRd
-census_manifest <- function() {
-  path <- system.file("manifest.csv", package = "censusindia", mustWork = TRUE)
+census_manifest <- function(file = "manifest.csv") {
+  path <- system.file(file, package = "censusindia", mustWork = TRUE)
   utils::read.csv(path, colClasses = "character")
 }
 
@@ -20,11 +21,11 @@ cache_path <- function(version, file) file.path(census_cache_dir(), version, fil
 #' By default the cache lives in [tools::R_user_dir()]. Set
 #' `options(censusindia.cache_dir = ...)` to use a different directory.
 #'
-#' @return `census_cache_dir()` returns the cache directory path (which may not
-#'   yet exist on disk). `clear_census_cache()` deletes the cache directory,
+#' @return `census_cache_dir()` returns the cache directory path (the directory can
+#'   be absent from the disk). `clear_census_cache()` deletes the cache directory,
 #'   clears the in-memory session cache, and returns the path invisibly.
-#' @seealso [census_download()] downloads all remote files upfront;
-#'   [clear_geometry_cache()] evicts objects cached in session memory.
+#' @seealso [census_download()] downloads all remote files at once.
+#'   [clear_geometry_cache()] removes cached objects from the session memory.
 #' @examples
 #' census_cache_dir()
 #' @export
@@ -43,8 +44,10 @@ clear_census_cache <- function() {
 
 #' Download all remote data
 #'
-#' Downloads every boundary file and remote table not yet present in
-#' [census_cache_dir()]. Once complete, all package functions work offline.
+#' Downloads every state and district boundary file and remote table not yet
+#' present in [census_cache_dir()]. Once complete, all package functions work
+#' offline, except for village boundaries. Each state file of village boundaries
+#' downloads on first use.
 #'
 #' @return The cache directory path, invisibly.
 #' @examplesIf interactive()
@@ -75,17 +78,37 @@ census_missing <- function() {
 #' function downloads it first.
 #' @noRd
 census_file <- function(file) {
-  entry <- census_manifest()
-  entry <- entry[entry$file == file, ]
+  entry <- manifest_entry(census_manifest(), file)
+  cached_remote(
+    paste(DATA_URL, entry$version, file, sep = "/"), cache_path(entry$version, file), entry$md5
+  )
+}
+
+#' own manifest: census_download() skips these files
+#' @noRd
+village_file <- function(file) {
+  entry <- manifest_entry(census_manifest("manifest-villages.csv"), file)
+  cached_remote(paste(VILLAGE_URL, file, sep = "/"), cache_path("villages", file), entry$md5)
+}
+
+#' @noRd
+manifest_entry <- function(manifest, file) {
+  entry <- manifest[manifest$file == file, ]
   if (nrow(entry) != 1) {
     cli::cli_abort("{.file {file}} is not in the censusindia data manifest.")
   }
-  path <- cache_path(entry$version, file)
-  if (file.exists(path)) {
-    return(path)
-  }
+  entry
+}
+
+#' @noRd
+cached_remote <- function(url, path, md5) {
+  if (file.exists(path)) path else fetch_remote(url, path, md5)
+}
+
+#' @noRd
+fetch_remote <- function(url, path, md5) {
+  file <- basename(path)
   dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
-  url <- paste(DATA_URL, entry$version, file, sep = "/")
 
   # download beside the target so the rename is atomic
   tmp <- tempfile(tmpdir = dirname(path))
@@ -105,7 +128,7 @@ census_file <- function(file) {
       "i" = "This file is fetched on first use. Check your internet connection and try again."
     ), class = "censusindia_download_error")
   }
-  if (!identical(unname(tools::md5sum(tmp)), entry$md5)) {
+  if (!identical(unname(tools::md5sum(tmp)), md5)) {
     cli::cli_abort(c(
       "Downloaded {.file {file}} does not match its expected checksum.",
       "i" = "The file may be truncated. Try again; if it persists, please report it at {.url https://github.com/saketlab/censusindia/issues}."

@@ -262,3 +262,9 @@ test_that("LA resolves to Ladakh, and every route uses the package column names"
   expect_equal(south$status, 200)
   expect_identical(unique(south$json$region), "South")
 })
+
+test_that("the API version follows the package version", {
+  lines <- readLines(system.file("plumber", "plumber.R", package = "censusindia"))
+  version <- sub("^#\\* @apiVersion ", "", grep("@apiVersion", lines, value = TRUE))
+  expect_identical(version, as.character(utils::packageVersion("censusindia")))
+})

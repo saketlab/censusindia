@@ -23,7 +23,6 @@ knitr::opts_chunk$set(
 ```{r load}
 library(censusindia)
 library(dplyr)
-library(ggplot2)
 ```
 
 ```{r data}
@@ -37,12 +36,12 @@ pop_geo <- lapply(years, function(y) {
 ```
 
 ```{r facet-map}
-ggplot(pop_geo) +
-  geom_sf(aes(fill = population / 1e6), color = "white", linewidth = 0.1) +
-  scale_fill_gradientn(colors = get_palette("viridis"), name = "Million") +
-  facet_wrap(~year, nrow = 2) +
-  theme_void() +
-  theme(strip.text = element_text(face = "bold"), legend.position = "bottom")
+pop_geo |>
+  mutate(population_millions = population / 1e6) |>
+  plot_map("population_millions",
+    legend_title = "Million", facet = "year", base_layer = FALSE,
+    unit_boundary_color = "white", legend_position = "bottom"
+  )
 ```
 
 ```{r growth}
@@ -55,7 +54,7 @@ pop <- census_population_time_series |>
 
 growth <- pop |>
   group_by(state_name_harmonized) |>
-  mutate(growth_rate = 100 * (population - lag(population)) / lag(population)) |>
+  mutate(growth_rate = percent_change(population, lag(population))) |>
   filter(!is.na(growth_rate), year %in% growth_years) |>
   ungroup()
 
@@ -67,10 +66,8 @@ growth_geo <- lapply(growth_years, function(y) {
 ```
 
 ```{r growth-map}
-ggplot(growth_geo) +
-  geom_sf(aes(fill = growth_rate), color = "white", linewidth = 0.1) +
-  scale_fill_gradientn(colors = get_palette("blue_red"), name = "Growth %", limits = c(-10, 50)) +
-  facet_wrap(~year, nrow = 2) +
-  theme_void() +
-  theme(strip.text = element_text(face = "bold"), legend.position = "bottom")
+plot_map(growth_geo, "growth_rate",
+  palette = "blue_red", limits = c(-10, 50), legend_title = "Growth %",
+  facet = "year", base_layer = FALSE, unit_boundary_color = "white", legend_position = "bottom"
+)
 ```

@@ -2,7 +2,7 @@
 % Please edit documentation in R/plotting.R
 \name{plot_map}
 \alias{plot_map}
-\title{Create a choropleth map from census data.}
+\title{Create a choropleth map from census data}
 \usage{
 plot_map(
   data,
@@ -13,11 +13,11 @@ plot_map(
   palette = "viridis",
   reverse = FALSE,
   direction = NULL,
-  na_color = "grey80",
+  na_color = if (dark) "black" else "grey80",
   boundary_year = NULL,
   base_layer = TRUE,
   show_state_boundaries = FALSE,
-  state_boundary_color = "black",
+  state_boundary_color = if (dark) "grey35" else "black",
   state_boundary_width = 0.3,
   trans = "identity",
   midpoint = NULL,
@@ -26,14 +26,21 @@ plot_map(
   breaks = NULL,
   labels = NULL,
   font_family = NULL,
-  legend_position = "right"
+  legend_position = "right",
+  state = NULL,
+  facet = NULL,
+  dark = FALSE,
+  unit_boundary_color = NA,
+  unit_boundary_width = 0.1
 )
 }
 \arguments{
 \item{data}{An \code{sf} object, or a data frame with geometry from
 \code{\link{attach_geometry}}.}
 
-\item{fill_var}{Variable for the fill color (unquoted column name or string).}
+\item{fill_var}{Variable for the fill color (unquoted column name or string).
+A numeric variable gets a continuous scale. Other variables get a discrete
+scale, and \code{palette} has no effect.}
 
 \item{title}{Optional title for the map.}
 
@@ -51,6 +58,7 @@ plot_map(
 \item \code{"reds"} - Sequential red palette
 \item \code{"blues"} - Sequential blue palette
 \item \code{"purple_green"} - Diverging purple to green
+\item \code{"inferno"} - Sequential black to yellow, for \code{dark = TRUE}
 }}
 
 \item{reverse}{Logical. If \code{TRUE}, reverses the palette direction. Default
@@ -59,7 +67,8 @@ plot_map(
 \item{direction}{Numeric. Alternative to \code{reverse}: \code{-1} reverses the palette
 and \code{1} keeps the default. Takes precedence over \code{reverse} if both are set.}
 
-\item{na_color}{Color for missing values. Default \code{"grey80"}.}
+\item{na_color}{Color for missing values. Default \code{"grey80"}, or \code{"black"} if
+\code{dark = TRUE}.}
 
 \item{boundary_year}{Census year of the state outline drawn beneath the data.
 This background layer preserves India's full claimed northern extent where
@@ -71,7 +80,8 @@ of India beneath the data.}
 \item{show_state_boundaries}{Logical. If \code{TRUE}, overlays state boundary lines
 on top of the data.}
 
-\item{state_boundary_color}{Color for state boundary lines. Default \code{"black"}.}
+\item{state_boundary_color}{Color for state boundary lines. Default \code{"black"},
+or \code{"grey35"} if \code{dark = TRUE}.}
 
 \item{state_boundary_width}{Width of state boundary lines. Default \code{0.3}.}
 
@@ -81,10 +91,10 @@ Default \code{"identity"}.}
 \item{midpoint}{Center value for a diverging palette (e.g., \code{0} for growth or
 \code{1000} for sex ratio). If \code{NULL}, defaults to the midpoint of \code{limits}.}
 
-\item{oob}{Out-of-bounds handler for values outside \code{limits}. By default
-ggplot2 maps out-of-bounds values to \code{na_color}, making them
-indistinguishable from missing data; pass \code{scales::squish} to clamp them to
-the nearest limit instead.}
+\item{oob}{Out-of-bounds handler for values outside \code{limits}. By default,
+ggplot2 maps out-of-bounds values to \code{na_color}. You cannot then distinguish
+them from missing data. Use \code{scales::squish} to clamp them to the nearest
+limit.}
 
 \item{limits}{Optional numeric vector \code{c(min, max)} for the color scale.}
 
@@ -98,18 +108,34 @@ the nearest limit instead.}
 \item{legend_position}{One of \code{"right"} (default), \code{"left"}, \code{"bottom"},
 \code{"top"}, or \code{"none"}. \code{"bottom"} and \code{"top"} orient the colorbar
 horizontally.}
+
+\item{state}{Optional state names. The map shows only these states. The
+column \code{state_name_harmonized} of \code{data} must have these names.}
+
+\item{facet}{Optional name of a column. The map has one panel for each value
+of this column. Use \code{base_layer = FALSE} if the panels have different
+boundary years.}
+
+\item{dark}{Logical. If \code{TRUE}, the map has a black background and white text.
+Use it with \code{palette = "inferno"}, so that high values are bright. See
+\code{\link[=theme_census_map]{theme_census_map()}} for the device background.}
+
+\item{unit_boundary_color}{Color of the lines around each unit of \code{data}. The
+default \code{NA} draws no lines.}
+
+\item{unit_boundary_width}{Width of the lines around each unit of \code{data}.}
 }
 \value{
 A \code{ggplot2} object.
 }
 \description{
-Create a choropleth map from census data.
+Create a choropleth map from census data
 }
 \examples{
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 # Calculate ST percentage and attach geometry
 st_data <- census_2011_pca |>
-  dplyr::mutate(st_pct = 100 * st_population / population) |>
+  dplyr::mutate(st_pct = share(st_population, population)) |>
   attach_geometry(2011)
 
 # Create a basic map

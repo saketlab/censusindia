@@ -35,22 +35,16 @@ years <- c(1961, 1971, 1981, 1991, 2001, 2011)
 pop_geo <- lapply(years, function(y) {
   census_population_time_series |>
     filter(geography == "state", year == y) |>
-    mutate(sex_ratio = 1000 * females / males) |>
+    mutate(sex_ratio = sex_ratio(females, males)) |>
     attach_geometry(year = y, geography = "state")
 }) |> bind_rows()
 ```
 
 ```{r facet-map}
-ggplot(pop_geo) +
-  geom_sf(aes(fill = sex_ratio), color = "white", linewidth = 0.1) +
-  scale_fill_gradientn(
-    colors = get_palette("blue_red"),
-    name = "Females per\n1000 males",
-    limits = c(850, 1100)
-  ) +
-  facet_wrap(~year, nrow = 2) +
-  theme_void() +
-  theme(strip.text = element_text(face = "bold"), legend.position = "bottom")
+plot_map(pop_geo, "sex_ratio",
+  palette = "blue_red", limits = c(850, 1100), legend_title = "Females per\n1000 males",
+  facet = "year", base_layer = FALSE, unit_boundary_color = "white", legend_position = "bottom"
+)
 ```
 
 ```{r national-trend}
@@ -58,7 +52,7 @@ national <- census_population_time_series |>
   filter(geography == "state", year %in% years) |>
   group_by(year) |>
   summarise(males = sum(males, na.rm = TRUE), females = sum(females, na.rm = TRUE)) |>
-  mutate(sex_ratio = 1000 * females / males)
+  mutate(sex_ratio = sex_ratio(females, males))
 
 ggplot(national, aes(year, sex_ratio)) +
   geom_line(linewidth = 1) +
@@ -66,13 +60,13 @@ ggplot(national, aes(year, sex_ratio)) +
   geom_hline(yintercept = 1000, linetype = "dashed", color = "gray50") +
   scale_y_continuous(limits = c(920, 950)) +
   labs(x = "Year", y = "Females per 1000 males", title = "National sex ratio trend") +
-  theme_minimal()
+  theme_census()
 ```
 
 ```{r state-trends, fig.height=8}
 state_trends <- census_population_time_series |>
   filter(geography == "state", year %in% years) |>
-  mutate(sex_ratio = 1000 * females / males)
+  mutate(sex_ratio = sex_ratio(females, males))
 
 extremes_2011 <- state_trends |>
   filter(year == 2011) |>
@@ -111,14 +105,14 @@ ggplot(state_trends, aes(year, sex_ratio, group = state_name_harmonized)) +
   scale_color_manual(values = state_colors) +
   scale_x_continuous(limits = c(1961, 2025)) +
   labs(x = "Year", y = "Females per 1000 males", title = "Sex ratio by state (top 5 and bottom 5 highlighted)") +
-  theme_minimal() +
+  theme_census() +
   theme(legend.position = "none")
 ```
 
 ```{r extremes}
 pop_2011 <- census_population_time_series |>
   filter(geography == "state", year == 2011) |>
-  mutate(sex_ratio = round(1000 * females / males)) |>
+  mutate(sex_ratio = round(sex_ratio(females, males))) |>
   arrange(desc(sex_ratio))
 
 cat("Highest sex ratio (2011):\n")
@@ -131,24 +125,16 @@ tail(pop_2011 |> select(state_name_harmonized, sex_ratio), 5)
 ```{r change-map}
 change_data <- census_population_time_series |>
   filter(geography == "state", year %in% c(1961, 2011)) |>
-  mutate(sex_ratio = 1000 * females / males) |>
+  mutate(sex_ratio = sex_ratio(females, males)) |>
   select(state_name_harmonized, year, sex_ratio) |>
   tidyr::pivot_wider(names_from = year, values_from = sex_ratio, names_prefix = "y") |>
   mutate(change = y2011 - y1961) |>
   attach_geometry(year = 2011, geography = "state")
 
-ggplot(change_data) +
-  geom_sf(aes(fill = change), color = "white", linewidth = 0.2) +
-  scale_fill_gradientn(
-    colors = get_palette("blue_red"),
-    name = "Change in\nsex ratio",
-    limits = c(-100, 100),
-    na.value = "grey80"
-  ) +
-  labs(
-    title = "Change in sex ratio (1961 to 2011)",
-    caption = "Grey: data not available for 1961"
-  ) +
-  theme_void() +
-  theme(legend.position = "right")
+plot_map(change_data, "change",
+  title = "Change in sex ratio (1961 to 2011)",
+  palette = "blue_red", limits = c(-100, 100), legend_title = "Change in\nsex ratio",
+  unit_boundary_color = "white", unit_boundary_width = 0.2
+) +
+  labs(caption = "Grey: data not available for 1961")
 ```

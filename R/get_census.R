@@ -5,7 +5,7 @@
 #' @param year Census year. One of: 1901, 1911, 1921, 1931, 1941, 1951, 1961,
 #'   1971, 1981, 1991, 2001, 2011.
 #' @param geography Geographic level: `"state"`, `"district"`, or `"subdistrict"`.
-#'   Not all geographies are available for every census year; see
+#'   Some geographies are not available for all census years. Refer to
 #'   [list_census_geographies()].
 #' @param variables Character vector of variable names to return, or `NULL`
 #'   (default) for all variables available at that year and geography. See
@@ -16,7 +16,7 @@
 #'   object. Available for `"state"` and `"district"`.
 #' @param sector Sector filter: `"total"` (default), `"rural"`, or `"urban"`.
 #'   Rural and urban splits are available in `get_census()` for 1971 and 1981
-#'   only; passing `"rural"` or `"urban"` for other years raises an error.
+#'   only. If you use `"rural"` or `"urban"` for other years, you get an error.
 #'
 #' @return A tibble (or an `sf` object when `geometry = TRUE`). Every year
 #'   begins with the same identifier columns: `year`, `geography`, `sector`,
@@ -199,11 +199,11 @@ filter_by_state <- function(data, state) {
   if (!length(cols)) {
     cli::cli_abort("Cannot filter by state: no state column found")
   }
-  present <- unique(unlist(lapply(data[cols], as.character), use.names = FALSE))
+  # by column: data[cols] on an sf object keeps the geometry
+  values <- lapply(cols, function(cl) as.character(data[[cl]]))
+  present <- unique(unlist(values, use.names = FALSE))
   wanted <- resolve_states(state, present = present[!is.na(present)])
-  hit <- Reduce(`|`, lapply(cols, function(cl) {
-    tolower(as.character(data[[cl]])) %in% tolower(wanted)
-  }))
+  hit <- Reduce(`|`, lapply(values, function(v) tolower(v) %in% tolower(wanted)))
   data[hit & !is.na(hit), , drop = FALSE]
 }
 

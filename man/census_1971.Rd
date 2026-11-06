@@ -37,8 +37,8 @@ values and the SC/ST population.
 \details{
 The table stores each sector as a row. Each of the 28 states and 352
 districts has one row each for \code{"total"}, \code{"rural"}, and \code{"urban"}. Filter
-to \code{sector == "total"} before summing across rows; otherwise the sum
-double-counts every person.
+to \code{sector == "total"} before you sum rows. If you do not, the sum counts each
+person two times.
 
 Verified against the printed volume (Table II). Ten missing Mysore districts
 were added and OCR errors in SC/ST cells were corrected. Madras is entirely

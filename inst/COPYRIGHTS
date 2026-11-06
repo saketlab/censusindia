@@ -1,12 +1,12 @@
 The R code in censusindia is copyright Saket Choudhary and released under the
-MIT licence (see LICENSE). The data are not the package author's work.
+MIT license (see LICENSE). The data are not the package author's work.
 
 Included with the package
 -------------------------
 
 census_population_time_series, census_1961_literacy, census_1971, census_1981,
 census_subdistricts_2011, census_2011_pca, and the state names used to
-harmonise every table derive from:
+harmonize every table derive from:
 
   Jolad, Shivakumar and Singh, Madhav (2026). Indian Census Data Collection,
   1901-2026: Digitised Subnational Population and Administrative Datasets.
@@ -25,7 +25,8 @@ Registrar General and Census Commissioner, India.
 
 Population projections are published by the Ministry of Health and Family
 Welfare, Government of India (state level) and the International Institute
-for Population Sciences (district level).
+for Population Sciences (district level). The rural, sub-district and village
+projections are derived from these by this package.
 
 Downloaded on first use
 -----------------------
@@ -34,3 +35,9 @@ The census boundary files are collated by bharatviz.org from Jolad and Singh
 (2026), above, and from https://github.com/ramSeraph/indian_admin_boundaries.
 The large 2011 tables and district age projections come from the same
 sources as above.
+
+The village and town boundaries come from the "Village Boundary" dataset of the
+National Water Data Portal (National Water Informatics Centre, Ministry of Jal
+Shakti), mirrored by bharatviz.org. The portal lists the licence as "Other
+(Open)" and gives no licence text:
+https://nwdp.nwic.gov.in/dataset/9bad17f2-9d88-428d-98ad-831ef01ae2e4

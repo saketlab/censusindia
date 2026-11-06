@@ -30,7 +30,7 @@ overlap analysis.
 population_projections_district_lgd
 }
 \description{
-MOHFW population projections, scaled to the current Local Government
+IIPS district projections, scaled to the current Local Government
 Directory (LGD) district boundaries. The table gives one projection for
 each year from 2012 to 2031. Each value is the sum of the age groups in
 \code{\link[=population_projections_district_lgd_age]{population_projections_district_lgd_age()}}.

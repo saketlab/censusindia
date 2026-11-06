@@ -69,7 +69,7 @@ ggplot(rankings, aes(x = factor(year), y = rank, group = state_name_harmonized))
     title = "State population rankings: 1901 vs 2011",
     subtitle = "1901 vs 2011"
   ) +
-  theme_minimal() +
+  theme_census() +
   theme(
     legend.position = "none",
     panel.grid.major.x = element_blank(),
@@ -118,7 +118,7 @@ ggplot(state_trajectories, aes(year, pop_scaled)) +
     title = "Population trajectories by state (1901-2011)",
     subtitle = "Ordered by total growth rate (highest to lowest)"
   ) +
-  theme_minimal() +
+  theme_census() +
   theme(
     axis.text = element_blank(),
     panel.grid = element_blank(),
@@ -144,7 +144,7 @@ growth_data <- growth_data |>
 ggplot(growth_data, aes(factor(year), state_name_harmonized, fill = variation_percent)) +
   geom_tile(color = "white", linewidth = 0.5) +
   scale_fill_gradient2(
-    low = "#2166ac", mid = "white", high = "#b2182b",
+    low = census_colors()[["low"]], mid = "white", high = census_colors()[["high"]],
     midpoint = 20, na.value = "grey90",
     name = "Growth %"
   ) +
@@ -154,7 +154,7 @@ ggplot(growth_data, aes(factor(year), state_name_harmonized, fill = variation_pe
     title = "Decadal population growth rates by state",
     subtitle = "States ordered by average growth rate"
   ) +
-  theme_minimal() +
+  theme_census() +
   theme(
     axis.text.x = element_text(angle = 45, hjust = 1),
     panel.grid = element_blank()

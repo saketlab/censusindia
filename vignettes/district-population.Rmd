@@ -24,83 +24,42 @@ knitr::opts_chunk$set(
 ```{r load}
 library(censusindia)
 library(dplyr)
-library(ggplot2)
-library(sf)
 library(scales)
 ```
 
 ```{r data}
 districts <- census_2011_pca |>
   mutate(
-    sc_pct = 100 * sc_population / population,
-    st_pct = 100 * st_population / population
+    sc_pct = share(sc_population, population),
+    st_pct = share(st_population, population)
   )
 
-boundaries <- get_census_boundaries(2011, "district")
-state_bounds <- get_census_boundaries(2011, "state")
 map_df <- attach_geometry(districts, 2011, geography = "district")
 ```
 
 ```{r map-population}
-ggplot() +
-  geom_sf(data = boundaries, fill = "grey80", color = "grey85", linewidth = 0.03) +
-  geom_sf(data = map_df, aes(fill = population), color = "grey60", linewidth = 0.05) +
-  geom_sf(data = state_bounds, fill = NA, color = "grey20", linewidth = 0.4) +
-  scale_fill_viridis_c(
-    option = "viridis", direction = 1, begin = 0.1, end = 0.9,
-    name = "Population", labels = label_comma(), trans = "log10",
-    na.value = "grey70"
-  ) +
-  labs(
-    title = "District population (Census 2011)",
-    subtitle = "Log scale. Thane (MH) at 11 million, Dibang Valley (AR) at 8,000"
-  ) +
-  theme_void() +
-  theme(
-    plot.title = element_text(face = "bold", size = 13, hjust = 0.5),
-    plot.subtitle = element_text(size = 10, color = "grey40", hjust = 0.5),
-    legend.position = c(0.15, 0.25)
-  )
+plot_map(map_df, "population",
+  title = "District population (Census 2011)",
+  subtitle = "Log scale. Thane (MH) at 11 million, Dibang Valley (AR) at 8,000",
+  trans = "log10", labels = label_comma(), legend_title = "Population", unit_boundary_color = "grey60", unit_boundary_width = 0.05,
+  show_state_boundaries = TRUE, state_boundary_color = "grey20", state_boundary_width = 0.4
+)
 ```
 
 ```{r map-sc}
-ggplot() +
-  geom_sf(data = boundaries, fill = "grey80", color = "grey85", linewidth = 0.03) +
-  geom_sf(data = map_df, aes(fill = sc_pct), color = "grey60", linewidth = 0.05) +
-  geom_sf(data = state_bounds, fill = NA, color = "grey20", linewidth = 0.4) +
-  scale_fill_distiller(
-    palette = "YlOrRd", direction = 1,
-    name = "SC (%)", labels = label_number(suffix = "%"),
-    na.value = "grey70"
-  ) +
-  labs(
-    title = "Scheduled Caste population share (Census 2011)"
-  ) +
-  theme_void() +
-  theme(
-    plot.title = element_text(face = "bold", size = 13, hjust = 0.5),
-    legend.position = c(0.15, 0.25)
-  )
+plot_map(map_df, "sc_pct",
+  title = "Scheduled Caste population share (Census 2011)",
+  palette = "oranges", labels = label_number(suffix = "%"), legend_title = "SC (%)", unit_boundary_color = "grey60", unit_boundary_width = 0.05,
+  show_state_boundaries = TRUE, state_boundary_color = "grey20", state_boundary_width = 0.4
+)
 ```
 
 ```{r map-st}
-ggplot() +
-  geom_sf(data = boundaries, fill = "grey80", color = "grey85", linewidth = 0.03) +
-  geom_sf(data = map_df, aes(fill = st_pct), color = "grey60", linewidth = 0.05) +
-  geom_sf(data = state_bounds, fill = NA, color = "grey20", linewidth = 0.4) +
-  scale_fill_distiller(
-    palette = "Greens", direction = 1,
-    name = "ST (%)", labels = label_number(suffix = "%"),
-    na.value = "grey70"
-  ) +
-  labs(
-    title = "Scheduled Tribe population share (Census 2011)"
-  ) +
-  theme_void() +
-  theme(
-    plot.title = element_text(face = "bold", size = 13, hjust = 0.5),
-    legend.position = c(0.15, 0.25)
-  )
+plot_map(map_df, "st_pct",
+  title = "Scheduled Tribe population share (Census 2011)",
+  palette = "greens", labels = label_number(suffix = "%"), legend_title = "ST (%)", unit_boundary_color = "grey60", unit_boundary_width = 0.05,
+  show_state_boundaries = TRUE, state_boundary_color = "grey20", state_boundary_width = 0.4
+)
 ```
 
 ```{r table-top-bottom}

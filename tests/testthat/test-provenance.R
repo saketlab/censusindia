@@ -30,10 +30,18 @@ test_that("named build scripts and verifying tests exist", {
   tests <- prov$verified_by[nzchar(prov$verified_by)]
   expect_true(all(file.exists(test_path(tests))), info = paste(tests, collapse = " "))
   data_raw <- test_path("..", "..", "data-raw")
-  skip_if_not(dir.exists(data_raw), "data-raw is not in the built package")
+  # git holds only part of data-raw; legacy.R marks a full copy
+  skip_if_not(file.exists(file.path(data_raw, "legacy.R")), "the full data-raw is not here")
   expect_true(all(file.exists(file.path(data_raw, scripts))),
     info = paste(setdiff(scripts, list.files(data_raw)), collapse = " ")
   )
+})
+
+test_that("the projection build script exists", {
+  data_raw <- test_path("..", "..", "data-raw")
+  skip_if_not(dir.exists(data_raw), "data-raw is not in the built package")
+  rows <- prov[prov$dataset %in% c("population_projections_state_urban", "population_projections_state_rural"), ]
+  expect_true(all(file.exists(file.path(data_raw, rows$build_script))))
 })
 
 # Generic invariants over every shipped table ------------------------------------

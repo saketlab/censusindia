@@ -6,18 +6,22 @@
 \usage{
 get_population(
   year = NULL,
-  geography = c("state", "district"),
+  geography = c("state", "district", "subdistrict"),
   state = NULL,
   boundary = c("census2011", "lgd"),
   geometry = FALSE,
-  by_age = FALSE
+  by_age = FALSE,
+  method = c("constant_share", "urban_rural")
 )
 }
 \arguments{
 \item{year}{Integer or integer vector of projection years, or \code{NULL}
 (default) for all published years in the table.}
 
-\item{geography}{Geographic level: \code{"state"} or \code{"district"}.}
+\item{geography}{Geographic level: \code{"state"}, \code{"district"}, or
+\code{"subdistrict"}. This package derives subdistrict figures. Refer to the
+Subdistrict figures section. They cover Census 2011 boundaries and all ages,
+without geometry.}
 
 \item{state}{Optional state filter: one or more canonical state names or
 two-letter codes (e.g., \code{"Maharashtra"} or \code{"MH"}).}
@@ -30,47 +34,57 @@ districts) or \code{"lgd"} (783 districts). Ignored when \code{geography = "stat
 \code{boundary = "census2011"}.}
 
 \item{by_age}{If \code{TRUE}, returns age-stratified rows. State projections use
-5-year age bands from \code{"0-4"} to \code{"80+"}; district projections use single
+5-year age bands from \code{"0-4"} to \code{"80+"}. District projections use single
 years for ages 0-14 and 5-year bands from \code{"15-19"} to \code{"80+"}. See
 \link{population_projections_state_age}, \code{\link[=population_projections_district_age]{population_projections_district_age()}},
 and \code{\link[=population_projections_district_lgd_age]{population_projections_district_lgd_age()}}. State age projections
-cover 23 major states, \code{"India"}, and \code{"North East States Excluding Assam"};
-requesting other states with \code{by_age = TRUE} raises an error.}
+cover 23 major states, \code{"India"}, and \code{"North East States Excluding Assam"}.
+If you use other states with \code{by_age = TRUE}, you get an error.}
+
+\item{method}{How to divide a district among its subdistricts:
+\code{"constant_share"} (default) or \code{"urban_rural"}. Applies only when
+\code{geography = "subdistrict"}. \code{"urban_rural"} downloads
+\code{\link[=census_2011_demographics]{census_2011_demographics()}} on first use.}
 }
 \value{
 A tibble (or an \code{sf} object if \code{geometry = TRUE}) with columns
 \code{year}, \code{geography}, \code{state_code}, \code{state_name_harmonized}, \code{district}
-(district level only), \code{age_group} (when \code{by_age = TRUE}), \code{males},
+(district and subdistrict level), \code{subdistrict} (subdistrict level only),
+\code{age_group} (when \code{by_age = TRUE}), \code{males},
 \code{females}, \code{population}, and \code{estimate}. \code{geography} is \code{"india"} on
 national rows. All counts are in persons. \code{estimate} is \code{"published"} for
 years printed in the MoHFW/IIPS tables, \code{"interpolated"} for years between
 printed years, and \code{"extrapolated"} for years after the last printed year.
+Subdistrict rows have \code{"derived"} in place of \code{"published"}.
 }
 \description{
-Queries Ministry of Health and Family Welfare (MoHFW) population projections
-(2011-2036, Census 2011 base) at state or district level. District
+Gives Ministry of Health and Family Welfare (MoHFW) population projections
+(2011-2036, Census 2011 base) at state level. It also gives the International
+Institute for Population Sciences (IIPS) district projections, which use the
+state projections. This package derives subdistrict figures from the
+districts. District
 projections are available on two boundary sets: Census 2011 districts (640
 districts at 5-year intervals) and Local Government Directory (LGD) districts
 (783 districts, annual).
 }
 \details{
 State projections cover 2011-2036 across 39 entries: 28 states, the 9 union
-territories printed by MoHFW (including separate \code{"Dadra & Nagar Haveli"} and
+territories printed by MoHFW (with separate \code{"Dadra & Nagar Haveli"} and
 \code{"Daman & Diu"} rows), the merged \code{"Dadra & Nagar Haveli and Daman & Diu"} UT
-(the sum of the two), and \code{"India"}. To sum across states without
-double-counting, exclude \code{"India"} and either the merged UT or the two
-constituent UTs; see \link{population_projections_state}.
+(the sum of the two), and \code{"India"}. To sum states and count each
+person once, exclude \code{"India"} and either the merged UT or the two constituent
+UTs. Refer to \link{population_projections_state}.
 
-Because the state report rounds Persons, Male, and Female independently to
-the nearest thousand, \code{population} and \code{males + females} can differ by up to
-1,000 at state level (2,000 for the summed UT).
+The state report rounds Persons, Male, and Female independently to the nearest
+thousand. Thus, \code{population} and \code{males + females} can differ by up to 1,000
+at state level (2,000 for the summed UT).
 
 Census 2011 district projections are published at 5-year intervals (2011,
-2016, 2021, 2026, 2031); LGD district projections are annual from 2012 to
+2016, 2021, 2026, 2031). LGD district projections are annual from 2012 to
 2031.
 
 When a requested \code{year} is between published table years, \code{get_population()}
-interpolates \code{males}, \code{females}, and \code{population} independently using
+interpolates \code{males}, \code{females}, and \code{population} independently. It uses
 geometric (exponential) growth between the two nearest published years:
 
 \deqn{P_t = P_1 (P_2 / P_1)^{(t - t_1) / (t_2 - t_1)}}
@@ -78,14 +92,42 @@ geometric (exponential) growth between the two nearest published years:
 Because each series is interpolated independently, summed district estimates
 need not equal the interpolated state estimate.
 
-Years after the last published year are extrapolated using the final
-interval's growth rate for up to five years (to 2041 for states, 2036 for
+\code{get_population()} extrapolates years after the last published year with the
+growth rate of the final interval, for up to five years (to 2041 for states, 2036 for
 districts). Years before the start of the table or more than five years past
 the end raise an error.
 
 Telangana and Ladakh are reported as separate entries even though both were
 created after the 2011 Census.
 }
+\section{Subdistrict figures}{
+
+IIPS projects a district as the state projection times the district's share
+of the state. The \code{"constant_share"} method applies the same idea one level
+down, as IIPS Ratio method 3 does: each subdistrict keeps its 2011 share of
+its district, for males and females separately. Every subdistrict of a
+district therefore grows at the district's rate.
+
+\code{"urban_rural"} weights the 2011 urban and rural population of each
+subdistrict by the growth of its state's urban and rural population. The
+urban growth comes from \link{population_projections_state_urban}. The rural
+growth comes from total minus urban. The method then scales the weights to the
+district total. Urban subdistricts
+grow faster than rural ones where the state's urban population does. This
+method belongs to this package.
+
+In Delhi, Chandigarh and Lakshadweep, the projected urban population reaches
+the state total. Thus, these areas use constant shares with both methods. The
+\code{"urban_rural"} method applies the state's rural trend to all rural areas.
+Thus, Kerala gives extreme results, because the report has a steep decrease in
+its rural population.
+
+Both methods add to the district projection within rounding, and \code{population}
+is \code{males + females}. The package has no 2001 subdistrict data to validate
+either. \code{"constant_share"} is the default because it had the lower error for a
+projection of 2011 districts from 2001, in states with unchanged districts.
+}
+
 \examples{
 # State-level projections for 2021
 get_population(2021, "state")
@@ -99,4 +141,10 @@ get_population(2021, "district", boundary = "lgd")
 # Age-stratified state projections
 get_population(2021, "state", by_age = TRUE)
 
+# Subdistricts: 2011 shares of the district projection
+get_population(2031, "subdistrict", state = "Kerala")
+
+}
+\seealso{
+\code{\link[=population_projections]{population_projections()}} for all levels and sectors in one table.
 }

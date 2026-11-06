@@ -34,9 +34,9 @@ C-16 tables. The table has values by sex and by sector.
 \details{
 The table stores each sector as a row. Each district and language has one
 row each for \code{"total"}, \code{"rural"}, and \code{"urban"} (38,993 rows per sector).
-Filter \code{sector == "total"} before summing across rows, or use
+Filter \code{sector == "total"} before you sum rows, or use
 \code{\link[=census_languages]{census_languages()}}, which applies this filter automatically. The census
-reports speakers by sex only for the total sector; \code{speakers_male} and
+reports speakers by sex only for the total sector. \code{speakers_male} and
 \code{speakers_female} are \code{NA} on rural and urban rows.
 }
 \keyword{datasets}

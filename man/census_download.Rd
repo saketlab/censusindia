@@ -10,8 +10,10 @@ census_download()
 The cache directory path, invisibly.
 }
 \description{
-Downloads every boundary file and remote table not yet present in
-\code{\link[=census_cache_dir]{census_cache_dir()}}. Once complete, all package functions work offline.
+Downloads every state and district boundary file and remote table not yet
+present in \code{\link[=census_cache_dir]{census_cache_dir()}}. Once complete, all package functions work
+offline, except for village boundaries. Each state file of village boundaries
+downloads on first use.
 }
 \examples{
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}

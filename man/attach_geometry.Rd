@@ -14,36 +14,39 @@ attach_geometry(
 \arguments{
 \item{data}{A data frame of census data with state names and, for
 districts, district names. \code{state_name_harmonized} and \code{district} join
-exactly; other name columns fall back to fuzzy matching.}
+exactly. Other name columns use fuzzy matching as a fallback. Villages and
+towns join by \code{town_village_code}.}
 
 \item{year}{Census year of the boundaries. Available: 1941, 1951, 1961, 1971,
 1981, 1991, 2001, 2011.}
 
-\item{geography}{Geographic level: \code{"state"} or \code{"district"}. If \code{NULL}
+\item{geography}{Geographic level: \code{"state"}, \code{"district"} or \code{"village"}. If \code{NULL}
 (default), inferred from the columns of \code{data}.}
 
 \item{unmatched}{Action when rows get no geometry or when two distinct units
 claim the same polygon: \code{"warn"} (default), \code{"error"}, or \code{"ignore"}.
-Because fuzzy matching uses substrings and edit distance as a fallback, a
-district whose true polygon is missing can otherwise be assigned a neighbor's
-shape silently.}
+Fuzzy matching uses substrings and edit distance as a fallback. Thus,
+without this check, a district with no true polygon can silently get the
+shape of a neighbor.}
 }
 \value{
 An \code{sf} object with geometry attached.
-
-Boundary files are downloaded on first use and cached locally; see
-\code{\link[=census_cache_dir]{census_cache_dir()}}.
 }
 \description{
-Joins state or district boundary polygons to a census data frame for mapping.
+Joins state, district or village boundary polygons to a census data frame for
+maps.
 When \code{geography} is \code{NULL}, the geographic level is inferred from the columns
 of \code{data}.
+}
+\details{
+The package downloads boundary files on first use and keeps them in a local
+cache. Refer to \code{\link[=census_cache_dir]{census_cache_dir()}}.
 }
 \examples{
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 # Attach district boundaries
 census_2011_pca |>
-  dplyr::mutate(st_pct = 100 * st_population / population) |>
+  dplyr::mutate(st_pct = share(st_population, population)) |>
   attach_geometry(2011)
 \dontshow{\}) # examplesIf}
 }

@@ -18,7 +18,7 @@ get_census(
 1971, 1981, 1991, 2001, 2011.}
 
 \item{geography}{Geographic level: \code{"state"}, \code{"district"}, or \code{"subdistrict"}.
-Not all geographies are available for every census year; see
+Some geographies are not available for all census years. Refer to
 \code{\link[=list_census_geographies]{list_census_geographies()}}.}
 
 \item{variables}{Character vector of variable names to return, or \code{NULL}
@@ -33,7 +33,7 @@ object. Available for \code{"state"} and \code{"district"}.}
 
 \item{sector}{Sector filter: \code{"total"} (default), \code{"rural"}, or \code{"urban"}.
 Rural and urban splits are available in \code{get_census()} for 1971 and 1981
-only; passing \code{"rural"} or \code{"urban"} for other years raises an error.}
+only. If you use \code{"rural"} or \code{"urban"} for other years, you get an error.}
 }
 \value{
 A tibble (or an \code{sf} object when \code{geometry = TRUE}). Every year

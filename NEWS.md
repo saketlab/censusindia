@@ -1,3 +1,26 @@
+# censusindia 0.4.0 - Development
+
+* New `population_projections()`: all levels and sectors in one table.
+* `get_population()` gains `geography = "subdistrict"` and `method`.
+* New datasets `population_projections_state_urban` and
+  `population_projections_state_rural`.
+* `get_census_boundaries()` gains `state`. With `geography = "village"`, it gives
+  2011 village and town polygons, and `attach_geometry()` joins them by census
+  code. Most large city corporations have no polygon.
+* New maps: `plot_bubble_map()`, `census_bubble_layer()` and
+  `plot_dot_density_map()`.
+* `plot_map()` accepts a categorical `fill_var` and gains `state`, `facet`,
+  `dark`, `unit_boundary_color` and `unit_boundary_width`.
+* `theme_census_map()` gains `dark`, and `get_palette()` gains `"inferno"`.
+* New measures: `area_km2()`, `percent_change()`, `shannon_entropy()`,
+  `effective_number()`, `herfindahl_index()`, `greenberg_index()`,
+  `gini_coefficient()` and `language_diversity()`.
+* New functions to compare districts: `composition_matrix()`,
+  `composition_distance()`, `composition_clusters()`, `composition_pca()`,
+  `pca_variance()`, `pca_scores()` and `adjusted_rand_index()`.
+* New `list_census_datasets()` and `census_colors()`.
+* New article on population density maps.
+
 # censusindia 0.3.0
 
 ## Breaking changes
@@ -81,10 +104,10 @@ All tables, accessors and API routes now use one column schema:
 
 ## Other changes
 
-* `census_download()` fetches every remote file at once; `clear_census_cache()` removes them.
+* `census_download()` downloads all remote files at once. `clear_census_cache()` removes them.
 * `clear_geometry_cache()` also releases downloaded tables held in memory.
-* `plot_map()` reports a failed boundary download instead of drawing without its base layer.
-* `at_level()` accepts any table with a `level` column, including `census_1981`.
+* `plot_map()` reports a failed boundary download. It does not draw a map with no base layer.
+* `at_level()` accepts all tables with a `level` column, for example `census_1981`.
 
 # censusindia 0.1.2
 
